@@ -1,0 +1,10 @@
+[requires]
+fmt/10.2.1
+etl/20.38.10
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[layout]
+cmake_layout
