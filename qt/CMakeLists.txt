@@ -51,4 +51,17 @@ add_executable(maelir_qt
 
 target_link_libraries(maelir_qt
     mainwindow
+#TMP!
+    PNG::PNG
+)
+
+
+
+
+# TMP!
+add_executable(png_test
+    png_test.cc
+)
+target_link_libraries(png_test
+    PNG::PNG
 )

@@ -5,6 +5,8 @@
 #include <QImage>
 #include <QMainWindow>
 
+#include "display_qt.hh"
+
 namespace Ui
 {
 class MainWindow;
@@ -24,6 +26,5 @@ private:
     Ui::MainWindow* m_ui {nullptr};
 
     std::unique_ptr<QGraphicsScene> m_scene;
-    std::unique_ptr<QImage> m_screen;
-    QGraphicsPixmapItem* m_pixmap;
+    std::unique_ptr<DisplayQt> m_display;
 };
