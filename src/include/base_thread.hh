@@ -5,6 +5,9 @@
 
 #include <optional>
 
+namespace os
+{
+
 class BaseThread
 {
 public:
@@ -18,3 +21,5 @@ protected:
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
 };
+
+} // namespace os
