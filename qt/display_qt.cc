@@ -1,4 +1,5 @@
 #include "display_qt.hh"
+#include <QPainter>
 
 DisplayQt::DisplayQt(QGraphicsScene* scene)
     : m_screen(
@@ -49,5 +50,29 @@ DisplayQt::Flip()
 void
 DisplayQt::UpdateScreen()
 {
-    m_pixmap->setPixmap(QPixmap::fromImage(*m_screen));
-}
+    // (from copilot)
+    QPixmap pixmap = QPixmap::fromImage(*m_screen);
+
+    // Create a QPainter to draw on the pixmap
+    QPainter painter(&pixmap);
+
+    // Set the pen and brush for drawing
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::black);
+
+    // Calculate the center and radius of the circle
+    int width = pixmap.width();
+    int height = pixmap.height();
+
+    // Create a mask region
+    QRegion maskRegion(0, 0, width, height);
+    QRegion circleRegion(0, 0, width, height, QRegion::Ellipse);
+    maskRegion = maskRegion.subtracted(circleRegion);
+
+    // Fill the masked area with black
+    painter.setClipRegion(maskRegion);
+    painter.fillRect(0, 0, width, height, Qt::black);
+
+    // Set the modified pixmap to the label
+    m_pixmap->setPixmap(pixmap);
+    }

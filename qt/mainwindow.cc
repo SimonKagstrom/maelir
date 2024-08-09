@@ -12,7 +12,8 @@ struct ImageImpl : public Image
 };
 
 #include <png.h>
-std::shared_ptr<ImageImpl> Vobb(const char *fn)
+std::shared_ptr<ImageImpl>
+Vobb(const char* fn)
 {
     FILE* fp = fopen(fn, "r");
 
@@ -59,7 +60,7 @@ std::shared_ptr<ImageImpl> Vobb(const char *fn)
 std::shared_ptr<ImageImpl> tile0;
 std::shared_ptr<ImageImpl> tile1;
 
-}
+} // namespace
 
 
 MainWindow::MainWindow(QWidget* parent)

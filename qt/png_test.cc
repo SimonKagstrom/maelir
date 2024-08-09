@@ -19,7 +19,7 @@ readpng(png_structp _pngptr, png_bytep _data, png_size_t _len)
 int
 main(int argc, const char* argv[])
 {
-//    FILE* fp = fopen(argv[1], "r");
+    //    FILE* fp = fopen(argv[1], "r");
 
     png_structp pngptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_infop pnginfo = png_create_info_struct(pngptr);
@@ -40,6 +40,9 @@ main(int argc, const char* argv[])
         }
         printf("\n");
     }
+
+    png_destroy_read_struct(&pngptr, &pnginfo, nullptr);
+    png_destroy_info_struct(pngptr, &pnginfo);
 
     return 0;
 }
