@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.21)
-project (lakecard_qt LANGUAGES CXX C ASM)
+project (maelir_qt LANGUAGES CXX C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
@@ -28,7 +28,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 find_package(fmt REQUIRED)
 find_package(etl REQUIRED)
 
-add_subdirectory(.. lakecard)
+add_subdirectory(.. maelir)
 
 
 add_library(mainwindow EXCLUDE_FROM_ALL
@@ -41,13 +41,13 @@ target_link_libraries(mainwindow
 PUBLIC
     Qt6::Widgets
     fmt::fmt
-    lakecard_interface
+    maelir_interface
 )
 
-add_executable(lakecard_qt
+add_executable(maelir_qt
     main.cc
 )
 
-target_link_libraries(lakecard_qt
+target_link_libraries(maelir_qt
     mainwindow
 )
