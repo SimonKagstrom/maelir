@@ -20,6 +20,9 @@ public:
 protected:
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
+
+private:
+    binary_semaphore m_semaphore {0};
 };
 
 } // namespace os

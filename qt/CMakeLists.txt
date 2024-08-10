@@ -36,6 +36,9 @@ add_library(mainwindow EXCLUDE_FROM_ALL
     mainwindow.ui
     mainwindow.cc
     display_qt.cc
+
+    # TMP!
+    os/semaphore_qt.cc
 )
 
 target_link_libraries(mainwindow
@@ -43,7 +46,10 @@ PUBLIC
     Qt6::Widgets
     fmt::fmt
     maelir_interface
-)
+
+# TMP!
+    tile_producer
+    )
 
 add_executable(maelir_qt
     main.cc
@@ -51,8 +57,7 @@ add_executable(maelir_qt
 
 target_link_libraries(maelir_qt
     mainwindow
-#TMP!
-    PNG::PNG
+    tile_producer
 )
 
 

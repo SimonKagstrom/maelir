@@ -3,6 +3,8 @@
 #include <memory>
 #include <semaphore>
 
+#include "time.hh"
+
 namespace os
 {
 struct Impl;
@@ -11,7 +13,7 @@ struct Impl;
 template <ptrdiff_t least_max_value = INT32_MAX>
 class counting_semaphore
 {
-    std::unique_ptr<Impl> impl_;
+    std::unique_ptr<Impl> m_impl;
 
 public:
     explicit counting_semaphore(ptrdiff_t desired) noexcept;
@@ -32,6 +34,8 @@ public:
     {
         return try_acquire_for_ms(rtime);
     }
+
+    bool try_acquire_for_ms(const milliseconds rtime);
 };
 
 using binary_semaphore = counting_semaphore<1>;
