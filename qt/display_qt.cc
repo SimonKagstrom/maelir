@@ -1,4 +1,5 @@
 #include "display_qt.hh"
+
 #include <QPainter>
 
 DisplayQt::DisplayQt(QGraphicsScene* scene)
@@ -11,11 +12,17 @@ DisplayQt::DisplayQt(QGraphicsScene* scene)
 
 
 void
-DisplayQt::Blit(const Image& image, Rect from, Rect to)
+DisplayQt::Blit(const Image& image, Rect to, std::optional<Rect> from)
 {
-    for (int y = 0; y < from.height; ++y)
+    auto height = from.has_value() ? from->height : image.height;
+    auto width = from.has_value() ? from->width : image.width;
+    auto from_y = from.has_value() ? from->y : 0;
+    auto from_x = from.has_value() ? from->x : 0;
+
+
+    for (int y = 0; y < height; ++y)
     {
-        for (int x = 0; x < from.width; ++x)
+        for (int x = 0; x < width; ++x)
         {
             auto dst_x = to.x + x;
             auto dst_y = to.y + y;
@@ -25,7 +32,7 @@ DisplayQt::Blit(const Image& image, Rect from, Rect to)
                 continue;
             }
 
-            auto rgb565 = __builtin_bswap16(image.data[(from.y + y) * image.width + from.x + x]);
+            auto rgb565 = __builtin_bswap16(image.data[(from_y + y) * image.width + from_x + x]);
             auto r = (rgb565 >> 11) & 0x1F;
             auto g = (rgb565 >> 5) & 0x3F;
             auto b = rgb565 & 0x1F;
@@ -75,4 +82,4 @@ DisplayQt::UpdateScreen()
 
     // Set the modified pixmap to the label
     m_pixmap->setPixmap(pixmap);
-    }
+}

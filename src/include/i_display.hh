@@ -3,6 +3,8 @@
 #include "image.hh"
 #include "rect.hh"
 
+#include <optional>
+
 namespace hal
 {
 
@@ -15,7 +17,7 @@ public:
     virtual ~IDisplay() = default;
 
     // Inspired by SDL2
-    virtual void Blit(const Image &image, Rect from, Rect to) = 0;
+    virtual void Blit(const Image &image, Rect to, std::optional<Rect> from = std::nullopt) = 0;
 
     virtual void Flip() = 0;
 };

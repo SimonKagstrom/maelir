@@ -23,10 +23,10 @@ MainWindow::MainWindow(QWidget* parent)
 
     if (t0 && t1 && t11 && t12)
     {
-        m_display->Blit(t0->GetImage(), {0, 0, 240, 240}, {0, 0});
-        m_display->Blit(t1->GetImage(), {0, 0, 240, 240}, {240, 0});
-        m_display->Blit(t11->GetImage(), {0, 0, 240, 240}, {0, 240});
-        m_display->Blit(t12->GetImage(), {0, 0, 240, 240}, {240, 240});
+        m_display->Blit(t0->GetImage(), Rect{0, 0});
+        m_display->Blit(t1->GetImage(), Rect{240, 0});
+        m_display->Blit(t11->GetImage(), Rect{0, 240});
+        m_display->Blit(t12->GetImage(), Rect{240, 240});
     }
     m_display->Flip();
 }

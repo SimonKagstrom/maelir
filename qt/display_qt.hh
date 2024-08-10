@@ -14,7 +14,7 @@ class DisplayQt : public QObject, public hal::IDisplay
 public:
     DisplayQt(QGraphicsScene* scene);
 
-    void Blit(const Image& image, Rect from, Rect to) final;
+    void Blit(const Image& image, Rect to, std::optional<Rect> from = std::nullopt) final;
     void Flip() final;
 
 signals:
