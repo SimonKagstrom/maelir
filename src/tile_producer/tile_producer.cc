@@ -1,10 +1,29 @@
 #include "tile_producer.hh"
 
+#include "tile.hh"
+
 #include <fmt/format.h>
 #include <png.h>
 
 namespace
 {
+
+struct ReadHelper
+{
+    const std::byte* data;
+    size_t offset;
+};
+
+void
+readpng(png_structp _pngptr, png_bytep _data, png_size_t _len)
+{
+    /* Get input */
+    auto input = static_cast<ReadHelper*>(png_get_io_ptr(_pngptr));
+
+    /* Copy data from input */
+    memcpy(_data, reinterpret_cast<const char*>(input->data) + input->offset, _len);
+    input->offset += _len;
+}
 
 class TileHandle : public ITileHandle
 {
@@ -30,8 +49,6 @@ private:
 std::optional<unsigned>
 PointToTileIndex(uint32_t x, uint32_t y)
 {
-    constexpr auto row = 11;
-
     // TMP!
     if (x > 480)
     {
@@ -43,7 +60,7 @@ PointToTileIndex(uint32_t x, uint32_t y)
         return std::nullopt;
     }
 
-    return (y / 240) * row + x / 240;
+    return (y / kTileSize) * kRowSize + x / kTileSize;
 }
 
 } // namespace
@@ -76,16 +93,13 @@ TileProducer::OnActivation()
 std::unique_ptr<TileProducer::ImageImpl>
 TileProducer::DecodeTile(unsigned index)
 {
-    auto fn = fmt::format("/Users/ska/projects/maelir/tmp/tile00{:02}.png", index);
-
-    FILE* fp = fopen(fn.c_str(), "r");
-
     png_structp pngptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_infop pnginfo = png_create_info_struct(pngptr);
 
-    png_init_io(pngptr, fp);
-    png_set_palette_to_rgb(pngptr);
+    ReadHelper helper {tile_array[index].data(), 0};
 
+    png_set_read_fn(pngptr, (png_voidp)&helper, readpng);
+    png_set_palette_to_rgb(pngptr);
 
     png_bytepp rows;
     png_read_png(pngptr, pnginfo, PNG_TRANSFORM_IDENTITY, NULL);

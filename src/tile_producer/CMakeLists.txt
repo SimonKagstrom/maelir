@@ -1,3 +1,5 @@
+tilegen(tile_library "/Users/ska/Downloads/sjokort.png")
+
 add_library(tile_producer EXCLUDE_FROM_ALL
     tile_producer.cc
 )
@@ -12,6 +14,7 @@ PUBLIC
     maelir_interface
     etl::etl
 PRIVATE
+    tile_library
     PNG::PNG
     fmt::fmt
 )
