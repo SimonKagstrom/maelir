@@ -69,6 +69,7 @@ PointToTileIndex(uint32_t x, uint32_t y)
 } // namespace
 
 TileProducer::TileProducer()
+    : BaseThread()
 {
     m_tile_index_to_cache.resize(kRowSize * kColumnSize);
     std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
@@ -84,22 +85,14 @@ TileProducer::LockTile(uint32_t x, uint32_t y)
     auto index = PointToTileIndex(x, y);
     if (index)
     {
-        if (m_tile_index_to_cache[*index] != kInvalidTileIndex)
+        while (m_tile_index_to_cache[*index] == kInvalidTileIndex)
         {
-            return std::make_unique<TileHandle>(*m_tiles[m_tile_index_to_cache[*index]]);
+            m_tile_requests.push(*index);
+            Awake();
+            m_tile_request_semaphore.acquire();
         }
 
-        // TODO: Do this in the base thread and evict entries
-        auto tile = DecodeTile(*index);
-        if (tile)
-        {
-            auto cache_index = m_tiles.size();
-
-            m_tiles.push_back(std::move(tile));
-            m_tile_index_to_cache[*index] = cache_index;
-
-            return std::make_unique<TileHandle>(*m_tiles.back());
-        }
+        return std::make_unique<TileHandle>(*m_tiles[m_tile_index_to_cache[*index]]);
     }
 
     return nullptr;
@@ -108,7 +101,23 @@ TileProducer::LockTile(uint32_t x, uint32_t y)
 std::optional<milliseconds>
 TileProducer::OnActivation()
 {
-    return std::nullopt;
+    uint32_t requested_index = 0;
+
+    while (m_tile_requests.pop(requested_index))
+    {
+        auto tile = DecodeTile(requested_index);
+        if (tile)
+        {
+            auto cache_index = m_tiles.size();
+
+            m_tiles.push_back(std::move(tile));
+            m_tile_index_to_cache[requested_index] = cache_index;
+
+            m_tile_request_semaphore.release();
+        }
+    }
+
+    return 500ms;
 }
 
 std::unique_ptr<ImageImpl>

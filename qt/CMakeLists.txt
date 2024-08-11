@@ -31,14 +31,21 @@ find_package(PNG REQUIRED)
 
 add_subdirectory(.. maelir)
 
+add_library(os_qt EXCLUDE_FROM_ALL
+    os/base_thread_qt.cc
+    os/semaphore_qt.cc
+)
+
+target_link_libraries(os_qt
+    Qt6::Widgets
+    fmt::fmt
+    maelir_interface
+)
 
 add_library(mainwindow EXCLUDE_FROM_ALL
     mainwindow.ui
     mainwindow.cc
     display_qt.cc
-
-    # TMP!
-    os/semaphore_qt.cc
 )
 
 target_link_libraries(mainwindow
@@ -46,6 +53,7 @@ PUBLIC
     Qt6::Widgets
     fmt::fmt
     maelir_interface
+    os_qt
 
 # TMP!
     tile_producer

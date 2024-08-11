@@ -4,6 +4,7 @@
 #include "image.hh"
 
 #include <etl/mutex.h>
+#include <etl/queue_spsc_atomic.h>
 #include <etl/vector.h>
 #include <memory>
 #include <vector>
@@ -39,6 +40,9 @@ private:
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     std::vector<uint8_t> m_tile_index_to_cache;
+
+    etl::queue_spsc_atomic<uint32_t, kTileCacheSize> m_tile_requests;
+    os::binary_semaphore m_tile_request_semaphore {0};
 
     etl::mutex m_mutex;
 };

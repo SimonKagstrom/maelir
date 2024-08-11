@@ -16,6 +16,8 @@ MainWindow::MainWindow(QWidget* parent)
 
     auto producer = TileProducer();
 
+    producer.Start();
+
     auto t0 = producer.LockTile(0, 0);
     auto t1 = producer.LockTile(240, 0);
     auto t11 = producer.LockTile(0, 240);
