@@ -3,7 +3,10 @@
 #include "tile.hh"
 
 #include <fmt/format.h>
+#include <mutex>
 #include <png.h>
+
+constexpr auto kInvalidTileIndex = kTileCacheSize;
 
 namespace
 {
@@ -28,7 +31,7 @@ readpng(png_structp _pngptr, png_bytep _data, png_size_t _len)
 class TileHandle : public ITileHandle
 {
 public:
-    explicit TileHandle(const Image& image)
+    explicit TileHandle(ImageImpl& image)
         : m_image(image)
     {
     }
@@ -43,7 +46,7 @@ public:
     }
 
 private:
-    const Image& m_image;
+    ImageImpl& m_image;
 };
 
 std::optional<unsigned>
@@ -65,19 +68,37 @@ PointToTileIndex(uint32_t x, uint32_t y)
 
 } // namespace
 
+TileProducer::TileProducer()
+{
+    m_tile_index_to_cache.resize(kRowSize * kColumnSize);
+    std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
+}
+
 
 // Context: Another thread
 std::unique_ptr<ITileHandle>
 TileProducer::LockTile(uint32_t x, uint32_t y)
 {
+    std::scoped_lock lock(m_mutex);
+
     auto index = PointToTileIndex(x, y);
     if (index)
     {
+        if (m_tile_index_to_cache[*index] != kInvalidTileIndex)
+        {
+            return std::make_unique<TileHandle>(*m_tiles[m_tile_index_to_cache[*index]]);
+        }
+
+        // TODO: Do this in the base thread and evict entries
         auto tile = DecodeTile(*index);
         if (tile)
         {
-            m_tiles.push_back(std::move(*tile));
-            return std::make_unique<TileHandle>(m_tiles.back());
+            auto cache_index = m_tiles.size();
+
+            m_tiles.push_back(std::move(tile));
+            m_tile_index_to_cache[*index] = cache_index;
+
+            return std::make_unique<TileHandle>(*m_tiles.back());
         }
     }
 
@@ -90,7 +111,7 @@ TileProducer::OnActivation()
     return std::nullopt;
 }
 
-std::unique_ptr<TileProducer::ImageImpl>
+std::unique_ptr<ImageImpl>
 TileProducer::DecodeTile(unsigned index)
 {
     png_structp pngptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -109,6 +130,7 @@ TileProducer::DecodeTile(unsigned index)
     auto h = png_get_image_height(pngptr, pnginfo);
 
     auto img = std::make_unique<ImageImpl>();
+    img->index = index;
     img->rgb565_data.resize(w * h);
     auto p = img->rgb565_data.data();
 
