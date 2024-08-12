@@ -1,11 +1,11 @@
 #pragma once
 
+#include "display_qt.hh"
+
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QImage>
 #include <QMainWindow>
-
-#include "display_qt.hh"
 
 namespace Ui
 {
@@ -19,6 +19,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() final;
+
+    hal::IDisplay& GetDisplay();
 
 private slots:
 
