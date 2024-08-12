@@ -57,6 +57,7 @@ PUBLIC
 
 # TMP!
     tile_producer
+    ui
     )
 
 add_executable(maelir_qt

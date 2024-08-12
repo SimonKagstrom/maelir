@@ -1,18 +1,19 @@
 #pragma once
 
 #include "base_thread.hh"
+#include "gps_port.hh"
 #include "tile_producer.hh"
 
-class Ui : public os::BaseThread
+class UserInterface : public os::BaseThread
 {
 public:
-    Ui(TileProducer& tile_producer);
+    UserInterface(TileProducer& tile_producer, std::unique_ptr<IGpsPort> gps_port);
 
 private:
     std::optional<milliseconds> OnActivation() final;
 
     TileProducer& m_tile_producer;
-
+    std::unique_ptr<IGpsPort> m_gps_port;
     // TMP!
     uint32_t m_x {0};
     uint32_t m_y {0};
