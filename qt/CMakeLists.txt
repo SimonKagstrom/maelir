@@ -65,5 +65,6 @@ add_executable(maelir_qt
 
 target_link_libraries(maelir_qt
     mainwindow
+    ui
     tile_producer
 )

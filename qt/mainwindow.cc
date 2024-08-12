@@ -4,6 +4,8 @@
 #include "tile_producer.hh"
 #include "ui_mainwindow.h"
 
+#include "gps_reader.hh"
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
@@ -14,8 +16,11 @@ MainWindow::MainWindow(QWidget* parent)
     m_display = std::make_unique<DisplayQt>(m_scene.get());
     m_ui->displayGraphicsView->setScene(m_scene.get());
 
-    auto producer = TileProducer();
+    // All this is TMP
+    auto gps_reader = GpsReader();
+    auto producer = TileProducer(gps_reader.AttachListener());
 
+    gps_reader.Start();
     producer.Start();
 
     auto t0 = producer.LockTile(0, 0);

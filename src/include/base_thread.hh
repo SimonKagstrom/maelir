@@ -33,6 +33,11 @@ protected:
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
 
+    os::binary_semaphore &GetSemaphore()
+    {
+        return m_semaphore;
+    }
+
 private:
     struct Impl;
 

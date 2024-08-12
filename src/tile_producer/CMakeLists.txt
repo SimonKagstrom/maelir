@@ -13,6 +13,7 @@ target_link_libraries(tile_producer
 PUBLIC
     maelir_interface
     etl::etl
+    gps_reader
 PRIVATE
     tile_library
     PNG::PNG

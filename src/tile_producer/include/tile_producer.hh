@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base_thread.hh"
+#include "gps_port.hh"
 #include "image.hh"
 
 #include <etl/mutex.h>
@@ -9,7 +10,7 @@
 #include <memory>
 #include <vector>
 
-constexpr auto kTileCacheSize = 8;
+constexpr auto kTileCacheSize = 16;
 
 class ITileHandle
 {
@@ -28,15 +29,15 @@ struct ImageImpl : public Image
 class TileProducer : public os::BaseThread
 {
 public:
-    TileProducer();
+    TileProducer(std::unique_ptr<IGpsPort> gps_port);
 
     // Context: Another thread
     std::unique_ptr<ITileHandle> LockTile(uint32_t x, uint32_t y);
 
 private:
-    std::unique_ptr<ImageImpl> DecodeTile(unsigned index);
-
     std::optional<milliseconds> OnActivation() final;
+
+    std::unique_ptr<ImageImpl> DecodeTile(unsigned index);
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     std::vector<uint8_t> m_tile_index_to_cache;
@@ -44,5 +45,6 @@ private:
     etl::queue_spsc_atomic<uint32_t, kTileCacheSize> m_tile_requests;
     os::binary_semaphore m_tile_request_semaphore {0};
 
+    std::unique_ptr<IGpsPort> m_gps_port;
     etl::mutex m_mutex;
 };
