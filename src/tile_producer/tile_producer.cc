@@ -1,6 +1,7 @@
 #include "tile_producer.hh"
 
 #include "tile.hh"
+#include "tile_utils.hh"
 
 #include <fmt/format.h>
 #include <mutex>
@@ -48,23 +49,6 @@ public:
 private:
     ImageImpl& m_image;
 };
-
-std::optional<unsigned>
-PointToTileIndex(uint32_t x, uint32_t y)
-{
-    // TMP!
-    if (x > 480)
-    {
-        return std::nullopt;
-    }
-
-    if (y > 480)
-    {
-        return std::nullopt;
-    }
-
-    return (y / kTileSize) * kRowSize + x / kTileSize;
-}
 
 } // namespace
 

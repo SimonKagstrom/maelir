@@ -87,5 +87,5 @@ GpsReader::OnActivation()
     {
         l->PushGpsData({.latitude = 0.0, .longitude = 0.0, .speed = 13, .heading = 270});
     }
-    return 500ms;
+    return 100ms;
 }

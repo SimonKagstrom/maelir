@@ -1,5 +1,10 @@
 #include "ui.hh"
 
+#include "tile_utils.hh"
+
+constexpr auto kDisplayWidth = 480;
+constexpr auto kDisplayHeight = 480;
+
 UserInterface::UserInterface(TileProducer& tile_producer,
                              hal::IDisplay& display,
                              std::unique_ptr<IGpsPort> gps_port)
@@ -13,20 +18,33 @@ UserInterface::UserInterface(TileProducer& tile_producer,
 std::optional<milliseconds>
 UserInterface::OnActivation()
 {
-    // This is TMP!
-    auto t0 = m_tile_producer.LockTile(0, 0);
-    auto t1 = m_tile_producer.LockTile(240, 0);
-    auto t11 = m_tile_producer.LockTile(0, 240);
-    auto t12 = m_tile_producer.LockTile(240, 240);
+    auto x_remainder = m_x % kTileSize;
+    auto y_remainder = m_y % kTileSize;
+    auto num_tiles_x = (kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
+    auto num_tiles_y = (kDisplayWidth + kTileSize - 1) / kTileSize + !!y_remainder;
 
-    if (t0 && t1 && t11 && t12)
+    // Blit all needed tiles
+    for (auto y = 0; y < num_tiles_y; y++)
     {
-        m_display.Blit(t0->GetImage(), Rect {0, 0});
-        m_display.Blit(t1->GetImage(), Rect {240, 0});
-        m_display.Blit(t11->GetImage(), Rect {0, 240});
-        m_display.Blit(t12->GetImage(), Rect {240, 240});
+        for (auto x = 0; x < num_tiles_x; x++)
+        {
+            auto tile_x = (m_x / kTileSize + x) % kColumnSize;
+            auto tile_y = (m_y / kTileSize + y) % kRowSize;
+
+            auto tile = m_tile_producer.LockTile(m_x + x * kTileSize, m_y + y * kTileSize);
+            if (tile)
+            {
+                auto& image = static_cast<const ImageImpl&>(tile->GetImage());
+                m_display.Blit(tile->GetImage(),
+                               {x * kTileSize - x_remainder, y * kTileSize - y_remainder});
+            }
+        }
     }
+
     m_display.Flip();
+
+    m_x++;
+    m_y++;
 
     return std::nullopt;
 }

@@ -14,8 +14,8 @@ PUBLIC
     maelir_interface
     etl::etl
     gps_reader
-PRIVATE
     tile_library
+PRIVATE
     PNG::PNG
     fmt::fmt
 )
