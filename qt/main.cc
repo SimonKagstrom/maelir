@@ -8,13 +8,31 @@
 #include <fmt/format.h>
 #include <stdlib.h>
 
+namespace
+{
+
+// TMP...
+class GpsSimulator : public hal::IGps
+{
+private:
+    GpsData WaitForData(std::binary_semaphore& semaphore)
+    {
+        semaphore.release();
+
+        return GpsData {};
+    }
+};
+
+} // namespace
+
 int
 main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
     MainWindow window;
 
-    auto gps_reader = std::make_unique<GpsReader>();
+    auto gps_simulator = std::make_unique<GpsSimulator>();
+    auto gps_reader = std::make_unique<GpsReader>(*gps_simulator);
     auto producer = std::make_unique<TileProducer>(gps_reader->AttachListener());
     auto ui = std::make_unique<UserInterface>(
         *producer, window.GetDisplay(), gps_reader->AttachListener());

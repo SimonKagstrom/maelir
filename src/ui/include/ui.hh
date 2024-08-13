@@ -2,7 +2,7 @@
 
 #include "base_thread.hh"
 #include "gps_port.hh"
-#include "i_display.hh"
+#include "hal/i_display.hh"
 #include "tile_producer.hh"
 
 class UserInterface : public os::BaseThread

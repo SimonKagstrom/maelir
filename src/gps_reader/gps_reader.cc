@@ -56,7 +56,7 @@ private:
 };
 
 
-GpsReader::GpsReader()
+GpsReader::GpsReader(hal::IGps& gps) : m_gps(gps)
 {
 }
 

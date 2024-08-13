@@ -1,6 +1,6 @@
 #pragma once
 
-#include "i_display.hh"
+#include "hal/i_display.hh"
 
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
