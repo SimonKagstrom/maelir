@@ -74,6 +74,8 @@ GpsReader::AttachListener()
 std::optional<milliseconds>
 GpsReader::OnActivation()
 {
+    auto data = m_gps.WaitForData(GetSemaphore());
+
     for (auto i = 0u; i < m_stale_listeners.size(); i++)
     {
         if (m_stale_listeners[i].exchange(false))
@@ -85,7 +87,7 @@ GpsReader::OnActivation()
     // TMP!
     for (auto& l : m_listeners)
     {
-        l->PushGpsData({.latitude = 0.0, .longitude = 0.0, .speed = 13, .heading = 270});
+        l->PushGpsData(data);
     }
     return 100ms;
 }

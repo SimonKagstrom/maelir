@@ -2,6 +2,8 @@
 
 #include "tile_utils.hh"
 
+#include <fmt/format.h>
+
 constexpr auto kDisplayWidth = 480;
 constexpr auto kDisplayHeight = 480;
 
@@ -21,6 +23,7 @@ UserInterface::OnActivation()
     if (auto position = m_gps_port->Poll())
     {
         auto [x, y] = PositionToPoint(*position);
+
         m_x = x;
         m_y = y;
     }
