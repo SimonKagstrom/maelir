@@ -24,6 +24,12 @@ function(tilegen DEST_LIBRARY IMAGE)
     add_library(${DEST_LIBRARY} STATIC EXCLUDE_FROM_ALL
         ${out_cpp} ${out_hpp}
     )
+
+    # The address sanitizer is redundant for this (generated) data
+    target_compile_options(${DEST_LIBRARY}
+    PRIVATE
+        -fno-sanitize=all
+    )
     add_dependencies(${DEST_LIBRARY} ${DEST_LIBRARY}_target)
 
     target_include_directories(${DEST_LIBRARY}
