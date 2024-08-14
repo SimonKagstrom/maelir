@@ -18,6 +18,13 @@ UserInterface::UserInterface(TileProducer& tile_producer,
 std::optional<milliseconds>
 UserInterface::OnActivation()
 {
+    if (auto position = m_gps_port->Poll())
+    {
+        auto [x, y] = PositionToPoint(*position);
+        m_x = x;
+        m_y = y;
+    }
+
     auto x_remainder = m_x % kTileSize;
     auto y_remainder = m_y % kTileSize;
     auto num_tiles_x = (kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
@@ -42,9 +49,6 @@ UserInterface::OnActivation()
     }
 
     m_display.Flip();
-
-    m_x++;
-    m_y++;
 
     return std::nullopt;
 }

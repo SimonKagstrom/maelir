@@ -61,6 +61,7 @@ PUBLIC
     )
 
 add_executable(maelir_qt
+    gps_simulator.cc
     main.cc
 )
 

@@ -1,4 +1,5 @@
 #include "gps_reader.hh"
+#include "gps_simulator.hh"
 #include "mainwindow.hh"
 #include "tile_producer.hh"
 #include "ui.hh"
@@ -7,23 +8,6 @@
 #include <QFile>
 #include <fmt/format.h>
 #include <stdlib.h>
-
-namespace
-{
-
-// TMP...
-class GpsSimulator : public hal::IGps
-{
-private:
-    GpsData WaitForData(std::binary_semaphore& semaphore)
-    {
-        semaphore.release();
-
-        return GpsData {};
-    }
-};
-
-} // namespace
 
 int
 main(int argc, char* argv[])

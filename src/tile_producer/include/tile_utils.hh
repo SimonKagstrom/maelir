@@ -1,8 +1,10 @@
 #pragma once
 
+#include "gps_data.hh"
 #include "tile.hh"
 
 #include <optional>
+#include <utility>
 
 constexpr std::optional<unsigned>
 PointToTileIndex(uint32_t x, uint32_t y)
@@ -18,4 +20,34 @@ PointToTileIndex(uint32_t x, uint32_t y)
     }
 
     return (y / kTileSize) * kRowSize + x / kTileSize;
+}
+
+constexpr std::pair<uint32_t, uint32_t>
+PositionToPoint(const auto& GpsData)
+{
+    auto longitude_offset = GpsData.longitude - kCornerLongitude;
+    auto latitude_offset = GpsData.latitude - kCornerLatitude;
+
+    uint32_t x = longitude_offset * kPixelLongitudeSize;
+    uint32_t y = latitude_offset * kPixelLatitudeSize;
+
+    if (longitude_offset < 0)
+    {
+        x = 0;
+    }
+    if (latitude_offset < 0)
+    {
+        y = 0;
+    }
+
+    if (x >= kTileSize * kRowSize)
+    {
+        x = kTileSize * kRowSize;
+    }
+    if (y >= kTileSize * kColumnSize)
+    {
+        y = kTileSize * kColumnSize;
+    }
+
+    return {x, y};
 }
