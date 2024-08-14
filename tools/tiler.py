@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -46,9 +46,6 @@ constexpr auto kColumnSize = {column_size};
         output = io.BytesIO()
         tile.save(output, format='PNG')
         bytes = output.getvalue()
-
-        f = open(f"/tmp/kalkon/tile_{index}.png", "wb")
-        f.write(bytes)
 
         cc_file.write("const std::array<const std::byte, {len}> {name} = {{\n    ".format(
             len=len(bytes), name=f"tile_{index}"))
