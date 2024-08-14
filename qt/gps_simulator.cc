@@ -9,7 +9,8 @@ GpsSimulator::GpsSimulator()
     m_timer.setInterval(100);
     m_timer.setSingleShot(false);
     connect(&m_timer, &QTimer::timeout, this, [this]() {
-        m_current_position.latitude += kPixelLatitudeSize;
+        m_current_position.latitude += 0.00001;
+        m_current_position.longitude += 0.00001;
 
         m_has_data_semaphore.release();
     });
