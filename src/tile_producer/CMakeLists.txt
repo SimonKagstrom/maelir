@@ -1,4 +1,4 @@
-tilegen(tile_library "/Users/ska/Downloads/sjokort.png")
+tilegen(tile_library "/home/ska/Downloads/mega_map.png")
 
 add_library(tile_producer EXCLUDE_FROM_ALL
     tile_producer.cc

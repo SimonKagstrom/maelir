@@ -33,10 +33,11 @@ def create_source_files(tiles: list, row_length: int, dst_dir: str, out_base: st
 #include <span>
 
 // TODO: Hardcoded hacks
-constexpr auto kCornerLatitude = 59.564513;
-constexpr auto kCornerLongitude = 16.841574;
-constexpr auto kPixelLatitudeSize = 0.000003;
-constexpr auto kPixelLongitudeSize = 0.000004;
+// 59.532405, 16.959949 -> 770, 1261 (y,x)
+constexpr auto kCornerLatitude = 59.579114;
+constexpr auto kCornerLongitude = 16.816097;
+constexpr auto kPixelLatitudeSize = 16485;
+constexpr auto kPixelLongitudeSize = 8766;
 
 constexpr auto kTileSize = {tile_size};
 constexpr auto kRowSize = {row_size};

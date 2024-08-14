@@ -40,13 +40,13 @@ PositionToPoint(const auto& GpsData)
         y = 0;
     }
 
-    if (x >= kTileSize * kRowSize)
+    if (x >= kTileSize * kRowSize - kTileSize)
     {
-        x = kTileSize * kRowSize;
+        x = kTileSize * kRowSize - kTileSize;
     }
-    if (y >= kTileSize * kColumnSize)
+    if (y >= kTileSize * kColumnSize - kTileSize)
     {
-        y = kTileSize * kColumnSize;
+        y = kTileSize * kColumnSize - kTileSize;
     }
 
     return {x, y};
