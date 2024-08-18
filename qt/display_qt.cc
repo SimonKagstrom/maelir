@@ -32,7 +32,7 @@ DisplayQt::Blit(const Image& image, Rect to, std::optional<Rect> from)
                 continue;
             }
 
-            auto rgb565 = __builtin_bswap16(image.data[(from_y + y) * image.width + from_x + x]);
+            auto rgb565 = image.data[(from_y + y) * image.width + from_x + x];
             auto r = (rgb565 >> 11) & 0x1F;
             auto g = (rgb565 >> 5) & 0x3F;
             auto b = rgb565 & 0x1F;

@@ -3,9 +3,9 @@
 #include "tile.hh"
 #include "tile_utils.hh"
 
+#include <PNGdec.h>
 #include <fmt/format.h>
 #include <mutex>
-#include <png.h>
 
 constexpr auto kInvalidTileIndex = kTileCacheSize;
 
@@ -18,15 +18,21 @@ struct ReadHelper
     size_t offset;
 };
 
-void
-readpng(png_structp _pngptr, png_bytep _data, png_size_t _len)
+struct DecodeHelper
 {
-    /* Get input */
-    auto input = static_cast<ReadHelper*>(png_get_io_ptr(_pngptr));
+    PNG& png;
+    uint16_t* dst;
+    size_t offset;
+};
 
-    /* Copy data from input */
-    memcpy(_data, reinterpret_cast<const char*>(input->data) + input->offset, _len);
-    input->offset += _len;
+void
+PngDraw(PNGDRAW* pDraw)
+{
+    auto helper = static_cast<DecodeHelper*>(pDraw->pUser);
+
+    helper->png.getLineAsRGB565(
+        pDraw, helper->dst + helper->offset, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
+    helper->offset += pDraw->iWidth;
 }
 
 class TileHandle : public ITileHandle
@@ -116,44 +122,31 @@ TileProducer::OnActivation()
 std::unique_ptr<ImageImpl>
 TileProducer::DecodeTile(unsigned index)
 {
-    png_structp pngptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    png_infop pnginfo = png_create_info_struct(pngptr);
+    PNG png;
 
-    ReadHelper helper {tile_array[index].data(), 0};
+    auto& src = tile_array[index];
+    auto rc = png.openRAM((uint8_t*)src.data(), src.size(), PngDraw);
 
-    png_set_read_fn(pngptr, (png_voidp)&helper, readpng);
-    png_set_palette_to_rgb(pngptr);
-
-    png_bytepp rows;
-    png_read_png(pngptr, pnginfo, PNG_TRANSFORM_IDENTITY, NULL);
-    rows = png_get_rows(pngptr, pnginfo);
-
-    auto w = png_get_image_width(pngptr, pnginfo);
-    auto h = png_get_image_height(pngptr, pnginfo);
-
-    auto img = std::make_unique<ImageImpl>();
-    img->index = index;
-    img->rgb565_data.resize(w * h);
-    auto p = img->rgb565_data.data();
-
-    for (auto i = 0; i < h; i++)
+    if (rc != PNG_SUCCESS)
     {
-        for (auto j = 0; j < h * 3; j += 3)
-        {
-            auto r = rows[i][j];
-            auto g = rows[i][j + 1];
-            auto b = rows[i][j + 2];
-
-            auto rgb565 = __builtin_bswap16((r >> 3) << 11 | (g >> 2) << 5 | (b >> 3));
-
-            *p = rgb565;
-            p++;
-        }
+        return nullptr;
     }
+    auto img = std::make_unique<ImageImpl>();
 
-    img->height = h;
-    img->width = w;
+    img->index = index;
+    img->height = png.getHeight();
+    img->width = png.getWidth();
+    img->rgb565_data.resize(img->height * img->width);
     img->data = img->rgb565_data;
+
+    DecodeHelper priv {png, img->rgb565_data.data(), 0};
+
+    rc = png.decode((void*)&priv, 0);
+    png.close();
+    if (rc != PNG_SUCCESS)
+    {
+        return nullptr;
+    }
 
     return img;
 }

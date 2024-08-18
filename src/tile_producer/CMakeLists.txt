@@ -21,6 +21,6 @@ PUBLIC
     gps_reader
     tile_library
 PRIVATE
-    PNG::PNG
     fmt::fmt
+    pngdec
 )
