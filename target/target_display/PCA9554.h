@@ -25,7 +25,6 @@ typedef enum
   DELAY,
 } spi_operation_type_t;
 
-
 void my_PCA9554_create(MY_PCA9554_HANDLE *handle);
 void my_PCA9554_delete(MY_PCA9554_HANDLE *handle);
 void my_PCA9554_pin_mode(MY_PCA9554_HANDLE *handle, uint8_t pin, uint8_t mode);

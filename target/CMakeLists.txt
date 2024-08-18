@@ -23,13 +23,12 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(etl REQUIRED)
 
 add_subdirectory(.. maelir)
+add_subdirectory(target_display)
+
 
 set(elf_file ${CMAKE_PROJECT_NAME}.elf)
 add_executable(${elf_file}
     main.cc
-    MyPCA9554.c
-    MyUtils.c
-    MyWire.c
 
     os/base_thread_freertos.cc
     os/semaphore_freertos.cc
@@ -38,9 +37,10 @@ add_executable(${elf_file}
 target_link_libraries(${elf_file}
     idf::freertos
     idf::spi_flash
-    idf::esp_lcd
-    idf::esp_timer
     tile_producer
+    ui
+    gps_reader
+    target_display
 )
 
 # Attach additional targets to the executable file for flashing,

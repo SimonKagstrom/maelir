@@ -2,9 +2,6 @@
 
 #include "tile_utils.hh"
 
-constexpr auto kDisplayWidth = 480;
-constexpr auto kDisplayHeight = 480;
-
 UserInterface::UserInterface(TileProducer& tile_producer,
                              hal::IDisplay& display,
                              std::unique_ptr<IGpsPort> gps_port)
@@ -28,8 +25,8 @@ UserInterface::OnActivation()
 
     auto x_remainder = m_x % kTileSize;
     auto y_remainder = m_y % kTileSize;
-    auto num_tiles_x = (kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
-    auto num_tiles_y = (kDisplayWidth + kTileSize - 1) / kTileSize + !!y_remainder;
+    auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
+    auto num_tiles_y = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!y_remainder;
 
     // Blit all needed tiles
     for (auto y = 0; y < num_tiles_y; y++)

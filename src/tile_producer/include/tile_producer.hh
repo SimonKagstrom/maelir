@@ -11,7 +11,7 @@
 #include <memory>
 #include <vector>
 
-constexpr auto kTileCacheSize = 16;
+constexpr auto kTileCacheSize = 20;
 
 class ITileHandle
 {
