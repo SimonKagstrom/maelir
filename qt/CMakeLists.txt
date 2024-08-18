@@ -27,7 +27,6 @@ add_link_options(-fsanitize=address,undefined -g)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 find_package(fmt REQUIRED)
 find_package(etl REQUIRED)
-find_package(PNG REQUIRED)
 
 add_subdirectory(.. maelir)
 

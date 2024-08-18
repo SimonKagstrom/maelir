@@ -10,7 +10,5 @@ target_include_directories(maelir_interface INTERFACE
 )
 
 target_link_libraries(maelir_interface INTERFACE
-    # Not actually used, but convenient
-    fmt::fmt
     etl::etl
 )

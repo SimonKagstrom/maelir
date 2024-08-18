@@ -2,7 +2,6 @@ if ("${MAP_IMAGE_PATH}" STREQUAL "")
     message(FATAL_ERROR "-DMAP_IMAGE_PATH=<path_to_png_image> is required when running cmake")
 endif()
 
-
 tilegen(tile_library ${MAP_IMAGE_PATH})
 
 add_library(tile_producer EXCLUDE_FROM_ALL
@@ -17,10 +16,8 @@ PUBLIC
 target_link_libraries(tile_producer
 PUBLIC
     maelir_interface
-    etl::etl
     gps_reader
     tile_library
 PRIVATE
-    fmt::fmt
     pngdec
 )

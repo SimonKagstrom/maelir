@@ -3,6 +3,7 @@
 #include "base_thread.hh"
 #include "gps_port.hh"
 #include "image.hh"
+#include "tile.hh"
 
 #include <etl/mutex.h>
 #include <etl/queue_spsc_atomic.h>
@@ -22,8 +23,14 @@ public:
 
 struct ImageImpl : public Image
 {
+    ~ImageImpl()
+    {
+        free(rgb565_data);
+    }
+
     unsigned int index;
-    std::vector<uint16_t> rgb565_data;
+    uint16_t *rgb565_data;
+//    std::array<uint16_t, kTileSize * kTileSize> rgb565_data;
 };
 
 class TileProducer : public os::BaseThread
@@ -34,7 +41,7 @@ public:
     // Context: Another thread
     std::unique_ptr<ITileHandle> LockTile(uint32_t x, uint32_t y);
 
-private:
+//private:
     std::optional<milliseconds> OnActivation() final;
 
     std::unique_ptr<ImageImpl> DecodeTile(unsigned index);

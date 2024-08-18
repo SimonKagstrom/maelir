@@ -2,8 +2,6 @@
 
 #include "tile_utils.hh"
 
-#include <fmt/format.h>
-
 constexpr auto kDisplayWidth = 480;
 constexpr auto kDisplayHeight = 480;
 

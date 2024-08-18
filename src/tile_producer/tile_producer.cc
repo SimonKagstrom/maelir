@@ -4,8 +4,8 @@
 #include "tile_utils.hh"
 
 #include <PNGdec.h>
-#include <fmt/format.h>
 #include <mutex>
+
 
 constexpr auto kInvalidTileIndex = kTileCacheSize;
 
@@ -122,10 +122,10 @@ TileProducer::OnActivation()
 std::unique_ptr<ImageImpl>
 TileProducer::DecodeTile(unsigned index)
 {
-    PNG png;
+    auto png = std::make_unique<PNG>();
 
     auto& src = tile_array[index];
-    auto rc = png.openRAM((uint8_t*)src.data(), src.size(), PngDraw);
+    auto rc = png->openFLASH((uint8_t*)src.data(), src.size(), PngDraw);
 
     if (rc != PNG_SUCCESS)
     {
@@ -134,15 +134,15 @@ TileProducer::DecodeTile(unsigned index)
     auto img = std::make_unique<ImageImpl>();
 
     img->index = index;
-    img->height = png.getHeight();
-    img->width = png.getWidth();
-    img->rgb565_data.resize(img->height * img->width);
-    img->data = img->rgb565_data;
+    img->height = png->getHeight();
+    img->width = png->getWidth();
+    img->rgb565_data = (uint16_t*)malloc(kTileSize * kTileSize * 2);
+    img->data = std::span<const uint16_t> {img->rgb565_data, kTileSize * kTileSize};
 
-    DecodeHelper priv {png, img->rgb565_data.data(), 0};
+    DecodeHelper priv {*png, img->rgb565_data, 0};
 
-    rc = png.decode((void*)&priv, 0);
-    png.close();
+    rc = png->decode((void*)&priv, 0);
+    png->close();
     if (rc != PNG_SUCCESS)
     {
         return nullptr;
