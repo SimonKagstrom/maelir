@@ -46,6 +46,7 @@ UserInterface::OnActivation()
         }
     }
 
+    printf("POS %d, %d\n", m_x, m_y);
     m_display.Flip();
 
     return std::nullopt;

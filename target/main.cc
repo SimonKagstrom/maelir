@@ -7,16 +7,21 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-class DummyGps : public hal::IGps, os::BaseThread
+class DummyGps : public hal::IGps, public os::BaseThread
 {
 public:
+    DummyGps()
+    {
+        m_current_position = {kCornerLatitude, kCornerLongitude};
+    }
+
     std::optional<milliseconds> OnActivation() final
     {
         m_current_position.latitude += 0.00001;
         m_current_position.longitude += 0.00001;
 
         m_has_data_semaphore.release();
-        return 250ms;
+        return 8ms;
     }
 
     GpsData WaitForData(os::binary_semaphore& semaphore) final
@@ -24,7 +29,7 @@ public:
         m_has_data_semaphore.acquire();
         semaphore.release();
 
-        printf("POS now %f, %f\n", m_current_position.latitude, m_current_position.longitude);  
+        printf("POS now %f, %f\n", m_current_position.latitude, m_current_position.longitude);
         return m_current_position;
     }
 
@@ -45,6 +50,7 @@ app_main(void)
     auto producer = std::make_unique<TileProducer>(gps_reader->AttachListener());
     auto ui = std::make_unique<UserInterface>(*producer, *display, gps_reader->AttachListener());
 
+    gps->Start();
     gps_reader->Start();
     producer->Start();
     ui->Start();
