@@ -31,7 +31,7 @@ BaseThread::Start()
 {
     xTaskCreatePinnedToCore([](void* arg) { static_cast<BaseThread*>(arg)->ThreadLoop(); },
                             "x",
-                            2048,
+                            4096,
                             this,
                             tskIDLE_PRIORITY + 1,
                             &m_impl->m_task,
