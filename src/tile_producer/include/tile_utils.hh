@@ -54,7 +54,7 @@ PositionToPoint(const auto& gps_data)
 }
 
 constexpr std::pair<int32_t, int32_t>
-PositionToPointCenteredAndClamped(const auto& gps_data)
+PositionToMapCenter(const auto& gps_data)
 {
     auto [x, y] = PositionToPoint(gps_data);
 

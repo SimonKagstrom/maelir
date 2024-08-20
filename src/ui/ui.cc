@@ -10,6 +10,13 @@ UserInterface::UserInterface(TileProducer& tile_producer,
     , m_display(display)
     , m_gps_port(std::move(gps_port))
 {
+    for (auto& pixel : m_boat_pixels)
+    {
+        // Magenta in rgb565
+        pixel = 0xF81F;
+    }
+    m_boat = Image {m_boat_pixels, 5, 5};
+
     m_gps_port->AwakeOn(GetSemaphore());
 }
 
@@ -18,15 +25,15 @@ UserInterface::OnActivation()
 {
     if (auto position = m_gps_port->Poll())
     {
-        auto [x, y] = PositionToPointCenteredAndClamped(*position);
+        auto [x, y] = PositionToPoint(*position);
+        auto [map_x, map_y] = PositionToMapCenter(*position);
 
-        if (!NeedsRedraw(x, y))
-        {
-            return std::nullopt;
-        }
-
+        // Update the boat position in global pixel coordinates
         m_x = x;
         m_y = y;
+
+        m_map_x = map_x;
+        m_map_y = map_y;
         printf("POS now %f, %f -> pixels %d, %d -> tile %d, %d\n",
                position->latitude,
                position->longitude,
@@ -47,8 +54,8 @@ UserInterface::OnActivation()
 void
 UserInterface::DrawMap()
 {
-    auto x_remainder = m_x % kTileSize;
-    auto y_remainder = m_y % kTileSize;
+    auto x_remainder = m_map_x % kTileSize;
+    auto y_remainder = m_map_y % kTileSize;
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
     auto num_tiles_y = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!y_remainder;
 
@@ -57,10 +64,10 @@ UserInterface::DrawMap()
     {
         for (auto x = 0; x < num_tiles_x; x++)
         {
-            auto tile_x = (m_x / kTileSize + x) % kColumnSize;
-            auto tile_y = (m_y / kTileSize + y) % kRowSize;
+            auto tile_x = (m_map_x / kTileSize + x) % kColumnSize;
+            auto tile_y = (m_map_y / kTileSize + y) % kRowSize;
 
-            auto tile = m_tile_producer.LockTile(m_x + x * kTileSize, m_y + y * kTileSize);
+            auto tile = m_tile_producer.LockTile(m_map_x + x * kTileSize, m_map_y + y * kTileSize);
             if (tile)
             {
                 auto& image = static_cast<const ImageImpl&>(tile->GetImage());
@@ -74,10 +81,8 @@ UserInterface::DrawMap()
 void
 UserInterface::DrawBoat()
 {
-}
+    auto x = m_x - m_map_x;
+    auto y = m_y - m_map_y;
 
-bool
-UserInterface::NeedsRedraw(int32_t x, int32_t y) const
-{
-    return x != m_x || y != m_y;
+    m_display.Blit(m_boat, {x, y});
 }

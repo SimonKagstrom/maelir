@@ -164,7 +164,7 @@ TileProducer::EvictTile()
 {
     if (m_current_position)
     {
-        auto [x, y] = PositionToPointCenteredAndClamped(*m_current_position);
+        auto [x, y] = PositionToMapCenter(*m_current_position);
 
         auto center_tile = PointToTileIndex(x, y);
         assert(center_tile);
