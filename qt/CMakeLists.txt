@@ -60,7 +60,6 @@ PUBLIC
     )
 
 add_executable(maelir_qt
-    gps_simulator.cc
     main.cc
 )
 
@@ -68,4 +67,5 @@ target_link_libraries(maelir_qt
     mainwindow
     ui
     tile_producer
+    gps_simulator
 )

@@ -21,6 +21,7 @@ main(int argc, char* argv[])
     auto ui = std::make_unique<UserInterface>(
         *producer, window.GetDisplay(), gps_reader->AttachListener());
 
+    gps_simulator->Start();
     gps_reader->Start();
     producer->Start();
     ui->Start();
