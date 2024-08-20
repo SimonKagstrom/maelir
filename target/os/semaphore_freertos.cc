@@ -70,7 +70,7 @@ template <ptrdiff_t least_max_value>
 bool
 counting_semaphore<least_max_value>::try_acquire_for_ms(const milliseconds time)
 {
-    return xSemaphoreTake(m_impl->m_sem, portTICK_PERIOD_MS * time.count()) == pdTRUE;
+    return xSemaphoreTake(m_impl->m_sem, time.count() / portTICK_PERIOD_MS) == pdTRUE;
 }
 
 namespace os
