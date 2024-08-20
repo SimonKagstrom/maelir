@@ -41,11 +41,11 @@ PositionToPoint(const auto& gps_data)
         y = 0;
     }
 
-    if (x >= kTileSize * kRowSize - kTileSize)
+    if (x > kTileSize * kRowSize - kTileSize)
     {
         x = kTileSize * kRowSize - kTileSize;
     }
-    if (y >= kTileSize * kColumnSize - kTileSize)
+    if (y > kTileSize * kColumnSize - kTileSize)
     {
         y = kTileSize * kColumnSize - kTileSize;
     }
@@ -58,12 +58,11 @@ PositionToMapCenter(const auto& gps_data)
 {
     auto [x, y] = PositionToPoint(gps_data);
 
-    x = std::clamp(static_cast<int>(x - hal::kDisplayWidth / 2),
-                   0,
-                   (kRowSize - 1) * kTileSize - hal::kDisplayWidth / 2);
+    x = std::clamp(
+        static_cast<int>(x - hal::kDisplayWidth / 2), 0, kRowSize * kTileSize - hal::kDisplayWidth);
     y = std::clamp(static_cast<int>(y - hal::kDisplayHeight / 2),
                    0,
-                   (kColumnSize - 1) * kTileSize - hal::kDisplayHeight / 2);
+                   kColumnSize * kTileSize - hal::kDisplayHeight);
 
     return {x, y};
 }
