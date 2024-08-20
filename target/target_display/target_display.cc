@@ -610,23 +610,38 @@ DisplayTarget::Blit(const Image& image, Rect to, std::optional<Rect> from = std:
     auto from_y = from.has_value() ? from->y : 0;
     auto from_x = from.has_value() ? from->x : 0;
 
-    // This should be optimized
+    if (to.x < 0)
+    {
+        from_x += -to.x;
+        width += to.x;
+    }
+    if (to.y < 0)
+    {
+        from_y += -to.y;
+        height += to.y;
+    }
+
+    auto row_length = image.width - from_x;
+
+    to.x = std::max(static_cast<int32_t>(0), to.x);
+    to.y = std::max(static_cast<int32_t>(0), to.y);
+    if (to.x + row_length > hal::kDisplayWidth)
+    {
+        row_length = hal::kDisplayWidth - to.x;
+    }
+
     for (int y = 0; y < height; ++y)
     {
-        for (int x = 0; x < width; ++x)
+        auto dst_y = to.y + y;
+
+        if (dst_y < 0 || dst_y >= hal::kDisplayHeight)
         {
-            auto dst_x = to.x + x;
-            auto dst_y = to.y + y;
-
-            if (dst_x >= hal::kDisplayWidth || dst_y >= hal::kDisplayHeight)
-            {
-                continue;
-            }
-
-            auto rgb565 = image.data[(from_y + y) * image.width + from_x + x];
-
-            m_frame_buffers[m_current_update_frame][dst_y * kWidth + dst_x] = rgb565;
+            continue;
         }
+
+        memcpy(&m_frame_buffers[m_current_update_frame][dst_y * hal::kDisplayWidth + to.x],
+               &image.data[(from_y + y) * image.width + from_x],
+               row_length * sizeof(uint16_t));
     }
 }
 

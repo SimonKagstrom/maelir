@@ -38,6 +38,7 @@ target_link_libraries(${elf_file}
     idf::freertos
     idf::spi_flash
     tile_producer
+    gps_simulator
     ui
     gps_reader
     target_display

@@ -18,12 +18,35 @@ UserInterface::OnActivation()
 {
     if (auto position = m_gps_port->Poll())
     {
-        auto [x, y] = PositionToPoint(*position);
+        auto [x, y] = PositionToPointCenteredAndClamped(*position);
+
+        if (!NeedsRedraw(x, y))
+        {
+            return std::nullopt;
+        }
 
         m_x = x;
         m_y = y;
+        printf("POS now %f, %f -> pixels %d, %d -> tile %d, %d\n",
+               position->latitude,
+               position->longitude,
+               x,
+               y,
+               m_x,
+               m_y);
     }
 
+    DrawMap();
+    DrawBoat();
+
+    m_display.Flip();
+
+    return std::nullopt;
+}
+
+void
+UserInterface::DrawMap()
+{
     auto x_remainder = m_x % kTileSize;
     auto y_remainder = m_y % kTileSize;
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
@@ -46,8 +69,15 @@ UserInterface::OnActivation()
             }
         }
     }
+}
 
-    m_display.Flip();
+void
+UserInterface::DrawBoat()
+{
+}
 
-    return std::nullopt;
+bool
+UserInterface::NeedsRedraw(int32_t x, int32_t y) const
+{
+    return x != m_x || y != m_y;
 }

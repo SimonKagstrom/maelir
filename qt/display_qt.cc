@@ -32,10 +32,9 @@ DisplayQt::Blit(const Image& image, Rect to, std::optional<Rect> from)
 
     auto row_length = image.width - from_x;
 
-
     to.x = std::max(0, to.x);
     to.y = std::max(0, to.y);
-    if (to.x + row_length >= hal::kDisplayWidth)
+    if (to.x + row_length > hal::kDisplayWidth)
     {
         row_length = hal::kDisplayWidth - to.x;
     }
