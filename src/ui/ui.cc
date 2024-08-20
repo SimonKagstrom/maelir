@@ -5,7 +5,8 @@
 UserInterface::UserInterface(TileProducer& tile_producer,
                              hal::IDisplay& display,
                              std::unique_ptr<IGpsPort> gps_port)
-    : m_tile_producer(tile_producer)
+    : BaseThread(1)
+    , m_tile_producer(tile_producer)
     , m_display(display)
     , m_gps_port(std::move(gps_port))
 {
@@ -46,7 +47,6 @@ UserInterface::OnActivation()
         }
     }
 
-    printf("POS %d, %d\n", m_x, m_y);
     m_display.Flip();
 
     return std::nullopt;

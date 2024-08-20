@@ -59,7 +59,7 @@ private:
 } // namespace
 
 TileProducer::TileProducer(std::unique_ptr<IGpsPort> gps_port)
-    : BaseThread()
+    : BaseThread(0)
     , m_gps_port(std::move(gps_port))
 {
     m_tile_index_to_cache.resize(kRowSize * kColumnSize);

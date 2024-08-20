@@ -28,4 +28,6 @@ private:
     std::unique_ptr<QImage> m_screen;
     QImage m_circle_mask;
     QGraphicsPixmapItem* m_pixmap;
+
+    std::array<uint16_t, hal::kDisplayWidth * hal::kDisplayHeight> m_frame_buffer;
 };

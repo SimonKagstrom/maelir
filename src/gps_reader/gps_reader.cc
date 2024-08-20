@@ -56,7 +56,9 @@ private:
 };
 
 
-GpsReader::GpsReader(hal::IGps& gps) : m_gps(gps)
+GpsReader::GpsReader(hal::IGps& gps)
+    : BaseThread(0)
+    , m_gps(gps)
 {
 }
 

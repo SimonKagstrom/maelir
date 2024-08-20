@@ -21,6 +21,6 @@ private:
     std::unique_ptr<IGpsPort> m_gps_port;
 
     // TMP!
-    uint32_t m_x {0};
-    uint32_t m_y {0};
+    int32_t m_x {0};
+    int32_t m_y {0};
 };
