@@ -9,7 +9,7 @@ struct BaseThread::Impl
     QThread* m_thread;
 };
 
-BaseThread::BaseThread()
+BaseThread::BaseThread(uint8_t)
 {
     m_impl = new Impl;
     m_impl->m_thread = QThread::create([this]() { ThreadLoop(); });

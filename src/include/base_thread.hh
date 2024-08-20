@@ -12,7 +12,7 @@ namespace os
 class BaseThread
 {
 public:
-    BaseThread();
+    BaseThread(uint8_t core);
 
     virtual ~BaseThread();
 

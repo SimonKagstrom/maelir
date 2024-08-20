@@ -2,6 +2,7 @@
 #include "sdkconfig.h"
 #include "target_display.hh"
 #include "tile_producer.hh"
+#include "tile_utils.hh"
 #include "ui.hh"
 
 #include <freertos/FreeRTOS.h>
@@ -11,6 +12,7 @@ class DummyGps : public hal::IGps, public os::BaseThread
 {
 public:
     DummyGps()
+        : os::BaseThread(0)
     {
         m_current_position = {kCornerLatitude, kCornerLongitude};
     }
@@ -21,7 +23,7 @@ public:
         m_current_position.longitude += 0.00001;
 
         m_has_data_semaphore.release();
-        return 8ms;
+        return 1ms;
     }
 
     GpsData WaitForData(os::binary_semaphore& semaphore) final
@@ -29,7 +31,14 @@ public:
         m_has_data_semaphore.acquire();
         semaphore.release();
 
-        printf("POS now %f, %f\n", m_current_position.latitude, m_current_position.longitude);
+        auto [x, y] = PositionToPoint(m_current_position);
+
+        printf("POS now %f, %f -> pixels %d, %d\n",
+               m_current_position.latitude,
+               m_current_position.longitude,
+               x,
+               y);
+
         return m_current_position;
     }
 
