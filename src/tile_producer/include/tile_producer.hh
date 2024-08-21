@@ -2,6 +2,7 @@
 
 #include "base_thread.hh"
 #include "gps_port.hh"
+#include "hal/i_display.hh"
 #include "image.hh"
 #include "tile.hh"
 
@@ -12,7 +13,11 @@
 #include <memory>
 #include <vector>
 
-constexpr auto kTileCacheSize = 4;
+// Cache all visible tiles, plus a few for good measure
+constexpr auto kTileCacheSize =
+    2 + ((hal::kDisplayWidth / kTileSize) + 1) * ((hal::kDisplayHeight / kTileSize) + 1);
+static_assert(hal::kDisplayWidth % kTileSize == 0);
+static_assert(hal::kDisplayHeight % kTileSize == 0);
 static_assert(kTileCacheSize <= 32); // For the uint32_t atomic
 
 class ITileHandle
