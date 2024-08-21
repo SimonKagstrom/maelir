@@ -69,8 +69,7 @@ private:
 } // namespace
 
 TileProducer::TileProducer(std::unique_ptr<IGpsPort> gps_port)
-    : BaseThread(0)
-    , m_gps_port(std::move(gps_port))
+    : m_gps_port(std::move(gps_port))
 {
     m_tile_index_to_cache.resize(kRowSize * kColumnSize);
     std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
@@ -147,6 +146,7 @@ TileProducer::CacheTile(unsigned requested_index)
     if (m_tiles.full())
     {
         cache_index = EvictTile();
+        assert(m_tiles[cache_index] == nullptr);
         m_tiles[cache_index] = std::move(tile);
     }
     else
@@ -195,7 +195,9 @@ TileProducer::EvictTile()
                 tile_y < center_tile_y - 2 || tile_y > center_tile_y + 2)
             {
                 m_tile_index_to_cache[tile->index] = kInvalidTileIndex;
-                return tile->index;
+                m_tiles[i] = nullptr;
+
+                return i;
             }
         }
     }
@@ -216,7 +218,9 @@ TileProducer::EvictTile()
         }
 
         m_tile_index_to_cache[tile->index] = kInvalidTileIndex;
-        return tile->index;
+        m_tiles[i] = nullptr;
+
+        return i;
     }
 
     assert(false);
@@ -235,15 +239,9 @@ TileProducer::DecodeTile(unsigned index)
     {
         return nullptr;
     }
-    auto img = std::make_unique<ImageImpl>();
+    auto img = std::make_unique<ImageImpl>(index);
 
-    img->index = index;
-    img->height = png->getHeight();
-    img->width = png->getWidth();
-    img->rgb565_data = (uint16_t*)malloc(kTileSize * kTileSize * 2);
-    img->data = std::span<const uint16_t> {img->rgb565_data, kTileSize * kTileSize};
-
-    DecodeHelper priv {*png, img->rgb565_data, 0};
+    DecodeHelper priv {*png, img->rgb565_data.data(), 0};
 
     rc = png->decode((void*)&priv, 0);
     png->close();

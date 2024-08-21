@@ -12,7 +12,7 @@
 #include <memory>
 #include <vector>
 
-constexpr auto kTileCacheSize = 20;
+constexpr auto kTileCacheSize = 4;
 static_assert(kTileCacheSize <= 32); // For the uint32_t atomic
 
 class ITileHandle
@@ -23,16 +23,21 @@ public:
     virtual const Image& GetImage() const = 0;
 };
 
-struct ImageImpl : public Image
+class ImageImpl : public Image
 {
+public:
+    ImageImpl(unsigned index)
+        : Image(std::span<const uint16_t>(rgb565_data), kTileSize, kTileSize)
+        , index(index)
+    {
+    }
+
     ~ImageImpl()
     {
-        free(rgb565_data);
     }
 
     unsigned int index;
-    uint16_t* rgb565_data;
-    //    std::array<uint16_t, kTileSize * kTileSize> rgb565_data;
+    std::array<uint16_t, kTileSize * kTileSize> rgb565_data;
 };
 
 class TileProducer : public os::BaseThread
