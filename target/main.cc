@@ -21,10 +21,10 @@ app_main(void)
     auto producer = std::make_unique<TileProducer>(gps_reader->AttachListener());
     auto ui = std::make_unique<UserInterface>(*producer, *display, gps_reader->AttachListener());
 
-    gps->Start();
-    gps_reader->Start();
-    producer->Start();
-    ui->Start();
+    gps->Start(0);
+    gps_reader->Start(0);
+    producer->Start(0);
+    ui->Start(1);
 
     while (true)
     {

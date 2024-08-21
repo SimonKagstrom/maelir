@@ -1,21 +1,21 @@
 #include "ui.hh"
 
 #include "tile_utils.hh"
+#include "time.hh"
 
 UserInterface::UserInterface(TileProducer& tile_producer,
                              hal::IDisplay& display,
                              std::unique_ptr<IGpsPort> gps_port)
-    : BaseThread(1)
-    , m_tile_producer(tile_producer)
+    : m_tile_producer(tile_producer)
     , m_display(display)
     , m_gps_port(std::move(gps_port))
+    , m_boat(m_boat_pixels, 5, 5)
 {
     for (auto& pixel : m_boat_pixels)
     {
         // Magenta in rgb565
         pixel = 0xF81F;
     }
-    m_boat = Image {m_boat_pixels, 5, 5};
 
     m_gps_port->AwakeOn(GetSemaphore());
 }
@@ -41,14 +41,15 @@ UserInterface::OnActivation()
                m_y,
                m_map_x,
                m_map_y,
-               kTileSize * kRowSize,kTileSize * kColumnSize
-               );
+               kTileSize * kRowSize,
+               kTileSize * kColumnSize);
     }
 
     DrawMap();
     DrawBoat();
 
     m_display.Flip();
+    os::Sleep(10ms);
 
     return std::nullopt;
 }

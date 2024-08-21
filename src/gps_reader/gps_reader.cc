@@ -57,8 +57,7 @@ private:
 
 
 GpsReader::GpsReader(hal::IGps& gps)
-    : BaseThread(0)
-    , m_gps(gps)
+    : m_gps(gps)
 {
 }
 
@@ -86,10 +85,10 @@ GpsReader::OnActivation()
         }
     }
 
-    // TMP!
     for (auto& l : m_listeners)
     {
         l->PushGpsData(data);
     }
-    return 100ms;
+
+    return std::nullopt;
 }

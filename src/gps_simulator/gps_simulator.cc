@@ -4,7 +4,6 @@
 #include "tile_utils.hh"
 
 GpsSimulator::GpsSimulator()
-    : os::BaseThread(0)
 {
     m_current_position = {kCornerLatitude + 0.0481, kCornerLongitude + 0.090};
 }

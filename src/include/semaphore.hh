@@ -1,9 +1,9 @@
 #pragma once
 
+#include "time.hh"
+
 #include <memory>
 #include <semaphore>
-
-#include "time.hh"
 
 namespace os
 {
