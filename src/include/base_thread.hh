@@ -12,7 +12,7 @@ namespace os
 class BaseThread
 {
 public:
-    BaseThread(uint8_t core);
+    BaseThread();
 
     virtual ~BaseThread();
 
@@ -21,7 +21,7 @@ public:
         m_semaphore.release();
     }
 
-    void Start();
+    void Start(uint8_t core = 0);
 
     void Stop()
     {
