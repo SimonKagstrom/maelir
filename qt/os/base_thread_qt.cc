@@ -17,8 +17,11 @@ BaseThread::BaseThread()
 
 BaseThread::~BaseThread()
 {
-    Stop();
-    m_impl->m_thread->wait();
+    if (m_running)
+    {
+        Stop();
+        m_impl->m_thread->wait();
+    }
 
     delete m_impl;
 }

@@ -28,5 +28,13 @@ main(int argc, char* argv[])
 
     window.show();
 
-    return QApplication::exec();
+    auto out = QApplication::exec();
+
+    // Stop to avoid the destructor accessing the thread
+    ui->Stop();
+    producer->Stop();
+    gps_reader->Stop();
+    gps_simulator->Stop();
+
+    return out;
 }

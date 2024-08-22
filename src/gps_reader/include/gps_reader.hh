@@ -11,7 +11,7 @@
 class GpsReader : public os::BaseThread
 {
 public:
-    GpsReader(hal::IGps& gps);
+    explicit GpsReader(hal::IGps& gps);
 
     std::unique_ptr<IGpsPort> AttachListener();
 
