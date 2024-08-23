@@ -529,7 +529,7 @@ DisplayTarget::DisplayTarget()
     my_PCA9554_create(&handle);
 
     my_PCA9554_send_command(&handle, 0x01);
-    vTaskDelay(120);
+    vTaskDelay(1);
     my_PCA9554_batch(&handle, hd40015c40_init_operations, sizeof(hd40015c40_init_operations));
 
     esp_lcd_rgb_panel_config_t panel_config;
