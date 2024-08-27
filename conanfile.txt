@@ -1,5 +1,6 @@
 [requires]
 etl/20.38.10
+mp-units/2.2.1
 
 [generators]
 CMakeDeps

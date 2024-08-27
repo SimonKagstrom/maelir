@@ -2,6 +2,8 @@
 
 #include "hal/i_gps.hh"
 
+#include <array>
+#include <etl/vector.h>
 #include <driver/uart.h>
 
 class UartGps : public hal::IGps
@@ -12,5 +14,8 @@ public:
 private:
     GpsData WaitForData(os::binary_semaphore& semaphore) final;
 
+    void OnLine(std::string_view line);
+
     const uart_port_t m_port_number;
+    etl::vector<char, 256> m_line;
 };

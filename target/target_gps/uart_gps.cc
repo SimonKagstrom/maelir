@@ -2,7 +2,7 @@
 
 #include <driver/uart.h>
 
-constexpr auto kUartBufSize = 256;
+constexpr auto kUartBufSize = 128;
 
 UartGps::UartGps(uart_port_t port_number, uint8_t rx_pin, uint8_t tx_pin)
     : m_port_number(port_number)
@@ -28,13 +28,15 @@ UartGps::UartGps(uart_port_t port_number, uint8_t rx_pin, uint8_t tx_pin)
 GpsData
 UartGps::WaitForData(os::binary_semaphore& semaphore)
 {
-    char data[192];
-    auto len = uart_read_bytes(m_port_number, data, sizeof(data), portMAX_DELAY);
+    std::array<char, 128> buf;
 
-    if (len)
+    auto len =
+        uart_read_bytes(m_port_number, buf.data(), buf.size(), portMAX_DELAY);
+
+    if (len > 0)
     {
-        data[sizeof(data) - 1] = '\0';
-        printf("Received %d bytes: %s\n", len, data);
+        buf[len] = '\0';
+        printf("Received %d bytes: %s\n", len, buf.data());
     }
     semaphore.release();
 

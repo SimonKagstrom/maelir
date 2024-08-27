@@ -1,0 +1,10 @@
+[settings]
+os=baremetal
+arch=xtensalx7
+compiler=gcc
+compiler.version=13
+compiler.libcxx=libstdc++
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja
+tools.cmake.cmaketoolchain:toolchain_file=$IDF_PATH/tools/cmake/toolchain-esp32s3.cmake

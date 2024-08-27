@@ -54,8 +54,6 @@ PUBLIC
     maelir_interface
     os_qt
 
-# TMP!
-    tile_producer
     ui
     )
 

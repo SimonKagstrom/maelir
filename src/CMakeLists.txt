@@ -1,3 +1,5 @@
+find_package(mp-units REQUIRED)
+
 add_subdirectory(gps_reader)
 add_subdirectory(gps_simulator)
 add_subdirectory(tile_producer)
@@ -12,4 +14,5 @@ target_include_directories(maelir_interface INTERFACE
 
 target_link_libraries(maelir_interface INTERFACE
     etl::etl
+    mp-units::mp-units
 )

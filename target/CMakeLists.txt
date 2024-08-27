@@ -110,6 +110,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(etl REQUIRED)
+find_package(mp-units REQUIRED)
 
 add_subdirectory(.. maelir)
 add_subdirectory(target_display)
@@ -133,6 +134,7 @@ target_link_libraries(${elf_file}
     gps_reader
     target_display
     uart_gps
+    mp-units::mp-units
 )
 
 # Attach additional targets to the executable file for flashing,
