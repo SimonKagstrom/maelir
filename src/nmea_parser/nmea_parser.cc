@@ -135,7 +135,6 @@ NmeaParser::ParseGppgaData(std::string_view line)
 
     if (latitude && longitude)
     {
-        printf("Pushing %f, %f  after %s", latitude.value(), longitude.value(), std::string(line).c_str());
         m_pending_data.push_back(GpsData {latitude.value(), longitude.value()});
     }
 }
