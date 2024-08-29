@@ -36,8 +36,9 @@ def create_source_files(tiles: list, row_length: int, dst_dir: str, out_base: st
 
 // TODO: Hardcoded hacks
 // 59.532405, 16.959949 -> 770, 1261 (y,x)
-constexpr auto kCornerLatitude = 59.579114;
-constexpr auto kCornerLongitude = 16.816097;
+// 59.363773, 17.725971 (at home), 59.284293, 17.880276 -> 1283, 1397 (y,x)
+constexpr auto kCornerLatitude = 59.363773;
+constexpr auto kCornerLongitude = 17.725971;
 constexpr auto kPixelLatitudeSize = 16485;
 constexpr auto kPixelLongitudeSize = 8766;
 

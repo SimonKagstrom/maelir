@@ -27,7 +27,7 @@ constexpr std::pair<int32_t, int32_t>
 PositionToPoint(const auto& gps_data)
 {
     auto longitude_offset = gps_data.longitude - kCornerLongitude;
-    auto latitude_offset = gps_data.latitude - kCornerLatitude;
+    auto latitude_offset = kCornerLatitude - gps_data.latitude;
 
     int32_t x = longitude_offset * kPixelLongitudeSize;
     int32_t y = latitude_offset * kPixelLatitudeSize;
