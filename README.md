@@ -9,4 +9,6 @@ Target:
 
 ```
 conan install -of ~/projects/build/maelir_esp32s3/ -pr ~/projects/maelir/target/conanprofile.txt --build=missing -s build_type=Release ~/projects/maelir/conanfile.txt
+
+cmake -DMAP_IMAGE_PATH=~/Desktop/kring_hemma.png -DCMAKE_PREFIX_PATH="`pwd`/build/Release/generators/" -DCMAKE_BUILD_TYPE=Release ~/projects/maelir/target/
 ```
