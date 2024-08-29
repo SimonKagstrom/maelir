@@ -6,6 +6,7 @@ constexpr auto kUartBufSize = 128;
 
 UartGps::UartGps(uart_port_t port_number, uint8_t rx_pin, uint8_t tx_pin)
     : m_port_number(port_number)
+    , m_parser(std::make_unique<NmeaParser>())
 {
     uart_config_t uart_config = {
         .baud_rate = 9600,
@@ -28,17 +29,20 @@ UartGps::UartGps(uart_port_t port_number, uint8_t rx_pin, uint8_t tx_pin)
 GpsData
 UartGps::WaitForData(os::binary_semaphore& semaphore)
 {
-    std::array<char, 128> buf;
+    std::optional<GpsData> data;
 
-    auto len =
-        uart_read_bytes(m_port_number, buf.data(), buf.size(), portMAX_DELAY);
-
-    if (len > 0)
+    while (!data.has_value())
     {
-        buf[len] = '\0';
-        printf("Received %d bytes: %s\n", len, buf.data());
+        std::array<char, 128> buf;
+
+        auto len = uart_read_bytes(m_port_number, buf.data(), buf.size(), portMAX_DELAY);
+
+        if (len > 0)
+        {
+            data = m_parser->PushData(std::string_view(buf.data(), len));
+        }
     }
     semaphore.release();
 
-    return {0, 0, 0, 0};
+    return *data;
 }

@@ -97,6 +97,11 @@ TileProducer::LockTile(uint32_t x, uint32_t y)
             m_tile_request_semaphore.acquire();
 
             m_mutex.lock();
+            if (m_tile_index_to_cache[*index] == kInvalidTileIndex)
+            {
+                m_mutex.unlock();
+                return nullptr;
+            }
         }
 
         auto cache_index = m_tile_index_to_cache[*index];
@@ -123,10 +128,8 @@ TileProducer::OnActivation()
     uint32_t requested_index = 0;
     while (m_tile_requests.pop(requested_index))
     {
-        if (CacheTile(requested_index))
-        {
-            m_tile_request_semaphore.release();
-        }
+        CacheTile(requested_index);
+        m_tile_request_semaphore.release();
     }
 
     return std::nullopt;
@@ -247,6 +250,7 @@ TileProducer::DecodeTile(unsigned index)
     png->close();
     if (rc != PNG_SUCCESS)
     {
+        printf("Argh tile %d @%p\n", index, src.data());
         return nullptr;
     }
 

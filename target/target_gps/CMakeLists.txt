@@ -13,4 +13,5 @@ PUBLIC
     idf::esp_driver_uart
     idf::esp_timer
     maelir_interface
+    nmea_parser
 )

@@ -1,10 +1,11 @@
 #pragma once
 
 #include "hal/i_gps.hh"
+#include "nmea_parser.hh"
 
 #include <array>
-#include <etl/vector.h>
 #include <driver/uart.h>
+#include <etl/vector.h>
 
 class UartGps : public hal::IGps
 {
@@ -18,4 +19,6 @@ private:
 
     const uart_port_t m_port_number;
     etl::vector<char, 256> m_line;
+
+    std::unique_ptr<NmeaParser> m_parser;
 };

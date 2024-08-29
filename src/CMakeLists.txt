@@ -2,6 +2,7 @@ find_package(mp-units REQUIRED)
 
 add_subdirectory(gps_reader)
 add_subdirectory(gps_simulator)
+add_subdirectory(nmea_parser)
 add_subdirectory(tile_producer)
 add_subdirectory(ui)
 

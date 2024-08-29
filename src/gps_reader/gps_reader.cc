@@ -3,8 +3,6 @@
 #include <cassert>
 #include <etl/queue_spsc_atomic.h>
 
-
-
 class GpsReader::GpsPortImpl : public IGpsPort
 {
 public:

@@ -13,8 +13,6 @@
 extern "C" void
 app_main(void)
 {
-    printf("Phnom world!\n");
-
     auto display = std::make_unique<DisplayTarget>();
     auto gps = std::make_unique<UartGps>(UART_NUM_1,
                                          17,  // RX -> A0
