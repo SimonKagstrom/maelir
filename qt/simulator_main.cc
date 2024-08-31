@@ -1,6 +1,6 @@
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
-#include "mainwindow.hh"
+#include "simulator_mainwindow.hh"
 #include "tile_producer.hh"
 #include "ui.hh"
 

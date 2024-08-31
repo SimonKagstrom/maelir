@@ -41,13 +41,13 @@ target_link_libraries(os_qt
     maelir_interface
 )
 
-add_library(mainwindow EXCLUDE_FROM_ALL
-    mainwindow.ui
-    mainwindow.cc
+add_library(simulator_mainwindow EXCLUDE_FROM_ALL
+    simulator_mainwindow.ui
+    simulator_mainwindow.cc
     display_qt.cc
 )
 
-target_link_libraries(mainwindow
+target_link_libraries(simulator_mainwindow
 PUBLIC
     Qt6::Widgets
     fmt::fmt
@@ -58,11 +58,11 @@ PUBLIC
     )
 
 add_executable(maelir_qt
-    main.cc
+    simulator_main.cc
 )
 
 target_link_libraries(maelir_qt
-    mainwindow
+    simulator_mainwindow
     ui
     tile_producer
     gps_simulator
