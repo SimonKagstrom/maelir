@@ -71,6 +71,9 @@ private:
     std::pair<int, int> GetMapCoordinates(QPoint pos);
     void RightClickContextMenu(QPoint mouse_position, QPoint map_posititon);
     void SetGpsPosition(double longitude, double latitude, int x, int y);
+    void CalculateLand();
+    unsigned CountLandPixels(QImage& image);
+
     void LoadYaml(const char* filename);
     void SaveYaml();
 
@@ -90,4 +93,6 @@ private:
 
     bool m_panning {false};
     QPoint m_last_mouse_pos {0, 0};
+
+    std::vector<bool> m_land_mask;
 };

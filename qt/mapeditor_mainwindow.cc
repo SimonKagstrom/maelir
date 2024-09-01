@@ -28,6 +28,8 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
     auto cropped_width = m_map->width() - m_map->width() % kTileSize;
 
     *m_map = m_map->copy(0, 0, cropped_width, cropped_height);
+
+    m_land_mask.resize(cropped_height * cropped_width * kPathFinderTileSize, false);
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
 
     m_ui->setupUi(this);
@@ -286,6 +288,8 @@ MapEditorMainWindow::LoadYaml(const char* filename)
                     QColor(color["r"].as<int>(), color["g"].as<int>(), color["b"].as<int>()));
             }
         }
+
+        CalculateLand();
     } catch (const YAML::BadFile& e)
     {
         // Just ignore this
@@ -345,4 +349,48 @@ MapEditorMainWindow::SaveYaml()
     std::ofstream f(m_out_yaml.toStdString());
 
     f << node;
+}
+
+void
+MapEditorMainWindow::CalculateLand()
+{
+    if (m_land_colors.empty())
+    {
+        return;
+    }
+
+    for (auto x = 0; x < m_map->width(); x += kPathFinderTileSize)
+    {
+        for (auto y = 0; y < m_map->height(); y += kPathFinderTileSize)
+        {
+            auto chunk = m_map->copy(x, y, kPathFinderTileSize, kPathFinderTileSize);
+
+            // it's land if it contains at least 20% land colors
+            if (CountLandPixels(chunk) > 0.2 * kPathFinderTileSize * kPathFinderTileSize)
+            {
+                m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = true;
+                m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::red));
+            }
+        }
+    }
+}
+
+unsigned
+MapEditorMainWindow::CountLandPixels(QImage& chunk)
+{
+    auto land = 0u;
+
+    for (auto x = 0; x < chunk.width(); ++x)
+    {
+        for (auto y = 0; y < chunk.height(); ++y)
+        {
+            auto color = chunk.pixelColor(x, y);
+            if (m_land_colors.find(color) != m_land_colors.end())
+            {
+                ++land;
+            }
+        }
+    }
+
+    return land;
 }
