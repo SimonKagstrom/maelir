@@ -6,10 +6,13 @@
 #include <QMessageBox>
 #include <fmt/format.h>
 
-MapEditorMainWindow::MapEditorMainWindow(std::unique_ptr<QImage> map, QWidget* parent)
+MapEditorMainWindow::MapEditorMainWindow(std::unique_ptr<QImage> map,
+                                         std::unique_ptr<QFile> out_header_file,
+                                         QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
     , m_map(std::move(map))
+    , out_header_file(std::move(out_header_file))
     , m_scene(std::make_unique<QGraphicsScene>())
     , m_pixmap(m_scene->addPixmap(QPixmap::fromImage(*m_map)))
 {
@@ -116,7 +119,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
         QString text = QInputDialog::getText(
             this,
             tr("Set GPS Coordinates"),
-            tr("Enter Longitude, Latitude (e.g., 59.30233189848152, 17.941052011787928):"),
+            tr("Enter Latitude, longitude (e.g., 59.30233189848152, 17.941052011787928):"),
             QLineEdit::Normal,
             "",
             &ok);
@@ -127,8 +130,8 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             if (coordinates.size() == 2)
             {
                 bool long_ok, lat_ok;
-                double longitude = coordinates[0].trimmed().toDouble(&long_ok);
-                double latitude = coordinates[1].trimmed().toDouble(&lat_ok);
+                double latitude = coordinates[0].trimmed().toDouble(&long_ok);
+                double longitude = coordinates[1].trimmed().toDouble(&lat_ok);
 
                 if (long_ok && lat_ok)
                 {
@@ -174,10 +177,13 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
         auto& first = m_positions.front();
         auto& second = m_positions.back();
 
-        auto distance = std::sqrt(std::pow(first.x - second.x, 2) + std::pow(first.y - second.y, 2));
-        auto gps_distance = std::sqrt(std::pow(first.longitude - second.longitude, 2) +
-                                      std::pow(first.latitude - second.latitude, 2));
+        auto longitude_diff = second.longitude - first.longitude;
+        auto latitude_diff = second.latitude - first.latitude;
 
-        fmt::print("Distance between points: {} pixels, {} GPS\n", distance, gps_distance);
+        auto x_pixel_diff = second.x - first.x;
+        auto y_pixel_diff = second.y - first.y;
+
+        fmt::print("Longitude diff: {}, Latitude diff: {}\n", longitude_diff, latitude_diff);
+        fmt::print("X pixel diff: {}, Y pixel diff: {}\n", x_pixel_diff, y_pixel_diff);
     }
 }

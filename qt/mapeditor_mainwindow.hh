@@ -3,6 +3,7 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QImage>
+#include <QFile>
 #include <QMainWindow>
 #include <QMouseEvent>
 #include <etl/list.h>
@@ -17,7 +18,7 @@ class MapEditorMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MapEditorMainWindow(std::unique_ptr<QImage> map, QWidget* parent = nullptr);
+    explicit MapEditorMainWindow(std::unique_ptr<QImage> map, std::unique_ptr<QFile> out_header_file, QWidget* parent = nullptr);
     ~MapEditorMainWindow() final;
 
 protected:
@@ -44,6 +45,7 @@ private:
 
     std::unique_ptr<QGraphicsScene> m_scene;
     std::unique_ptr<QImage> m_map;
+    std::unique_ptr<QFile> out_header_file;
     QGraphicsPixmapItem* m_pixmap;
 
     etl::list<GpsToPixel, 2> m_positions;
