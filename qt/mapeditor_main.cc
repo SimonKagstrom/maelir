@@ -21,14 +21,8 @@ main(int argc, char* argv[])
         fmt::print("Failed to load image: {}\n", argv[1]);
         return 1;
     }
-    auto out_file = std::make_unique<QFile>(argv[2]);
-    if (!out_file->open(QIODevice::WriteOnly | QIODevice::Text))
-    {
-        fmt::print("Failed to open file: {}\n", argv[2]);
-        return 1;
-    }
 
-    MapEditorMainWindow window(std::move(map), std::move(out_file));
+    MapEditorMainWindow window(std::move(map), argv[1], argv[2]);
 
     window.show();
 

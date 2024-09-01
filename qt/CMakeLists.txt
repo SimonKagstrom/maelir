@@ -27,6 +27,7 @@ add_link_options(-fsanitize=address,undefined -g)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 find_package(fmt REQUIRED)
 find_package(etl REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 add_subdirectory(.. maelir)
 
@@ -68,4 +69,5 @@ target_include_directories(map_editor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(map_editor
     os_qt
+    yaml-cpp
 )

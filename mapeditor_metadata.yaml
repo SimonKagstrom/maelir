@@ -1,0 +1,19 @@
+# This is an example of how the metadata file should look like
+map_filename: /Users/ska/Desktop/mega_map.png
+
+reference_positions:
+  - latitude: 59.30211281169723
+    longitude: 17.937790445665566
+    x_pixel: 55
+    y_pixel: 190
+
+  - latitude: 59.26769865815629
+    longitude: 17.969976954073577
+    x_pixel: 550
+    y_pixel: 1900
+
+extra_land:
+  - x_pixel: 100
+    y_pixel: 110
+  - x_pixel: 200
+    y_pixel: 220

@@ -5,14 +5,17 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <fmt/format.h>
+#include <fstream>
 
 MapEditorMainWindow::MapEditorMainWindow(std::unique_ptr<QImage> map,
-                                         std::unique_ptr<QFile> out_header_file,
+                                         const QString& map_name,
+                                         const QString& out_yaml,
                                          QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
     , m_map(std::move(map))
-    , out_header_file(std::move(out_header_file))
+    , m_map_name(map_name)
+    , m_out_yaml(out_yaml)
     , m_scene(std::make_unique<QGraphicsScene>())
     , m_pixmap(m_scene->addPixmap(QPixmap::fromImage(*m_map)))
 {
@@ -23,10 +26,13 @@ MapEditorMainWindow::MapEditorMainWindow(std::unique_ptr<QImage> map,
 
     // Install the event filter on the viewport
     m_ui->displayGraphicsView->viewport()->installEventFilter(this);
+
+    LoadYaml(m_out_yaml.toStdString().c_str());
 }
 
 MapEditorMainWindow::~MapEditorMainWindow()
 {
+    SaveYaml();
     delete m_ui;
 }
 
@@ -151,6 +157,8 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
                 {
                     auto [x, y] = GetMapCoordinates(map_posititon);
                     SetGpsPosition(longitude, latitude, x, y);
+
+                    SaveYaml();
                 }
                 else
                 {
@@ -192,7 +200,7 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
     {
         scene_positions.push_back(QPointF(pos.x, pos.y));
     }
-    m_ui->displayGraphicsView ->SetGpsPositions(scene_positions);
+    m_ui->displayGraphicsView->SetGpsPositions(scene_positions);
 
     if (m_positions.size() == 2)
     {
@@ -228,4 +236,50 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
     }
 
     update();
+}
+
+void
+MapEditorMainWindow::LoadYaml(const char* filename)
+{
+    try
+    {
+        auto node = YAML::LoadFile(filename);
+
+        for (const auto& pos : node["reference_positions"])
+        {
+            if (pos["longitude"] && pos["latitude"] && pos["x_pixel"] && pos["y_pixel"])
+            {
+                SetGpsPosition(pos["longitude"].as<double>(),
+                               pos["latitude"].as<double>(),
+                               pos["x_pixel"].as<int>(),
+                               pos["y_pixel"].as<int>());
+            }
+        }
+    } catch (const YAML::BadFile& e)
+    {
+        // Just ignore this
+    }
+}
+
+void
+MapEditorMainWindow::SaveYaml()
+{
+    YAML::Node node;
+
+    node["map_filename"] = m_map_name.toStdString();
+    for (const auto& pos : m_positions)
+    {
+        YAML::Node pos_node;
+
+        pos_node["longitude"] = pos.longitude;
+        pos_node["latitude"] = pos.latitude;
+        pos_node["x_pixel"] = pos.x;
+        pos_node["y_pixel"] = pos.y;
+
+        node["reference_positions"].push_back(pos_node);
+    }
+
+    std::ofstream f(m_out_yaml.toStdString());
+
+    f << node;
 }
