@@ -7,18 +7,29 @@
 #include <fmt/format.h>
 #include <fstream>
 
-MapEditorMainWindow::MapEditorMainWindow(std::unique_ptr<QImage> map,
-                                         const QString& map_name,
+MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
                                          const QString& out_yaml,
                                          QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
-    , m_map(std::move(map))
     , m_map_name(map_name)
     , m_out_yaml(out_yaml)
     , m_scene(std::make_unique<QGraphicsScene>())
-    , m_pixmap(m_scene->addPixmap(QPixmap::fromImage(*m_map)))
 {
+    m_map = std::make_unique<QImage>(map_name);
+    if (m_map->isNull())
+    {
+        fmt::print("Failed to load image: {}\n", map_name.toStdString());
+        exit(1);
+    }
+
+    constexpr auto tile_size = 240;
+    auto cropped_height = m_map->height() - m_map->height() % tile_size;
+    auto cropped_width = m_map->width() - m_map->width() % tile_size;
+
+    *m_map = m_map->copy(0, 0, cropped_width, cropped_height);
+    m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
+
     m_ui->setupUi(this);
 
     m_ui->displayGraphicsView->setScene(m_scene.get());

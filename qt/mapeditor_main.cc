@@ -15,14 +15,7 @@ main(int argc, char* argv[])
 
     QApplication a(argc, argv);
 
-    auto map = std::make_unique<QImage>(argv[1]);
-    if (map->isNull())
-    {
-        fmt::print("Failed to load image: {}\n", argv[1]);
-        return 1;
-    }
-
-    MapEditorMainWindow window(std::move(map), argv[1], argv[2]);
+    MapEditorMainWindow window(argv[1], argv[2]);
 
     window.show();
 

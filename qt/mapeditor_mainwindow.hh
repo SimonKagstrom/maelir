@@ -35,8 +35,7 @@ class MapEditorMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MapEditorMainWindow(std::unique_ptr<QImage> map,
-                                 const QString& map_name,
+    explicit MapEditorMainWindow(const QString& map_name,
                                  const QString& out_yaml,
                                  QWidget* parent = nullptr);
     ~MapEditorMainWindow() final;
