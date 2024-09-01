@@ -4,6 +4,8 @@
 #include <QPointF>
 #include <QVector>
 
+class MapEditorMainWindow;
+
 class MapEditorGraphicsView : public QGraphicsView
 {
     Q_OBJECT
@@ -11,11 +13,11 @@ class MapEditorGraphicsView : public QGraphicsView
 public:
     explicit MapEditorGraphicsView(QWidget* parent = nullptr);
 
-    void SetGpsPositions(const QVector<QPointF>& positions);
+    void SetOwner(MapEditorMainWindow* owner);
 
 protected:
     void drawForeground(QPainter* painter, const QRectF& rect) override;
 
 private:
-    QVector<QPointF> m_positions;
+    MapEditorMainWindow* m_owner {nullptr};
 };

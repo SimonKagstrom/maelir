@@ -31,6 +31,7 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
 
     m_ui->setupUi(this);
+    m_ui->displayGraphicsView->SetOwner(this);
 
     m_ui->displayGraphicsView->setScene(m_scene.get());
     m_ui->displayGraphicsView->centerOn(0, 0);
@@ -217,13 +218,6 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
         m_map_position_data = std::nullopt;
     }
     m_positions.push_back({longitude, latitude, x, y});
-
-    QVector<QPointF> scene_positions;
-    for (auto pos : m_positions)
-    {
-        scene_positions.push_back(QPointF(pos.x, pos.y));
-    }
-    m_ui->displayGraphicsView->SetGpsPositions(scene_positions);
 
     if (m_positions.size() == 2)
     {

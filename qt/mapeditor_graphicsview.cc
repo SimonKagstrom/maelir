@@ -1,5 +1,7 @@
 #include "mapeditor_graphicsview.hh"
 
+#include "mapeditor_mainwindow.hh"
+
 #include <QPainter>
 
 MapEditorGraphicsView::MapEditorGraphicsView(QWidget* parent)
@@ -8,10 +10,9 @@ MapEditorGraphicsView::MapEditorGraphicsView(QWidget* parent)
 }
 
 void
-MapEditorGraphicsView::SetGpsPositions(const QVector<QPointF>& positions)
+MapEditorGraphicsView::SetOwner(MapEditorMainWindow* owner)
 {
-    m_positions = positions;
-    viewport()->update(); // Trigger a repaint
+    m_owner = owner;
 }
 
 void
@@ -21,8 +22,14 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
 
     painter->setPen(Qt::NoPen);
 
+    QVector<QPointF> scene_positions;
+    for (auto pos : m_owner->m_positions)
+    {
+        scene_positions.push_back(QPointF(pos.x, pos.y));
+    }
+
     // Draw a dot for each GPS position
-    for (const auto& pos : m_positions)
+    for (const auto& pos : scene_positions)
     {
         painter->setBrush(Qt::magenta);
         painter->drawEllipse(pos, 8, 8);

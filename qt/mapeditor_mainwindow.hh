@@ -34,6 +34,8 @@ class MapEditorMainWindow : public QMainWindow
 {
     Q_OBJECT
 
+    friend class MapEditorGraphicsView;
+
 public:
     explicit MapEditorMainWindow(const QString& map_name,
                                  const QString& out_yaml,
