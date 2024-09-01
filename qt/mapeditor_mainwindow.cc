@@ -21,7 +21,6 @@ MapEditorMainWindow::MapEditorMainWindow(std::unique_ptr<QImage> map,
     m_ui->displayGraphicsView->setScene(m_scene.get());
     m_ui->displayGraphicsView->centerOn(0, 0);
 
-
     // Install the event filter on the viewport
     m_ui->displayGraphicsView->viewport()->installEventFilter(this);
 }
@@ -47,6 +46,7 @@ MapEditorMainWindow::eventFilter(QObject* obj, QEvent* event)
     return QMainWindow::eventFilter(obj, event);
 }
 
+
 bool
 MapEditorMainWindow::FilterMouse(QObject* obj, QEvent* event)
 {
@@ -70,7 +70,21 @@ MapEditorMainWindow::FilterMouse(QObject* obj, QEvent* event)
     else if (event->type() == QEvent::MouseMove)
     {
         auto [x, y] = GetMapCoordinates(mouse_event->pos());
-        m_ui->coordinateLabel->setText(QString("x: %1, y: %2").arg(x).arg(y));
+        QString gps_text = "";
+        if (m_map_position_data)
+        {
+            auto [longitude_at_pixel_0,
+                  latitude_at_pixel_0,
+                  longitude_per_pixel,
+                  latitude_per_pixel] = m_map_position_data.value();
+
+            auto longitude = longitude_at_pixel_0 + longitude_per_pixel * x;
+            auto latitude = latitude_at_pixel_0 + latitude_per_pixel * y;
+
+            gps_text = QString(",  Longitude: %1, Latitude: %2").arg(longitude).arg(latitude);
+        }
+
+        m_ui->coordinateLabel->setText(QString("x: %1, y: %2%3").arg(x).arg(y).arg(gps_text));
 
         if (m_panning)
         {
@@ -169,8 +183,16 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
     if (m_positions.full())
     {
         m_positions.clear();
+        m_map_position_data = std::nullopt;
     }
     m_positions.push_back({longitude, latitude, x, y});
+
+    QVector<QPointF> scene_positions;
+    for (auto pos : m_positions)
+    {
+        scene_positions.push_back(QPointF(pos.x, pos.y));
+    }
+    m_ui->displayGraphicsView ->SetGpsPositions(scene_positions);
 
     if (m_positions.size() == 2)
     {
@@ -179,7 +201,8 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
 
         if (first.x > second.x)
         {
-            printf("First coordinate should be top left, second bottom right. Unreliable results\n");
+            printf(
+                "First coordinate should be top left, second bottom right. Unreliable results\n");
             std::swap(first, second);
         }
 
@@ -192,10 +215,17 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
         auto latitude_at_pixel_0 = first.latitude - (latitude_diff / y_pixel_diff) * first.y;
         auto longitude_at_pixel_0 = first.longitude - (longitude_diff / x_pixel_diff) * first.x;
 
+        m_map_position_data = {longitude_at_pixel_0,
+                               latitude_at_pixel_0,
+                               longitude_diff / x_pixel_diff,
+                               latitude_diff / y_pixel_diff};
+
         fmt::print("Longitude diff: {}, Latitude diff: {}\n", longitude_diff, latitude_diff);
         fmt::print("X pixel diff: {}, Y pixel diff: {}\n", x_pixel_diff, y_pixel_diff);
         fmt::print("Latitude at pixel 0: {}, Longitude at pixel 0: {}\n",
                    latitude_at_pixel_0,
                    longitude_at_pixel_0);
     }
+
+    update();
 }

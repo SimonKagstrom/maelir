@@ -59,10 +59,12 @@ target_link_libraries(maelir_qt
 
 
 add_executable(map_editor
+    mapeditor_graphicsview.cc
     mapeditor_main.cc
     mapeditor_mainwindow.ui
     mapeditor_mainwindow.cc
 )
+target_include_directories(map_editor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(map_editor
     os_qt

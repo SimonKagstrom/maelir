@@ -1,9 +1,11 @@
 #pragma once
 
+#include "mapeditor_graphicsview.hh"
+
+#include <QFile>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QImage>
-#include <QFile>
 #include <QMainWindow>
 #include <QMouseEvent>
 #include <etl/list.h>
@@ -18,7 +20,9 @@ class MapEditorMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MapEditorMainWindow(std::unique_ptr<QImage> map, std::unique_ptr<QFile> out_header_file, QWidget* parent = nullptr);
+    explicit MapEditorMainWindow(std::unique_ptr<QImage> map,
+                                 std::unique_ptr<QFile> out_header_file,
+                                 QWidget* parent = nullptr);
     ~MapEditorMainWindow() final;
 
 protected:
@@ -35,6 +39,14 @@ private:
         int y;
     };
 
+    struct MapPositionData
+    {
+        double longitude_at_pixel_0;
+        double latitude_at_pixel_0;
+        double longitude_per_pixel;
+        double latitude_per_pixel;
+    };
+
     bool FilterMouse(QObject* obj, QEvent* event);
     std::pair<int, int> GetMapCoordinates(QPoint pos);
     void RightClickContextMenu(QPoint mouse_position, QPoint map_posititon);
@@ -49,6 +61,7 @@ private:
     QGraphicsPixmapItem* m_pixmap;
 
     etl::list<GpsToPixel, 2> m_positions;
+    std::optional<MapPositionData> m_map_position_data;
 
     bool m_panning {false};
     QPoint m_last_mouse_pos {0, 0};

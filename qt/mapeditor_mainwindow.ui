@@ -28,7 +28,7 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QGraphicsView" name="displayGraphicsView">
+     <widget class="MapEditorGraphicsView" name="displayGraphicsView">
       <property name="mouseTracking">
        <bool>true</bool>
       </property>
@@ -68,6 +68,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MapEditorGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">mapeditor_graphicsview.hh</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
