@@ -1,4 +1,4 @@
-function(tilegen DEST_LIBRARY IMAGE)
+function(tilegen DEST_LIBRARY YAML_FILE)
     set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${DEST_LIBRARY})
     set(out_cpp ${OUTPUT_DIR}/tile.cc)
     set(out_hpp ${OUTPUT_DIR}/tile.hh)
@@ -8,11 +8,11 @@ function(tilegen DEST_LIBRARY IMAGE)
         COMMAND mkdir -p ${OUTPUT_DIR}
         COMMAND
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/tiler.py
-            ${IMAGE}
+            ${YAML_FILE}
             ${OUTPUT_DIR}
             tile
 
-        DEPENDS ${IMAGE}
+        DEPENDS ${YAML_FILE}
         DEPENDS ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/tiler.py
     )
 

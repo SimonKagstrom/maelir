@@ -12,6 +12,12 @@ reference_positions:
     x_pixel: 550
     y_pixel: 1900
 
+corner_position:
+  latitude: 59.30211281169723
+  longitude: 17.937790445665566
+  latitude_pixel_size: 16485
+  longitude_pixel_size: 8766
+
 extra_land:
   - x_pixel: 100
     y_pixel: 110

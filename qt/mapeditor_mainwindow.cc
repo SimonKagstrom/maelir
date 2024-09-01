@@ -79,13 +79,10 @@ MapEditorMainWindow::FilterMouse(QObject* obj, QEvent* event)
         QString gps_text = "";
         if (m_map_position_data)
         {
-            auto [longitude_at_pixel_0,
-                  latitude_at_pixel_0,
-                  longitude_per_pixel,
-                  latitude_per_pixel] = m_map_position_data.value();
-
-            auto longitude = longitude_at_pixel_0 + longitude_per_pixel * x;
-            auto latitude = latitude_at_pixel_0 + latitude_per_pixel * y;
+            auto longitude = m_map_position_data->longitude_at_pixel_0 +
+                             m_map_position_data->longitude_per_pixel * x;
+            auto latitude = m_map_position_data->latitude_at_pixel_0 +
+                            m_map_position_data->latitude_per_pixel * y;
 
             gps_text = QString(",  Longitude: %1, Latitude: %2").arg(longitude).arg(latitude);
         }
@@ -223,10 +220,15 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
         auto latitude_at_pixel_0 = first.latitude - (latitude_diff / y_pixel_diff) * first.y;
         auto longitude_at_pixel_0 = first.longitude - (longitude_diff / x_pixel_diff) * first.x;
 
+        auto latitude_pixel_size = y_pixel_diff / latitude_diff;
+        auto longitude_pixel_size = x_pixel_diff / longitude_diff;
+
         m_map_position_data = {longitude_at_pixel_0,
                                latitude_at_pixel_0,
                                longitude_diff / x_pixel_diff,
-                               latitude_diff / y_pixel_diff};
+                               latitude_diff / y_pixel_diff,
+                               static_cast<unsigned>(std::abs(longitude_pixel_size)),
+                               static_cast<unsigned>(std::abs(latitude_pixel_size))};
 
         fmt::print("Longitude diff: {}, Latitude diff: {}\n", longitude_diff, latitude_diff);
         fmt::print("X pixel diff: {}, Y pixel diff: {}\n", x_pixel_diff, y_pixel_diff);
@@ -277,6 +279,18 @@ MapEditorMainWindow::SaveYaml()
         pos_node["y_pixel"] = pos.y;
 
         node["reference_positions"].push_back(pos_node);
+    }
+
+    if (m_map_position_data)
+    {
+        YAML::Node corner_position;
+
+        corner_position["latitude"] = m_map_position_data->latitude_at_pixel_0;
+        corner_position["longitude"] = m_map_position_data->longitude_at_pixel_0;
+        corner_position["latitude_pixel_size"] = m_map_position_data->latitude_pixel_size;
+        corner_position["longitude_pixel_size"] = m_map_position_data->longitude_pixel_size;
+
+        node["corner_position"] = corner_position;
     }
 
     std::ofstream f(m_out_yaml.toStdString());

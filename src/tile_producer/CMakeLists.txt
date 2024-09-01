@@ -1,8 +1,8 @@
-if ("${MAP_IMAGE_PATH}" STREQUAL "")
-    message(FATAL_ERROR "-DMAP_IMAGE_PATH=<path_to_png_image> is required when running cmake")
+if ("${MAP_YAML_PATH}" STREQUAL "")
+    message(FATAL_ERROR "-DMAP_YAML_PATH=<path_to_maelir_yaml_metadata> is required when running cmake")
 endif()
 
-tilegen(tile_library ${MAP_IMAGE_PATH})
+tilegen(tile_library ${MAP_YAML_PATH})
 
 add_library(tile_producer EXCLUDE_FROM_ALL
     tile_producer.cc

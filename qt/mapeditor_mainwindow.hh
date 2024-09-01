@@ -47,6 +47,9 @@ private:
         double latitude_at_pixel_0;
         double longitude_per_pixel;
         double latitude_per_pixel;
+
+        unsigned longitude_pixel_size;
+        unsigned latitude_pixel_size;
     };
 
     bool FilterMouse(QObject* obj, QEvent* event);

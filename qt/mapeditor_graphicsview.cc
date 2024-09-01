@@ -20,11 +20,13 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
     Q_UNUSED(rect);
 
     painter->setPen(Qt::NoPen);
-    painter->setBrush(Qt::magenta);
 
     // Draw a dot for each GPS position
     for (const auto& pos : m_positions)
     {
-        painter->drawEllipse(pos, 6, 6);
+        painter->setBrush(Qt::magenta);
+        painter->drawEllipse(pos, 8, 8);
+        painter->setBrush(Qt::cyan);
+        painter->drawEllipse(pos, 5, 5);
     }
 }
