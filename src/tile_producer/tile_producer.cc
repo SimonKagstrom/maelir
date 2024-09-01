@@ -1,7 +1,7 @@
 #include "tile_producer.hh"
 
+#include "generated_tiles.hh"
 #include "hal/i_display.hh"
-#include "tile.hh"
 #include "tile_utils.hh"
 
 #include <PNGdec.h>

@@ -43,7 +43,6 @@ constexpr auto kCornerLongitude = {corner_longitude};
 constexpr auto kPixelLatitudeSize = {pixel_latitude_size};
 constexpr auto kPixelLongitudeSize = {pixel_longitude_size};
 
-constexpr auto kTileSize = {tile_size};
 constexpr auto kRowSize = {row_size};
 constexpr auto kColumnSize = {column_size};
 
@@ -98,8 +97,8 @@ if __name__ == "__main__":
 
     yaml_data = yaml.safe_load(open(sys.argv[1], 'r'))
 
-    if "map_filename" not in yaml_data:
-        print("Error: map_filename not found in input yaml file. See mapeditor_metadata.yaml for an example")
+    if "corner_position" not in yaml_data or "tile_size" not in yaml_data:
+        print("Error: map_filename/tile_size not found in input yaml file. See mapeditor_metadata.yaml for an example")
         sys.exit(1)
 
     if "corner_position" not in yaml_data:
@@ -115,7 +114,7 @@ if __name__ == "__main__":
     num_pixels = img.size[0]*img.size[1]
     num_colors = len(img.getcolors(num_pixels))
 
-    tile_size = 240
+    tile_size = yaml_data['tile_size']
     tiles = create_tiles(img, tile_size=tile_size)
     # save_tiles(tiles, num_colors=256)
     data_size = create_source_files(yaml_data,

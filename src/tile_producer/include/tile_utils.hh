@@ -3,6 +3,7 @@
 #include "gps_data.hh"
 #include "hal/i_display.hh"
 #include "tile.hh"
+#include "generated_tiles.hh"
 
 #include <optional>
 #include <utility>

@@ -1,5 +1,6 @@
 #include "mapeditor_mainwindow.hh"
 
+#include "tile.hh"
 #include "ui_mapeditor_mainwindow.h"
 
 #include <QInputDialog>
@@ -23,9 +24,8 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
         exit(1);
     }
 
-    constexpr auto tile_size = 240;
-    auto cropped_height = m_map->height() - m_map->height() % tile_size;
-    auto cropped_width = m_map->width() - m_map->width() % tile_size;
+    auto cropped_height = m_map->height() - m_map->height() % kTileSize;
+    auto cropped_width = m_map->width() - m_map->width() % kTileSize;
 
     *m_map = m_map->copy(0, 0, cropped_width, cropped_height);
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
@@ -303,7 +303,10 @@ MapEditorMainWindow::SaveYaml()
 {
     YAML::Node node;
 
+    // Globals
     node["map_filename"] = m_map_name.toStdString();
+    node["tile_size"] = kTileSize;
+
     for (const auto& pos : m_positions)
     {
         YAML::Node pos_node;

@@ -1,6 +1,6 @@
 #include "gps_simulator.hh"
 
-#include "tile.hh"
+#include "generated_tiles.hh"
 #include "tile_utils.hh"
 
 GpsSimulator::GpsSimulator()

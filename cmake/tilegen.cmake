@@ -1,7 +1,7 @@
 function(tilegen DEST_LIBRARY YAML_FILE)
     set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${DEST_LIBRARY})
-    set(out_cpp ${OUTPUT_DIR}/tile.cc)
-    set(out_hpp ${OUTPUT_DIR}/tile.hh)
+    set(out_cpp ${OUTPUT_DIR}/generated_tiles.cc)
+    set(out_hpp ${OUTPUT_DIR}/generated_tiles.hh)
 
     add_custom_command(
         OUTPUT ${out_cpp} ${out_hpp}
@@ -10,7 +10,7 @@ function(tilegen DEST_LIBRARY YAML_FILE)
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/tiler.py
             ${YAML_FILE}
             ${OUTPUT_DIR}
-            tile
+            generated_tiles
 
         DEPENDS ${YAML_FILE}
         DEPENDS ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/tiler.py
