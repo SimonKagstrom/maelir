@@ -40,6 +40,20 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QLabel" name="coordinateLabel">
+      <property name="text">
+       <string>Coordinates</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="informationLabel">
+      <property name="text">
+       <string>Information</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">

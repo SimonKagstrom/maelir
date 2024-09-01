@@ -2,6 +2,10 @@
 
 #include "ui_mapeditor_mainwindow.h"
 
+#include <QInputDialog>
+#include <QMessageBox>
+#include <fmt/format.h>
+
 MapEditorMainWindow::MapEditorMainWindow(std::unique_ptr<QImage> map, QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
@@ -28,35 +32,48 @@ MapEditorMainWindow::~MapEditorMainWindow()
 bool
 MapEditorMainWindow::eventFilter(QObject* obj, QEvent* event)
 {
-    if (obj == m_ui->displayGraphicsView->viewport() && filterMouse(obj, event))
+    if (obj == m_ui->displayGraphicsView->viewport())
     {
-        return true;
+        if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseMove ||
+            event->type() == QEvent::MouseButtonRelease)
+        {
+            return FilterMouse(obj, event);
+        }
     }
 
     return QMainWindow::eventFilter(obj, event);
 }
 
 bool
-MapEditorMainWindow::filterMouse(QObject* obj, QEvent* event)
+MapEditorMainWindow::FilterMouse(QObject* obj, QEvent* event)
 {
+    QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
+
     if (event->type() == QEvent::MouseButtonPress)
     {
-        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-        if (mouseEvent->button() == Qt::LeftButton)
+        m_last_mouse_pos = mouse_event->pos();
+        if (mouse_event->button() == Qt::LeftButton)
         {
             m_panning = true;
-            m_lastMousePos = mouseEvent->pos();
             setCursor(Qt::ClosedHandCursor);
+            return true;
+        }
+        else if (mouse_event->button() == Qt::RightButton)
+        {
+            RightClickContextMenu(mouse_event->globalPosition().toPoint(), m_last_mouse_pos);
             return true;
         }
     }
     else if (event->type() == QEvent::MouseMove)
     {
+        auto [x, y] = GetMapCoordinates(mouse_event->pos());
+        m_ui->coordinateLabel->setText(QString("x: %1, y: %2").arg(x).arg(y));
+
         if (m_panning)
         {
-            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-            QPoint delta = mouseEvent->pos() - m_lastMousePos;
-            m_lastMousePos = mouseEvent->pos();
+            QPoint delta = mouse_event->pos() - m_last_mouse_pos;
+
+            m_last_mouse_pos = mouse_event->pos();
             m_ui->displayGraphicsView->centerOn(
                 m_ui->displayGraphicsView->mapToScene(
                     m_ui->displayGraphicsView->viewport()->rect().center()) -
@@ -66,8 +83,7 @@ MapEditorMainWindow::filterMouse(QObject* obj, QEvent* event)
     }
     else if (event->type() == QEvent::MouseButtonRelease)
     {
-        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-        if (mouseEvent->button() == Qt::LeftButton)
+        if (mouse_event->button() == Qt::LeftButton)
         {
             m_panning = false;
             setCursor(Qt::ArrowCursor);
@@ -76,4 +92,92 @@ MapEditorMainWindow::filterMouse(QObject* obj, QEvent* event)
     }
 
     return false;
+}
+
+std::pair<int, int>
+MapEditorMainWindow::GetMapCoordinates(QPoint pos)
+{
+    QPointF scenePos = m_ui->displayGraphicsView->mapToScene(pos);
+
+    return {static_cast<int>(scenePos.x()), static_cast<int>(scenePos.y())};
+}
+
+void
+MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_posititon)
+{
+    // Show context menu
+    QMenu contextMenu(this);
+    QAction* action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
+    QAction* selectedAction = contextMenu.exec(mouse_position);
+
+    if (selectedAction == action_set_coordinates)
+    {
+        bool ok;
+        QString text = QInputDialog::getText(
+            this,
+            tr("Set GPS Coordinates"),
+            tr("Enter Longitude, Latitude (e.g., 59.30233189848152, 17.941052011787928):"),
+            QLineEdit::Normal,
+            "",
+            &ok);
+
+        if (ok && !text.isEmpty())
+        {
+            QStringList coordinates = text.split(",");
+            if (coordinates.size() == 2)
+            {
+                bool long_ok, lat_ok;
+                double longitude = coordinates[0].trimmed().toDouble(&long_ok);
+                double latitude = coordinates[1].trimmed().toDouble(&lat_ok);
+
+                if (long_ok && lat_ok)
+                {
+                    auto [x, y] = GetMapCoordinates(map_posititon);
+                    SetGpsPosition(longitude, latitude, x, y);
+                }
+                else
+                {
+                    QMessageBox::warning(
+                        this,
+                        tr("Invalid Input"),
+                        tr("Please enter valid numeric values for longitude and latitude."));
+                }
+            }
+            else
+            {
+                QMessageBox::warning(
+                    this,
+                    tr("Invalid Input"),
+                    tr("Please enter the coordinates in the format: Longitude, Latitude."));
+            }
+        }
+    }
+}
+
+void
+MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, int y)
+{
+    fmt::print("Setting GPS coordinates at {},{} to Longitude: {}, Latitude: {}\n",
+               x,
+               y,
+               longitude,
+               latitude);
+
+    if (m_positions.full())
+    {
+        m_positions.pop_front();
+    }
+    m_positions.push_back({longitude, latitude, x, y});
+
+    if (m_positions.size() == 2)
+    {
+        auto& first = m_positions.front();
+        auto& second = m_positions.back();
+
+        auto distance = std::sqrt(std::pow(first.x - second.x, 2) + std::pow(first.y - second.y, 2));
+        auto gps_distance = std::sqrt(std::pow(first.longitude - second.longitude, 2) +
+                                      std::pow(first.latitude - second.latitude, 2));
+
+        fmt::print("Distance between points: {} pixels, {} GPS\n", distance, gps_distance);
+    }
 }
