@@ -168,7 +168,7 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
 
     if (m_positions.full())
     {
-        m_positions.pop_front();
+        m_positions.clear();
     }
     m_positions.push_back({longitude, latitude, x, y});
 
@@ -177,13 +177,25 @@ MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, in
         auto& first = m_positions.front();
         auto& second = m_positions.back();
 
+        if (first.x > second.x)
+        {
+            printf("First coordinate should be top left, second bottom right. Unreliable results\n");
+            std::swap(first, second);
+        }
+
         auto longitude_diff = second.longitude - first.longitude;
         auto latitude_diff = second.latitude - first.latitude;
 
         auto x_pixel_diff = second.x - first.x;
         auto y_pixel_diff = second.y - first.y;
 
+        auto latitude_at_pixel_0 = first.latitude - (latitude_diff / y_pixel_diff) * first.y;
+        auto longitude_at_pixel_0 = first.longitude - (longitude_diff / x_pixel_diff) * first.x;
+
         fmt::print("Longitude diff: {}, Latitude diff: {}\n", longitude_diff, latitude_diff);
         fmt::print("X pixel diff: {}, Y pixel diff: {}\n", x_pixel_diff, y_pixel_diff);
+        fmt::print("Latitude at pixel 0: {}, Longitude at pixel 0: {}\n",
+                   latitude_at_pixel_0,
+                   longitude_at_pixel_0);
     }
 }
