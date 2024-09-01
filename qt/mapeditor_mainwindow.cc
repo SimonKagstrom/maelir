@@ -127,8 +127,9 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 {
     // Show context menu
     QMenu contextMenu(this);
-    QAction* action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
-    QAction* selectedAction = contextMenu.exec(mouse_position);
+    auto action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
+    auto action_add_land_color = contextMenu.addAction("Add land color for this point");
+    auto selectedAction = contextMenu.exec(mouse_position);
 
     if (selectedAction == action_set_coordinates)
     {
@@ -173,6 +174,20 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
                     tr("Please enter the coordinates in the format: Longitude, Latitude."));
             }
         }
+    }
+
+    if (selectedAction == action_add_land_color)
+    {
+        auto [x, y] = GetMapCoordinates(map_posititon);
+        auto color = m_map->pixelColor(x, y);
+        fmt::print("Color at {},{}: R: {}, G: {}, B: {}\n",
+                   x,
+                   y,
+                   color.red(),
+                   color.green(),
+                   color.blue());
+
+        m_land_colors.insert(color);
     }
 }
 
@@ -257,6 +272,15 @@ MapEditorMainWindow::LoadYaml(const char* filename)
                                pos["y_pixel"].as<int>());
             }
         }
+
+        for (const auto& color : node["land_pixel_colors"])
+        {
+            if (color["r"] && color["g"] && color["b"])
+            {
+                m_land_colors.insert(
+                    QColor(color["r"].as<int>(), color["g"].as<int>(), color["b"].as<int>()));
+            }
+        }
     } catch (const YAML::BadFile& e)
     {
         // Just ignore this
@@ -291,6 +315,23 @@ MapEditorMainWindow::SaveYaml()
         corner_position["longitude_pixel_size"] = m_map_position_data->longitude_pixel_size;
 
         node["corner_position"] = corner_position;
+    }
+
+    if (m_land_colors.size() > 0)
+    {
+        YAML::Node colors;
+        for (const auto& color : m_land_colors)
+        {
+            YAML::Node color_node;
+
+            color_node["r"] = color.red();
+            color_node["g"] = color.green();
+            color_node["b"] = color.blue();
+
+            colors.push_back(color_node);
+        }
+
+        node["land_pixel_colors"] = colors;
     }
 
     std::ofstream f(m_out_yaml.toStdString());

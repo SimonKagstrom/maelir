@@ -4,13 +4,27 @@
 
 #include <QFile>
 #include <QGraphicsPixmapItem>
-#include <yaml-cpp/yaml.h>
 #include <QGraphicsScene>
 #include <QImage>
 #include <QMainWindow>
 #include <QMouseEvent>
 #include <etl/list.h>
+#include <unordered_set>
+#include <yaml-cpp/yaml.h>
 
+/*
+ * From  https://stackoverflow.com/questions/70175131/qt-how-to-implement-a-hash-function-for-qcolor
+ *
+ * Since we use a std::unordered_set for land colors
+ */
+template <>
+struct std::hash<QColor>
+{
+    std::size_t operator()(const QColor& c) const noexcept
+    {
+        return std::hash<unsigned int> {}(c.rgba());
+    }
+};
 namespace Ui
 {
 class MainWindow;
@@ -56,7 +70,7 @@ private:
     std::pair<int, int> GetMapCoordinates(QPoint pos);
     void RightClickContextMenu(QPoint mouse_position, QPoint map_posititon);
     void SetGpsPosition(double longitude, double latitude, int x, int y);
-    void LoadYaml(const char *filename);
+    void LoadYaml(const char* filename);
     void SaveYaml();
 
     Ui::MainWindow* m_ui {nullptr};
@@ -69,6 +83,9 @@ private:
 
     etl::list<GpsToPixel, 2> m_positions;
     std::optional<MapPositionData> m_map_position_data;
+
+    // Colors for land (for route planning)
+    std::unordered_set<QColor> m_land_colors;
 
     bool m_panning {false};
     QPoint m_last_mouse_pos {0, 0};

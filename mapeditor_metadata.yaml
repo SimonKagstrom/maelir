@@ -18,6 +18,15 @@ corner_position:
   latitude_pixel_size: 16485
   longitude_pixel_size: 8766
 
+land_pixel_colors:
+  - r: 254
+    g: 242
+    b: 203
+
+  - r: 197
+    g: 185
+    b: 158
+
 extra_land:
   - x_pixel: 100
     y_pixel: 110
