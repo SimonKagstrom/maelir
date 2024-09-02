@@ -81,8 +81,8 @@ private:
 
     std::unique_ptr<QGraphicsScene> m_scene;
     std::unique_ptr<QImage> m_map;
-    QString m_map_name;
-    QString m_out_yaml;
+    const QString m_map_name;
+    const QString m_out_yaml;
     QGraphicsPixmapItem* m_pixmap;
 
     etl::list<GpsToPixel, 2> m_positions;

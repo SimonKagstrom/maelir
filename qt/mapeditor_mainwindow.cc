@@ -29,7 +29,7 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
 
     *m_map = m_map->copy(0, 0, cropped_width, cropped_height);
 
-    m_land_mask.resize(cropped_height * cropped_width * kPathFinderTileSize, false);
+    m_land_mask.resize((cropped_height * cropped_width) / kPathFinderTileSize, false);
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
 
     m_ui->setupUi(this);
@@ -345,6 +345,25 @@ MapEditorMainWindow::SaveYaml()
 
         node["land_pixel_colors"] = colors;
     }
+
+    // Save land mask as uint32_t values
+    std::vector<uint32_t> land_mask_uint32;
+    uint32_t cur_val = 0;
+    for (auto i = 0; i < m_land_mask.size(); ++i)
+    {
+        cur_val |= m_land_mask[i] << (i % 32);
+        if ((i + 1) % 32 == 0)
+        {
+            land_mask_uint32.push_back(cur_val);
+            cur_val = 0;
+        }
+    }
+    if (cur_val != 0)
+    {
+        land_mask_uint32.push_back(cur_val);
+    }
+
+    node["land_mask"] = land_mask_uint32;
 
     std::ofstream f(m_out_yaml.toStdString());
 
