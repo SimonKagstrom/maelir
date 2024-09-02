@@ -143,6 +143,8 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     QMenu contextMenu(this);
     auto action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
     auto action_add_land_color = contextMenu.addAction("Add land color for this point");
+    auto action_add_extra_land = contextMenu.addAction("Mark this route tile as land");
+    auto action_add_extra_water = contextMenu.addAction("Mark this route tile as water");
     auto selectedAction = contextMenu.exec(mouse_position);
 
     if (selectedAction == action_set_coordinates)
@@ -190,7 +192,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
         }
     }
 
-    if (selectedAction == action_add_land_color)
+    else if (selectedAction == action_add_land_color)
     {
         auto [x, y] = GetMapCoordinates(map_posititon);
         auto color = m_map->pixelColor(x, y);
@@ -202,6 +204,24 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
                    color.blue());
 
         m_land_colors.insert(color);
+    }
+
+    else if (selectedAction == action_add_extra_land || selectedAction == action_add_extra_water)
+    {
+        auto [x, y] = GetMapCoordinates(map_posititon);
+
+        x = x - x % kPathFinderTileSize;
+        y = y - y % kPathFinderTileSize;
+
+        printf("Extra land/water at %d, %d\n", x, y);
+        if (selectedAction == action_add_extra_water)
+        {
+            m_extra_water.insert({x, y});
+        }
+        else
+        {
+            m_extra_land.insert({x, y});
+        }
     }
 }
 
@@ -289,6 +309,22 @@ MapEditorMainWindow::LoadYaml(const char* filename)
             }
         }
 
+        for (const auto& pos : node["extra_land"])
+        {
+            if (pos["x_pixel"] && pos["y_pixel"])
+            {
+                m_extra_land.insert({pos["x_pixel"].as<int>(), pos["y_pixel"].as<int>()});
+            }
+        }
+
+        for (const auto& pos : node["extra_water"])
+        {
+            if (pos["x_pixel"] && pos["y_pixel"])
+            {
+                m_extra_water.insert({pos["x_pixel"].as<int>(), pos["y_pixel"].as<int>()});
+            }
+        }
+
         CalculateLand();
     } catch (const YAML::BadFile& e)
     {
@@ -329,7 +365,7 @@ MapEditorMainWindow::SaveYaml()
         node["corner_position"] = corner_position;
     }
 
-    if (m_land_colors.size() > 0)
+    if (!m_land_colors.empty())
     {
         YAML::Node colors;
         for (const auto& color : m_land_colors)
@@ -363,6 +399,38 @@ MapEditorMainWindow::SaveYaml()
         land_mask_uint32.push_back(cur_val);
     }
 
+    if (!m_extra_land.empty())
+    {
+        YAML::Node extra_land;
+        for (const auto& pos : m_extra_land)
+        {
+            YAML::Node pos_node;
+
+            pos_node["x_pixel"] = pos.first;
+            pos_node["y_pixel"] = pos.second;
+
+            extra_land.push_back(pos_node);
+        }
+
+        node["extra_land"] = extra_land;
+    }
+    if (!m_extra_water.empty())
+    {
+        YAML::Node extra_water;
+        for (const auto& pos : m_extra_water)
+        {
+            YAML::Node pos_node;
+
+            pos_node["x_pixel"] = pos.first;
+            pos_node["y_pixel"] = pos.second;
+
+            extra_water.push_back(pos_node);
+        }
+
+        node["extra_water"] = extra_water;
+    }
+
+
     node["land_mask"] = land_mask_uint32;
 
     std::ofstream f(m_out_yaml.toStdString());
@@ -391,6 +459,18 @@ MapEditorMainWindow::CalculateLand()
                 m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::red));
             }
         }
+    }
+
+    for (auto [x, y] : m_extra_land)
+    {
+        m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = true;
+        m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::green));
+    }
+
+    for (auto [x, y] : m_extra_water)
+    {
+        m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = false;
+        m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::blue));
     }
 }
 

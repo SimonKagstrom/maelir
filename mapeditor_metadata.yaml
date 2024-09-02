@@ -34,3 +34,7 @@ extra_land:
     y_pixel: 110
   - x_pixel: 200
     y_pixel: 220
+
+extra_water:
+  - x_pixel: 900
+    y_pixel: 910

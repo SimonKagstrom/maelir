@@ -25,6 +25,16 @@ struct std::hash<QColor>
         return std::hash<unsigned int> {}(c.rgba());
     }
 };
+
+template<>
+struct std::hash<std::pair<int, int>>
+{
+    std::size_t operator()(const std::pair<int, int> &c) const noexcept
+    {
+        return std::hash<int64_t> {}(static_cast<int64_t>(c.first) << 32 | c.second);
+    }
+};
+
 namespace Ui
 {
 class MainWindow;
@@ -90,6 +100,10 @@ private:
 
     // Colors for land (for route planning)
     std::unordered_set<QColor> m_land_colors;
+    // "Extra land", marked manually
+    std::unordered_set<std::pair<int, int>> m_extra_land;
+    // "Extra water", marked manually
+    std::unordered_set<std::pair<int, int>> m_extra_water;
 
     bool m_panning {false};
     QPoint m_last_mouse_pos {0, 0};
