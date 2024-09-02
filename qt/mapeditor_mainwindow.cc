@@ -206,22 +206,17 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
         m_land_colors.insert(color);
     }
 
-    else if (selectedAction == action_add_extra_land || selectedAction == action_add_extra_water)
+    else if (selectedAction == action_add_extra_land)
     {
         auto [x, y] = GetMapCoordinates(map_posititon);
 
-        x = x - x % kPathFinderTileSize;
-        y = y - y % kPathFinderTileSize;
+        AddExtraLand(x, y);
+    }
+    else if (selectedAction == action_add_extra_water)
+    {
+        auto [x, y] = GetMapCoordinates(map_posititon);
 
-        printf("Extra land/water at %d, %d\n", x, y);
-        if (selectedAction == action_add_extra_water)
-        {
-            m_extra_water.insert({x, y});
-        }
-        else
-        {
-            m_extra_land.insert({x, y});
-        }
+        AddExtraWater(x, y);
     }
 }
 
@@ -463,16 +458,37 @@ MapEditorMainWindow::CalculateLand()
 
     for (auto [x, y] : m_extra_land)
     {
-        m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = true;
-        m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::green));
+        AddExtraLand(x, y);
     }
 
     for (auto [x, y] : m_extra_water)
     {
-        m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = false;
-        m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::blue));
+        AddExtraWater(x, y);
     }
 }
+
+void
+MapEditorMainWindow::AddExtraLand(int x, int y)
+{
+    x = x - x % kPathFinderTileSize;
+    y = y - y % kPathFinderTileSize;
+
+    m_extra_land.insert({x, y});
+    m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = true;
+    m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::green));
+}
+
+void
+MapEditorMainWindow::AddExtraWater(int x, int y)
+{
+    x = x - x % kPathFinderTileSize;
+    y = y - y % kPathFinderTileSize;
+
+    m_extra_water.insert({x, y});
+    m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = false;
+    m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::cyan));
+}
+
 
 unsigned
 MapEditorMainWindow::CountLandPixels(QImage& chunk)

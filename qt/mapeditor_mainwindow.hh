@@ -82,6 +82,8 @@ private:
     void RightClickContextMenu(QPoint mouse_position, QPoint map_posititon);
     void SetGpsPosition(double longitude, double latitude, int x, int y);
     void CalculateLand();
+    void AddExtraLand(int x, int y);
+    void AddExtraWater(int x, int y);
     unsigned CountLandPixels(QImage& image);
 
     void LoadYaml(const char* filename);
