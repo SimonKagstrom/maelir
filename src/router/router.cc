@@ -142,25 +142,24 @@ Router::Neighbors(IndexType index) const
     {
         neighbors.push_back({above});
     }
-    else printf("Above land\n");
+
     auto below = index + m_row_size;
     if (IsWater(m_land_mask, below))
     {
         neighbors.push_back({below});
     }
-    else printf("below land\n");
+
     auto left = index - 1;
     if (IsWater(m_land_mask, left))
     {
         neighbors.push_back({left});
     }
-    else printf("left land\n");
+
     auto right = index + 1;
     if (IsWater(m_land_mask, right))
     {
         neighbors.push_back({right});
     }
-    else printf("right land\n");
 
     return neighbors;
 }

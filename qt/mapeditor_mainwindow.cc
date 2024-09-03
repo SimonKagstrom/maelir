@@ -59,7 +59,13 @@ MapEditorMainWindow::eventFilter(QObject* obj, QEvent* event)
         if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseMove ||
             event->type() == QEvent::MouseButtonRelease)
         {
-            return FilterMouse(obj, event);
+            auto filtered = FilterMouse(obj, event);
+            if (filtered)
+            {
+                m_scene->invalidate(m_scene->sceneRect());
+            }
+
+            return filtered;
         }
     }
 
