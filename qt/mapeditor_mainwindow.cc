@@ -478,7 +478,7 @@ MapEditorMainWindow::CalculateLand()
             cur_val = 0;
         }
     }
-    if (cur_val != 0)
+    if (land_mask.size() % 32 != 0)
     {
         m_land_mask_uint32.push_back(cur_val);
     }

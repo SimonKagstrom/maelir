@@ -13,15 +13,17 @@ public:
 
         // 16x8 land mask
         land_mask = {
-         // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14
-            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 0 (make clang-format ignore line breaks)
-            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 1
-            w, w, w, w, w, w, w, L, L, L, w, w, w, w, w, // 2 Some land
-            w, w, w, w, w, w, L, L, w, w, w, w, w, w, w, // 3 Some land
-            w, w, w, w, w, w, L, L, L, w, w, w, w, w, w, // 4 Some land
-            w, w, w, w, w, w, w, w, L, w, w, w, w, w, w, // 5
-            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 6
-            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 7
+            // clang-format off
+        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 0
+            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 1
+            w, w, w, w, w, w, w, L, L, L, w, w, w, w, w, w, // 2 Some land
+            w, w, w, w, w, w, L, L, w, w, w, w, w, w, w, w, // 3 Some land
+            w, w, w, w, w, w, L, L, L, w, w, w, w, w, w, w, // 4 Some land
+            w, w, w, w, w, w, w, w, L, w, w, w, w, w, w, w, // 5
+            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 6
+            w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, // 7
+            // clang-format on
         };
 
         // Save land mask as uint32_t values
@@ -35,7 +37,7 @@ public:
                 cur_val = 0;
             }
         }
-        if (cur_val != 0)
+        if (land_mask.size() % 32 != 0)
         {
             m_land_mask_uint32.push_back(cur_val);
         }
@@ -46,7 +48,7 @@ public:
 
     auto ToPoint(auto row_x, auto row_y)
     {
-        return Point {row_y * kPathFinderTileSize, row_x * kPathFinderTileSize};
+        return Point {row_x * kPathFinderTileSize, row_y * kPathFinderTileSize};
     }
 
     std::unique_ptr<Router> router;

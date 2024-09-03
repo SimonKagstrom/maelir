@@ -15,7 +15,7 @@ IsWater(std::span<const uint32_t> land_mask, IndexType index)
 {
     if (index / 32 >= land_mask.size())
     {
-        printf("Index out of bounds %d vs %zu\n", index, land_mask.size());
+        printf("Index out of bounds %d (%d) vs %zu\n", index, index / 32, land_mask.size());
         return false;
     }
 
