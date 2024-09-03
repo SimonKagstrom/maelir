@@ -20,10 +20,12 @@ add_subdirectory(../.. maelir)
 add_executable(ut
     main.cc
     test_nmea_parser.cc
+    test_router.cc
 )
 
 target_link_libraries(ut
     nmea_parser
+    router
     doctest::doctest
     trompeloeil::trompeloeil
 )

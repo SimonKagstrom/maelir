@@ -35,7 +35,7 @@ TEST_CASE("the NMEA parser can handle broken messages")
     {
         std::string buf;
 
-        std::copy("$GPGGA", "$GPGGA" + 1, std::back_inserter(buf));
+        std::copy("$GPGGA", "$GPGGA", std::back_inserter(buf));
         for (auto i = 0; i < 1024; i++)
         {
             buf.push_back('x');
@@ -63,5 +63,5 @@ TEST_CASE("the NMEA parser can restart after broken messages")
 
 TEST_CASE("an empty NMEA message is handled")
 {
-"$GPGGA,171029.00,,,    "
+    //"$GPGGA,171029.00,,,    "
 }

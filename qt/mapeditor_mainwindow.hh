@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mapeditor_graphicsview.hh"
+#include "router.hh"
 
 #include <QFile>
 #include <QGraphicsPixmapItem>
@@ -26,10 +27,10 @@ struct std::hash<QColor>
     }
 };
 
-template<>
+template <>
 struct std::hash<std::pair<int, int>>
 {
-    std::size_t operator()(const std::pair<int, int> &c) const noexcept
+    std::size_t operator()(const std::pair<int, int>& c) const noexcept
     {
         return std::hash<int64_t> {}(static_cast<int64_t>(c.first) << 32 | c.second);
     }
@@ -107,8 +108,12 @@ private:
     // "Extra water", marked manually
     std::unordered_set<std::pair<int, int>> m_extra_water;
 
+    etl::list<Point, 2> m_wanted_route;
+
     bool m_panning {false};
     QPoint m_last_mouse_pos {0, 0};
 
     std::vector<bool> m_land_mask;
+    std::vector<uint32_t> m_land_mask_uint32;
+    std::unique_ptr<Router> m_router;
 };

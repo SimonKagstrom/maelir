@@ -145,7 +145,11 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     auto action_add_land_color = contextMenu.addAction("Add land color for this point");
     auto action_add_extra_land = contextMenu.addAction("Mark this route tile as land");
     auto action_add_extra_water = contextMenu.addAction("Mark this route tile as water");
+    auto action_route_from = contextMenu.addAction("Route from this point");
+    auto action_route_to = contextMenu.addAction("Route to this point");
+
     auto selectedAction = contextMenu.exec(mouse_position);
+    auto [x, y] = GetMapCoordinates(map_posititon);
 
     if (selectedAction == action_set_coordinates)
     {
@@ -169,7 +173,6 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 
                 if (long_ok && lat_ok)
                 {
-                    auto [x, y] = GetMapCoordinates(map_posititon);
                     SetGpsPosition(longitude, latitude, x, y);
 
                     SaveYaml();
@@ -194,7 +197,6 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 
     else if (selectedAction == action_add_land_color)
     {
-        auto [x, y] = GetMapCoordinates(map_posititon);
         auto color = m_map->pixelColor(x, y);
         fmt::print("Color at {},{}: R: {}, G: {}, B: {}\n",
                    x,
@@ -208,16 +210,31 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 
     else if (selectedAction == action_add_extra_land)
     {
-        auto [x, y] = GetMapCoordinates(map_posititon);
-
         AddExtraLand(x, y);
     }
     else if (selectedAction == action_add_extra_water)
     {
-        auto [x, y] = GetMapCoordinates(map_posititon);
-
         AddExtraWater(x, y);
     }
+    else if (selectedAction == action_route_from)
+    {
+        m_wanted_route.clear();
+        m_wanted_route.push_front(Point {x, y});
+    }
+    else if (selectedAction == action_route_to)
+    {
+        m_wanted_route.push_back(Point {x, y});
+
+        if (m_wanted_route.size() == 2 && m_router)
+        {
+            auto from = m_wanted_route.front();
+            auto to = m_wanted_route.back();
+
+            m_router->CalculateRoute(from, to);
+        }
+    }
+
+    m_ui->displayGraphicsView->repaint();
 }
 
 void
@@ -377,23 +394,6 @@ MapEditorMainWindow::SaveYaml()
         node["land_pixel_colors"] = colors;
     }
 
-    // Save land mask as uint32_t values
-    std::vector<uint32_t> land_mask_uint32;
-    uint32_t cur_val = 0;
-    for (auto i = 0; i < m_land_mask.size(); ++i)
-    {
-        cur_val |= m_land_mask[i] << (i % 32);
-        if ((i + 1) % 32 == 0)
-        {
-            land_mask_uint32.push_back(cur_val);
-            cur_val = 0;
-        }
-    }
-    if (cur_val != 0)
-    {
-        land_mask_uint32.push_back(cur_val);
-    }
-
     if (!m_extra_land.empty())
     {
         YAML::Node extra_land;
@@ -426,7 +426,7 @@ MapEditorMainWindow::SaveYaml()
     }
 
 
-    node["land_mask"] = land_mask_uint32;
+    node["land_mask"] = m_land_mask_uint32;
 
     std::ofstream f(m_out_yaml.toStdString());
 
@@ -465,6 +465,25 @@ MapEditorMainWindow::CalculateLand()
     {
         AddExtraWater(x, y);
     }
+
+    m_land_mask_uint32.clear();
+    // Save land mask as uint32_t values
+    uint32_t cur_val = 0;
+    for (auto i = 0; i < m_land_mask.size(); ++i)
+    {
+        cur_val |= m_land_mask[i] << (i % 32);
+        if ((i + 1) % 32 == 0)
+        {
+            m_land_mask_uint32.push_back(cur_val);
+            cur_val = 0;
+        }
+    }
+    if (cur_val != 0)
+    {
+        m_land_mask_uint32.push_back(cur_val);
+    }
+
+    m_router = std::make_unique<Router>(m_land_mask_uint32, m_map->width() / kPathFinderTileSize);
 }
 
 void

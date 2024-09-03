@@ -36,4 +36,16 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
         painter->setBrush(Qt::cyan);
         painter->drawEllipse(pos, 5, 5);
     }
+
+    // Draw a dot for each GPS position
+    for (const auto& cur : m_owner->m_wanted_route)
+    {
+        auto inner = QRect(cur.x, cur.y, 5, 5);
+        auto outer = QRect(cur.x, cur.y, 8, 8);
+
+        painter->setBrush(Qt::magenta);
+        painter->drawRect(inner);
+        painter->setBrush(Qt::cyan);
+        painter->drawRect(outer);
+    }
 }
