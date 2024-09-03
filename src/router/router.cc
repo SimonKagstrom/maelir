@@ -57,7 +57,6 @@ Router::CalculateRoute(Point from_point, Point to_point)
         /* We found a path! */
         if (cur->index == to)
         {
-            printf("Found path\n");
             while (cur->parent)
             {
                 printf("  Path %d,%d\n", cur->index % m_row_size, cur->index / m_row_size);
@@ -90,18 +89,12 @@ Router::CalculateRoute(Point from_point, Point to_point)
             neighbor_node->g = newg;
             neighbor_node->f = neighbor_node->g + Heuristic(neighbor.land_index, to); // g+h
 
-            printf("Neighbor %d,%d g %d f %d\n",
-                   neighbor.land_index % m_row_size,
-                   neighbor.land_index / m_row_size,
-                   neighbor_node->g,
-                   neighbor_node->f);
             if (neighbor_node->IsClosed())
             {
                 neighbor_node->closed = false;
             }
             if (!neighbor_node->open)
             {
-                printf("PUSH\n");
                 m_open_set.push(neighbor_node);
                 neighbor_node->open = true;
             }
@@ -149,21 +142,25 @@ Router::Neighbors(IndexType index) const
     {
         neighbors.push_back({above});
     }
+    else printf("Above land\n");
     auto below = index + m_row_size;
     if (IsWater(m_land_mask, below))
     {
         neighbors.push_back({below});
     }
+    else printf("below land\n");
     auto left = index - 1;
     if (IsWater(m_land_mask, left))
     {
         neighbors.push_back({left});
     }
+    else printf("left land\n");
     auto right = index + 1;
     if (IsWater(m_land_mask, right))
     {
         neighbors.push_back({right});
     }
+    else printf("right land\n");
 
     return neighbors;
 }

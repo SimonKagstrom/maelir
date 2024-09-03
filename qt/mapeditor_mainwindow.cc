@@ -218,6 +218,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     }
     else if (selectedAction == action_route_from)
     {
+        m_current_route.clear();
         m_wanted_route.clear();
         m_wanted_route.push_front(Point {x, y});
     }
@@ -230,10 +231,18 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             auto from = m_wanted_route.front();
             auto to = m_wanted_route.back();
 
-            m_router->CalculateRoute(from, to);
+            auto route = m_router->CalculateRoute(from, to);
+            for (auto index : route)
+            {
+                auto x = index % (m_map->width() / kPathFinderTileSize);
+                auto y = index / (m_map->width() / kPathFinderTileSize);
+
+                m_current_route.push_back(Point {static_cast<int32_t>(x * kPathFinderTileSize),
+                                                 static_cast<int32_t>(y * kPathFinderTileSize)});
+            }
         }
     }
-
+    update();
     m_ui->displayGraphicsView->repaint();
 }
 
@@ -450,7 +459,8 @@ MapEditorMainWindow::CalculateLand()
             // it's land if it contains at least 20% land colors
             if (CountLandPixels(chunk) > 0.2 * kPathFinderTileSize * kPathFinderTileSize)
             {
-                m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = true;
+                m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
+                            x / kPathFinderTileSize] = true;
                 m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::red));
             }
         }
@@ -478,7 +488,7 @@ MapEditorMainWindow::CalculateLand()
             cur_val = 0;
         }
     }
-    if (land_mask.size() % 32 != 0)
+    if (m_land_mask.size() % 32 != 0)
     {
         m_land_mask_uint32.push_back(cur_val);
     }
@@ -493,7 +503,8 @@ MapEditorMainWindow::AddExtraLand(int x, int y)
     y = y - y % kPathFinderTileSize;
 
     m_extra_land.insert({x, y});
-    m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = true;
+    m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
+                x / kPathFinderTileSize] = true;
     m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::green));
 }
 
@@ -504,7 +515,8 @@ MapEditorMainWindow::AddExtraWater(int x, int y)
     y = y - y % kPathFinderTileSize;
 
     m_extra_water.insert({x, y});
-    m_land_mask[y * m_map->width() / kPathFinderTileSize + x] = false;
+    m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
+                x / kPathFinderTileSize] = false;
     m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::cyan));
 }
 

@@ -48,4 +48,13 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
         painter->setBrush(Qt::cyan);
         painter->drawRect(outer);
     }
+
+    for (const auto& cur : m_owner->m_current_route)
+    {
+        QPen pen(Qt::yellow);
+        pen.setWidth(3);
+
+        painter->setPen(pen);
+        painter->drawRect(cur.x, cur.y, kPathFinderTileSize, kPathFinderTileSize);
+    }
 }
