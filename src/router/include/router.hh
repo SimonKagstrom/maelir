@@ -11,10 +11,13 @@
 using IndexType = uint32_t;
 using CostType = IndexType;
 
+constexpr auto kCacheSize = 512;
+
 struct FinderNode
 {
     IndexType land_index;
 };
+
 
 class Router
 {
@@ -24,6 +27,13 @@ public:
     std::span<IndexType> CalculateRoute(Point from, Point to);
 
 private:
+    enum class AstarResult
+    {
+        kPathFound,
+        kNoPath,
+        kMaxNodesReached,
+    };
+
     struct Node
     {
         Node()
@@ -73,6 +83,8 @@ private:
         }
     };
 
+    AstarResult RunAstar(IndexType from, IndexType to);
+
     Node* GetNode(IndexType index);
 
     etl::vector<FinderNode, 4> Neighbors(IndexType index) const;
@@ -81,8 +93,10 @@ private:
 
     const std::span<const uint32_t> m_land_mask;
     const unsigned m_row_size;
-    etl::priority_queue<Node*, 1024, etl::vector<Node*, 1024>, CompareNodePointers> m_open_set;
-    etl::unordered_map<IndexType, Node, 1024> m_nodes;
+    etl::priority_queue<Node*, kCacheSize, etl::vector<Node*, kCacheSize>, CompareNodePointers>
+        m_open_set;
+    etl::unordered_map<IndexType, Node, kCacheSize> m_nodes;
 
+    std::vector<IndexType> m_current_result;
     std::vector<IndexType> m_result;
 };

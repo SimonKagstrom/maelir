@@ -471,6 +471,11 @@ MapEditorMainWindow::CalculateLand()
             }
         }
     }
+    printf("Land mask calculated for %d,%d -> %d,%d\n",
+           m_map->width(),
+           m_map->height(),
+           m_map->width() / kPathFinderTileSize,
+           m_map->height() / kPathFinderTileSize);
 
     for (auto [x, y] : m_extra_land)
     {
@@ -485,7 +490,8 @@ MapEditorMainWindow::CalculateLand()
     m_land_mask_uint32.clear();
     // Save land mask as uint32_t values
     uint32_t cur_val = 0;
-    for (auto i = 0; i < m_land_mask.size(); ++i)
+    int i;
+    for (i = 0; i < m_land_mask.size(); ++i)
     {
         cur_val |= m_land_mask[i] << (i % 32);
         if ((i + 1) % 32 == 0)
@@ -496,6 +502,8 @@ MapEditorMainWindow::CalculateLand()
     }
     if (m_land_mask.size() % 32 != 0)
     {
+        // Fill the remaining bits with 1s (as land)
+        cur_val |= 0xffffffff >> (i % 32);
         m_land_mask_uint32.push_back(cur_val);
     }
 

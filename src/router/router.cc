@@ -36,8 +36,42 @@ Router::CalculateRoute(Point from_point, Point to_point)
     auto from = PointToLandIndex(from_point, m_row_size);
     auto to = PointToLandIndex(to_point, m_row_size);
 
-    m_open_set.clear();
     m_result.clear();
+
+    for (auto i = 0; i < 10; i++)
+    {
+        auto rc = RunAstar(from, to);
+        if (rc == Router::AstarResult::kNoPath)
+        {
+            return {};
+        }
+        else
+        {
+            for (auto rit = m_current_result.rbegin(); rit != m_current_result.rend(); ++rit)
+            {
+                m_result.push_back(*rit);
+            }
+            if (rc == Router::AstarResult::kPathFound)
+            {
+                return m_result;
+            }
+            else
+            {
+                from = m_current_result.front();
+            }
+        }
+        printf("At %d\n", i);
+    }
+
+
+    return {};
+}
+
+Router::AstarResult
+Router::RunAstar(IndexType from, IndexType to)
+{
+    m_current_result.clear();
+    m_open_set.clear();
     m_nodes.clear();
 
     auto p = GetNode(from);
@@ -60,11 +94,11 @@ Router::CalculateRoute(Point from_point, Point to_point)
             while (cur->parent)
             {
                 printf("  Path %d,%d\n", cur->index % m_row_size, cur->index / m_row_size);
-                m_result.push_back(cur->index);
+                m_current_result.push_back(cur->index);
                 cur = cur->parent;
             }
 
-            return m_result;
+            return Router::AstarResult::kPathFound;
         }
 
         /* Iterate over UP, DOWN, LEFT and RIGHT */
@@ -73,8 +107,12 @@ Router::CalculateRoute(Point from_point, Point to_point)
             auto neighbor_node = GetNode(neighbor.land_index);
             if (!neighbor_node)
             {
-                // Max nodes reached?
-                continue;
+                while (cur->parent)
+                {
+                    m_current_result.push_back(cur->index);
+                    cur = cur->parent;
+                }
+                return Router::AstarResult::kMaxNodesReached;
             }
 
             auto newg = cur->g + 1;
@@ -104,9 +142,9 @@ Router::CalculateRoute(Point from_point, Point to_point)
     }
 
     /* There was no path */
-    printf("No path :-(\n");
-    return {};
+    return Router::AstarResult::kNoPath;
 }
+
 
 Router::Node*
 Router::GetNode(IndexType index)
@@ -137,28 +175,43 @@ Router::Neighbors(IndexType index) const
 {
     etl::vector<FinderNode, 4> neighbors;
 
-    auto above = index - m_row_size;
-    if (IsWater(m_land_mask, above))
+    auto x = index % m_row_size;
+    auto y = index / m_row_size;
+
+    if (y > 0)
     {
-        neighbors.push_back({above});
+        auto above = index - m_row_size;
+        if (IsWater(m_land_mask, above))
+        {
+            neighbors.push_back({above});
+        }
     }
 
-    auto below = index + m_row_size;
-    if (IsWater(m_land_mask, below))
+    if (index < m_land_mask.size() * 32)
     {
-        neighbors.push_back({below});
+        auto below = index + m_row_size;
+        if (IsWater(m_land_mask, below))
+        {
+            neighbors.push_back({below});
+        }
     }
 
-    auto left = index - 1;
-    if (IsWater(m_land_mask, left))
+    if (x > 0)
     {
-        neighbors.push_back({left});
+        auto left = index - 1;
+        if (IsWater(m_land_mask, left))
+        {
+            neighbors.push_back({left});
+        }
     }
 
-    auto right = index + 1;
-    if (IsWater(m_land_mask, right))
+    if (x < m_row_size - 1)
     {
-        neighbors.push_back({right});
+        auto right = index + 1;
+        if (IsWater(m_land_mask, right))
+        {
+            neighbors.push_back({right});
+        }
     }
 
     return neighbors;
