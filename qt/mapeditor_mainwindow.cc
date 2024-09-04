@@ -507,9 +507,9 @@ MapEditorMainWindow::CalculateLand()
         m_land_mask_uint32.push_back(cur_val);
     }
 
-    m_router = std::make_unique<Router>(m_land_mask_uint32,
-                                        m_map->height() / kPathFinderTileSize,
-                                        m_map->width() / kPathFinderTileSize);
+    m_router = std::make_unique<Router<kTargetCacheSize>>(m_land_mask_uint32,
+                                                          m_map->height() / kPathFinderTileSize,
+                                                          m_map->width() / kPathFinderTileSize);
 }
 
 void

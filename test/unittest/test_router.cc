@@ -47,7 +47,7 @@ public:
         }
 
 
-        router = std::make_unique<Router>(m_land_mask_uint32, 8, kRowSize);
+        router = std::make_unique<Router<kUnitTestCacheSize>>(m_land_mask_uint32, 8, kRowSize);
     }
 
     auto ToPoint(auto row_x, auto row_y)
@@ -55,7 +55,7 @@ public:
         return Point {row_x * kPathFinderTileSize, row_y * kPathFinderTileSize};
     }
 
-    std::unique_ptr<Router> router;
+    std::unique_ptr<Router<kUnitTestCacheSize>> router;
     std::vector<bool> land_mask;
 
 private:

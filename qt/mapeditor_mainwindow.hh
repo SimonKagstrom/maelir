@@ -115,7 +115,7 @@ private:
 
     std::vector<bool> m_land_mask;
     std::vector<uint32_t> m_land_mask_uint32;
-    std::unique_ptr<Router> m_router;
+    std::unique_ptr<Router<kTargetCacheSize>> m_router;
 
     std::vector<Point> m_current_route;
 };

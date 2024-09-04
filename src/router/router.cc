@@ -3,7 +3,6 @@
 namespace
 {
 
-
 IndexType
 PointToLandIndex(Point point, unsigned row_size)
 {
@@ -24,15 +23,17 @@ IsWater(std::span<const uint32_t> land_mask, IndexType index)
 
 } // namespace
 
-Router::Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width)
+template <size_t CACHE_SIZE>
+Router<CACHE_SIZE>::Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width)
     : m_land_mask(land_mask)
     , m_height(height)
     , m_width(width)
 {
 }
 
+template <size_t CACHE_SIZE>
 std::span<IndexType>
-Router::CalculateRoute(Point from_point, Point to_point)
+Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
 {
     auto from = PointToLandIndex(from_point, m_width);
     auto to = PointToLandIndex(to_point, m_width);
@@ -68,8 +69,9 @@ Router::CalculateRoute(Point from_point, Point to_point)
     return {};
 }
 
-Router::AstarResult
-Router::RunAstar(IndexType from, IndexType to)
+template <size_t CACHE_SIZE>
+Router<CACHE_SIZE>::AstarResult
+Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
 {
     m_current_result.clear();
     m_open_set.clear();
@@ -103,9 +105,9 @@ Router::RunAstar(IndexType from, IndexType to)
         }
 
         /* Iterate over UP, DOWN, LEFT and RIGHT */
-        for (auto neighbor : Neighbors(cur->index))
+        for (auto neighbor_index : Neighbors(cur->index))
         {
-            auto neighbor_node = GetNode(neighbor.land_index);
+            auto neighbor_node = GetNode(neighbor_index);
             if (!neighbor_node)
             {
                 while (cur->parent)
@@ -126,7 +128,7 @@ Router::RunAstar(IndexType from, IndexType to)
 
             neighbor_node->parent = cur;
             neighbor_node->g = newg;
-            neighbor_node->f = neighbor_node->g + Heuristic(neighbor.land_index, to); // g+h
+            neighbor_node->f = neighbor_node->g + Heuristic(neighbor_index, to); // g+h
 
             if (neighbor_node->IsClosed())
             {
@@ -147,8 +149,9 @@ Router::RunAstar(IndexType from, IndexType to)
 }
 
 
-Router::Node*
-Router::GetNode(IndexType index)
+template <size_t CACHE_SIZE>
+Router<CACHE_SIZE>::Node*
+Router<CACHE_SIZE>::GetNode(IndexType index)
 {
     auto it = m_nodes.find(index);
     if (it != m_nodes.end())
@@ -171,10 +174,11 @@ Router::GetNode(IndexType index)
 }
 
 
-etl::vector<FinderNode, 4>
-Router::Neighbors(IndexType index) const
+template <size_t CACHE_SIZE>
+etl::vector<IndexType, 4>
+Router<CACHE_SIZE>::Neighbors(IndexType index) const
 {
-    etl::vector<FinderNode, 4> neighbors;
+    etl::vector<IndexType, 4> neighbors;
 
     auto x = index % m_width;
     auto y = index / m_width;
@@ -218,8 +222,9 @@ Router::Neighbors(IndexType index) const
     return neighbors;
 }
 
+template <size_t CACHE_SIZE>
 CostType
-Router::Heuristic(IndexType from, IndexType to)
+Router<CACHE_SIZE>::Heuristic(IndexType from, IndexType to)
 {
     int from_x = from % m_width;
     int from_y = from / m_width;
@@ -233,3 +238,7 @@ Router::Heuristic(IndexType from, IndexType to)
     // Manhattan distance
     return std::abs(from_x - to_x) + std::abs(from_y - to_y);
 }
+
+
+template class Router<kTargetCacheSize>;
+template class Router<kUnitTestCacheSize>;

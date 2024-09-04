@@ -11,14 +11,10 @@
 using IndexType = uint32_t;
 using CostType = IndexType;
 
-constexpr auto kCacheSize = 1024;
+constexpr auto kTargetCacheSize = 1024;
+constexpr auto kUnitTestCacheSize = 32;
 
-struct FinderNode
-{
-    IndexType land_index;
-};
-
-
+template<size_t CACHE_SIZE>
 class Router
 {
 public:
@@ -87,7 +83,7 @@ private:
 
     Node* GetNode(IndexType index);
 
-    etl::vector<FinderNode, 4> Neighbors(IndexType index) const;
+    etl::vector<IndexType, 4> Neighbors(IndexType index) const;
 
     CostType Heuristic(IndexType from, IndexType to);
 
@@ -95,9 +91,9 @@ private:
     const unsigned m_height;
     const unsigned m_width;
 
-    etl::priority_queue<Node*, kCacheSize, etl::vector<Node*, kCacheSize>, CompareNodePointers>
+    etl::priority_queue<Node*, CACHE_SIZE, etl::vector<Node*, CACHE_SIZE>, CompareNodePointers>
         m_open_set;
-    etl::unordered_map<IndexType, Node, kCacheSize> m_nodes;
+    etl::unordered_map<IndexType, Node, CACHE_SIZE> m_nodes;
 
     std::vector<IndexType> m_current_result;
     std::vector<IndexType> m_result;
