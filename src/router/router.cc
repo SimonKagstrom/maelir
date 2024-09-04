@@ -55,6 +55,10 @@ Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
             }
             if (rc == Router::AstarResult::kPathFound)
             {
+                for (auto cur : m_result)
+                {
+                    printf("  Path %d,%d\n", cur % m_width, cur / m_width);
+                }
                 return m_result;
             }
             else
@@ -62,9 +66,7 @@ Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
                 from = m_current_result.front();
             }
         }
-        printf("At %d\n", i);
     }
-
 
     return {};
 }
@@ -96,7 +98,6 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
         {
             while (cur->parent)
             {
-                printf("  Path %d,%d\n", cur->index % m_width, cur->index / m_width);
                 m_current_result.push_back(cur->index);
                 cur = cur->parent;
             }

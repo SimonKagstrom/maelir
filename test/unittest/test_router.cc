@@ -21,7 +21,7 @@ public:
             w, w, w, w, w, w, L, L, w, w, w, w, w, w, w, w, // 3 Some land
             w, w, w, w, w, w, L, L, L, w, w, w, w, w, w, w, // 4
             w, w, w, w, w, w, w, w, L, w, w, w, L, L, L, L, // 5 Walled-in land
-            w, w, w, w, w, w, w, w, w, w, w, w, L, w, w, w, // 6
+            L, L, L, L, L, L, L, w, w, w, w, w, L, w, w, w, // 6
             w, w, w, w, w, w, w, w, w, w, w, w, L, w, w, w, // 7
             w, w, w, w, w, w, w, w, w, w, w, w, L, w, w, w, // 8
             // clang-format on
@@ -102,4 +102,12 @@ TEST_CASE_FIXTURE(Fixture, "when walled in, the router can't find a path")
 
     REQUIRE(r0.empty());
     REQUIRE(r1.empty());
+}
+
+
+TEST_CASE_FIXTURE(Fixture, "the router can merge partial paths")
+{
+    auto r0 = router->CalculateRoute(ToPoint(0, 7), ToPoint(0, 5));
+
+    REQUIRE_FALSE(r0.empty());
 }
