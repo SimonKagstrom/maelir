@@ -11,7 +11,7 @@
 using IndexType = uint32_t;
 using CostType = IndexType;
 
-constexpr auto kCacheSize = 512;
+constexpr auto kCacheSize = 1024;
 
 struct FinderNode
 {
@@ -22,7 +22,7 @@ struct FinderNode
 class Router
 {
 public:
-    Router(std::span<const uint32_t> land_mask, unsigned row_size);
+    Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width);
 
     std::span<IndexType> CalculateRoute(Point from, Point to);
 
@@ -92,7 +92,9 @@ private:
     CostType Heuristic(IndexType from, IndexType to);
 
     const std::span<const uint32_t> m_land_mask;
-    const unsigned m_row_size;
+    const unsigned m_height;
+    const unsigned m_width;
+
     etl::priority_queue<Node*, kCacheSize, etl::vector<Node*, kCacheSize>, CompareNodePointers>
         m_open_set;
     etl::unordered_map<IndexType, Node, kCacheSize> m_nodes;

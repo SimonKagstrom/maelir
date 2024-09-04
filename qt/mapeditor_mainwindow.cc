@@ -1,3 +1,4 @@
+// A map editor, which is a bit of a hack
 #include "mapeditor_mainwindow.hh"
 
 #include "tile.hh"
@@ -467,7 +468,6 @@ MapEditorMainWindow::CalculateLand()
             {
                 m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
                             x / kPathFinderTileSize] = true;
-                m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::red));
             }
         }
     }
@@ -507,7 +507,9 @@ MapEditorMainWindow::CalculateLand()
         m_land_mask_uint32.push_back(cur_val);
     }
 
-    m_router = std::make_unique<Router>(m_land_mask_uint32, m_map->width() / kPathFinderTileSize);
+    m_router = std::make_unique<Router>(m_land_mask_uint32,
+                                        m_map->height() / kPathFinderTileSize,
+                                        m_map->width() / kPathFinderTileSize);
 }
 
 void

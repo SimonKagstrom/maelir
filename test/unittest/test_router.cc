@@ -47,7 +47,7 @@ public:
         }
 
 
-        router = std::make_unique<Router>(m_land_mask_uint32, kRowSize);
+        router = std::make_unique<Router>(m_land_mask_uint32, 8, kRowSize);
     }
 
     auto ToPoint(auto row_x, auto row_y)

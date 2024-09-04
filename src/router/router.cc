@@ -24,21 +24,22 @@ IsWater(std::span<const uint32_t> land_mask, IndexType index)
 
 } // namespace
 
-Router::Router(std::span<const uint32_t> land_mask, unsigned row_size)
+Router::Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width)
     : m_land_mask(land_mask)
-    , m_row_size(row_size)
+    , m_height(height)
+    , m_width(width)
 {
 }
 
 std::span<IndexType>
 Router::CalculateRoute(Point from_point, Point to_point)
 {
-    auto from = PointToLandIndex(from_point, m_row_size);
-    auto to = PointToLandIndex(to_point, m_row_size);
+    auto from = PointToLandIndex(from_point, m_width);
+    auto to = PointToLandIndex(to_point, m_width);
 
     m_result.clear();
 
-    for (auto i = 0; i < 10; i++)
+    for (auto i = 0; i < 100; i++)
     {
         auto rc = RunAstar(from, to);
         if (rc == Router::AstarResult::kNoPath)
@@ -93,7 +94,7 @@ Router::RunAstar(IndexType from, IndexType to)
         {
             while (cur->parent)
             {
-                printf("  Path %d,%d\n", cur->index % m_row_size, cur->index / m_row_size);
+                printf("  Path %d,%d\n", cur->index % m_width, cur->index / m_width);
                 m_current_result.push_back(cur->index);
                 cur = cur->parent;
             }
@@ -175,21 +176,21 @@ Router::Neighbors(IndexType index) const
 {
     etl::vector<FinderNode, 4> neighbors;
 
-    auto x = index % m_row_size;
-    auto y = index / m_row_size;
+    auto x = index % m_width;
+    auto y = index / m_width;
 
     if (y > 0)
     {
-        auto above = index - m_row_size;
+        auto above = index - m_width;
         if (IsWater(m_land_mask, above))
         {
             neighbors.push_back({above});
         }
     }
 
-    if (index < m_land_mask.size() * 32)
+    if (y < m_height - 1)
     {
-        auto below = index + m_row_size;
+        auto below = index + m_width;
         if (IsWater(m_land_mask, below))
         {
             neighbors.push_back({below});
@@ -205,7 +206,7 @@ Router::Neighbors(IndexType index) const
         }
     }
 
-    if (x < m_row_size - 1)
+    if (x < m_width - 1)
     {
         auto right = index + 1;
         if (IsWater(m_land_mask, right))
@@ -220,11 +221,14 @@ Router::Neighbors(IndexType index) const
 CostType
 Router::Heuristic(IndexType from, IndexType to)
 {
-    int from_x = from % m_row_size;
-    int from_y = from / m_row_size;
+    int from_x = from % m_width;
+    int from_y = from / m_width;
 
-    int to_x = to % m_row_size;
-    int to_y = to / m_row_size;
+    int to_x = to % m_width;
+    int to_y = to / m_width;
+
+    // Euclidean distance
+    //return std::sqrt(std::pow(from_x - to_x, 2) + std::pow(from_y - to_y, 2));
 
     // Manhattan distance
     return std::abs(from_x - to_x) + std::abs(from_y - to_y);
