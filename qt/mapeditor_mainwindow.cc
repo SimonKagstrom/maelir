@@ -148,11 +148,14 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 {
     // Show context menu
     QMenu contextMenu(this);
-    auto action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
-    auto action_add_land_color = contextMenu.addAction("Add land color for this point");
     auto action_add_extra_land = contextMenu.addAction("Mark this route tile as land");
     auto action_add_extra_water = contextMenu.addAction("Mark this route tile as water");
     auto action_route_add_point = contextMenu.addAction("Add route point");
+    // Add delimiter
+    contextMenu.addSeparator();
+    auto action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
+    auto action_add_land_color = contextMenu.addAction("Add land color for this point");
+    auto action_calculate_land = contextMenu.addAction("Calculate land tiles");
 
     auto selectedAction = contextMenu.exec(mouse_position);
     auto [x, y] = GetMapCoordinates(map_posititon);
@@ -213,7 +216,11 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 
         m_land_colors.insert(color);
     }
-
+    else if (selectedAction == action_add_land_color)
+    {
+        CalculateLand();
+        UpdateRoutingInformation();
+    }
     else if (selectedAction == action_add_extra_land)
     {
         AddExtraLand(x, y);
@@ -364,7 +371,19 @@ MapEditorMainWindow::LoadYaml(const char* filename)
             }
         }
 
-        CalculateLand();
+        auto index = 0;
+        for (const auto& mask_uint32 : node["land_mask"])
+        {
+            auto val = mask_uint32.as<uint32_t>();
+
+            for (auto i = 0; i < 32; ++i)
+            {
+                m_land_mask[index] = val & (1 << i);
+                index++;
+            }
+        }
+
+        UpdateRoutingInformation();
     } catch (const YAML::BadFile& e)
     {
         // Just ignore this
@@ -454,6 +473,7 @@ MapEditorMainWindow::SaveYaml()
 
 
     node["land_mask"] = m_land_mask_uint32;
+    UpdateRoutingInformation();
 
     std::ofstream f(m_out_yaml.toStdString());
 
@@ -487,7 +507,12 @@ MapEditorMainWindow::CalculateLand()
            m_map->height(),
            m_map->width() / kPathFinderTileSize,
            m_map->height() / kPathFinderTileSize);
+    UpdateRoutingInformation();
+}
 
+void
+MapEditorMainWindow::UpdateRoutingInformation()
+{
     for (auto [x, y] : m_extra_land)
     {
         AddExtraLand(x, y);
