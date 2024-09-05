@@ -124,7 +124,11 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
                 return Router::AstarResult::kMaxNodesReached;
             }
 
-            auto newg = cur->g + 1;
+            const auto is_diagonal = (neighbor_index % m_width != cur->index % m_width) &&
+                                     (neighbor_index / m_width != cur->index / m_width);
+            auto cost = is_diagonal ? 3 : 2;
+
+            auto newg = cur->g + cost;
 
             if ((neighbor_node->IsOpen() || neighbor_node->IsClosed()) && neighbor_node->g <= newg)
             {

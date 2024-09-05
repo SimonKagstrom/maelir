@@ -152,8 +152,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     auto action_add_land_color = contextMenu.addAction("Add land color for this point");
     auto action_add_extra_land = contextMenu.addAction("Mark this route tile as land");
     auto action_add_extra_water = contextMenu.addAction("Mark this route tile as water");
-    auto action_route_from = contextMenu.addAction("Route from this point");
-    auto action_route_to = contextMenu.addAction("Route to this point");
+    auto action_route_add_point = contextMenu.addAction("Add route point");
 
     auto selectedAction = contextMenu.exec(mouse_position);
     auto [x, y] = GetMapCoordinates(map_posititon);
@@ -223,14 +222,13 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     {
         AddExtraWater(x, y);
     }
-    else if (selectedAction == action_route_from)
+    else if (selectedAction == action_route_add_point)
     {
-        m_current_route.clear();
-        m_wanted_route.clear();
-        m_wanted_route.push_front(Point {x, y});
-    }
-    else if (selectedAction == action_route_to)
-    {
+        if (m_wanted_route.size() == 2)
+        {
+            m_wanted_route.clear();
+            m_current_route.clear();
+        }
         m_wanted_route.push_back(Point {x, y});
 
         if (m_wanted_route.size() == 2 && m_router)
