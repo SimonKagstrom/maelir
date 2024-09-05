@@ -14,13 +14,28 @@ using CostType = IndexType;
 constexpr auto kTargetCacheSize = 4096;
 constexpr auto kUnitTestCacheSize = 20;
 
-template<size_t CACHE_SIZE>
+template <size_t CACHE_SIZE>
 class Router
 {
 public:
+    struct Stats
+    {
+        void Reset()
+        {
+            partial_paths = 0;
+            nodes_expanded = 0;
+        }
+
+        unsigned partial_paths {0};
+        unsigned nodes_expanded {0};
+    };
+
     Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width);
 
     std::span<IndexType> CalculateRoute(Point from, Point to);
+
+    // For unit tests
+    Stats GetStats() const;
 
 private:
     enum class AstarResult
@@ -83,7 +98,7 @@ private:
 
     Node* GetNode(IndexType index);
 
-    etl::vector<IndexType, 4> Neighbors(IndexType index) const;
+    etl::vector<IndexType, 8> Neighbors(IndexType index) const;
 
     CostType Heuristic(IndexType from, IndexType to);
 
@@ -97,4 +112,5 @@ private:
 
     std::vector<IndexType> m_current_result;
     std::vector<IndexType> m_result;
+    Stats m_stats;
 };

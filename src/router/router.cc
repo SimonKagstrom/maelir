@@ -38,6 +38,7 @@ Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
     auto from = PointToLandIndex(from_point, m_width);
     auto to = PointToLandIndex(to_point, m_width);
 
+    m_stats.Reset();
     m_result.clear();
 
     for (auto i = 0; i < 100; i++)
@@ -66,6 +67,8 @@ Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
                 from = m_current_result.front();
             }
         }
+
+        m_stats.partial_paths++;
     }
 
     return {};
@@ -109,6 +112,8 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
         for (auto neighbor_index : Neighbors(cur->index))
         {
             auto neighbor_node = GetNode(neighbor_index);
+
+            m_stats.nodes_expanded++;
             if (!neighbor_node)
             {
                 while (cur->parent)
@@ -176,47 +181,37 @@ Router<CACHE_SIZE>::GetNode(IndexType index)
 
 
 template <size_t CACHE_SIZE>
-etl::vector<IndexType, 4>
+etl::vector<IndexType, 8>
 Router<CACHE_SIZE>::Neighbors(IndexType index) const
 {
-    etl::vector<IndexType, 4> neighbors;
+    etl::vector<IndexType, 8> neighbors;
 
     auto x = index % m_width;
     auto y = index / m_width;
 
-    if (y > 0)
+    for (auto dy = -1; dy <= 1; dy++)
     {
-        auto above = index - m_width;
-        if (IsWater(m_land_mask, above))
+        for (auto dx = -1; dx <= 1; dx++)
         {
-            neighbors.push_back({above});
-        }
-    }
+            if (dx == 0 && dy == 0)
+            {
+                // Skip self
+                continue;
+            }
 
-    if (y < m_height - 1)
-    {
-        auto below = index + m_width;
-        if (IsWater(m_land_mask, below))
-        {
-            neighbors.push_back({below});
-        }
-    }
+            auto nx = x + dx;
+            auto ny = y + dy;
 
-    if (x > 0)
-    {
-        auto left = index - 1;
-        if (IsWater(m_land_mask, left))
-        {
-            neighbors.push_back({left});
-        }
-    }
+            if (nx < 0 || nx >= m_width || ny < 0 || ny >= m_height)
+            {
+                continue;
+            }
 
-    if (x < m_width - 1)
-    {
-        auto right = index + 1;
-        if (IsWater(m_land_mask, right))
-        {
-            neighbors.push_back({right});
+            auto neighbor = ny * m_width + nx;
+            if (IsWater(m_land_mask, neighbor))
+            {
+                neighbors.push_back(neighbor);
+            }
         }
     }
 
@@ -238,6 +233,14 @@ Router<CACHE_SIZE>::Heuristic(IndexType from, IndexType to)
 
     // Manhattan distance
     return std::abs(from_x - to_x) + std::abs(from_y - to_y);
+}
+
+
+template <size_t CACHE_SIZE>
+Router<CACHE_SIZE>::Stats
+Router<CACHE_SIZE>::GetStats() const
+{
+    return m_stats;
 }
 
 

@@ -1,7 +1,34 @@
 #include "router.hh"
 #include "test.hh"
 
+#include <set>
+
 constexpr auto kRowSize = 16;
+
+namespace
+{
+
+auto
+AsSet(auto span)
+{
+    return std::set(span.begin(), span.end());
+}
+
+
+consteval auto
+ToPoint(auto row_x, auto row_y)
+{
+    return Point {row_x * kPathFinderTileSize, row_y * kPathFinderTileSize};
+}
+
+consteval IndexType
+ToIndex(auto row_x, auto row_y)
+{
+    return row_y * kRowSize + row_x;
+}
+
+
+} // namespace
 
 class Fixture
 {
@@ -50,11 +77,6 @@ public:
         router = std::make_unique<Router<kUnitTestCacheSize>>(m_land_mask_uint32, 8, kRowSize);
     }
 
-    auto ToPoint(auto row_x, auto row_y)
-    {
-        return Point {row_x * kPathFinderTileSize, row_y * kPathFinderTileSize};
-    }
-
     std::unique_ptr<Router<kUnitTestCacheSize>> router;
     std::vector<bool> land_mask;
 
@@ -98,6 +120,7 @@ TEST_CASE_FIXTURE(Fixture, "the router can route around obstacles")
 TEST_CASE_FIXTURE(Fixture, "when walled in, the router can't find a path")
 {
     auto r0 = router->CalculateRoute(ToPoint(15, 8), ToPoint(4, 8));
+    REQUIRE(router->GetStats().partial_paths == 0);
     auto r1 = router->CalculateRoute(ToPoint(15, 8), ToPoint(15, 1));
 
     REQUIRE(r0.empty());
@@ -110,4 +133,14 @@ TEST_CASE_FIXTURE(Fixture, "the router can merge partial paths")
     auto r0 = router->CalculateRoute(ToPoint(0, 7), ToPoint(0, 5));
 
     REQUIRE_FALSE(r0.empty());
+    REQUIRE(router->GetStats().partial_paths > 0);
+}
+
+
+TEST_CASE_FIXTURE(Fixture, "the router can do diagonal paths")
+{
+    auto r0 = router->CalculateRoute(ToPoint(0, 0), ToPoint(3, 3));
+
+    REQUIRE_FALSE(r0.empty());
+    REQUIRE(AsSet(r0) == AsSet(std::array {ToIndex(1, 1), ToIndex(2, 2), ToIndex(3, 3)}));
 }

@@ -239,6 +239,19 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             auto to = m_wanted_route.back();
 
             auto route = m_router->CalculateRoute(from, to);
+            if (!route.empty())
+            {
+                auto stats = m_router->GetStats();
+                fmt::print(
+                    "Route from {},{} to {},{} with {} expanded nodes for {} partial paths\n",
+                    from.x,
+                    from.y,
+                    to.x,
+                    to.y,
+                    stats.nodes_expanded,
+                    stats.partial_paths);
+            }
+
             for (auto index : route)
             {
                 auto x = index % (m_map->width() / kPathFinderTileSize);
