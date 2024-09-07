@@ -2,6 +2,7 @@
 doctest/2.4.11
 trompeloeil/48
 etl/20.38.10
+fmt/10.2.1
 mp-units/2.2.1
 yaml-cpp/0.8.0
 
