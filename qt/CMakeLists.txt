@@ -21,8 +21,10 @@ if (APPLE)
 endif()
 
 # Enable sanitizers in debug builds
-add_compile_options(-fsanitize=address,undefined -g)
-add_link_options(-fsanitize=address,undefined -g)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-fsanitize=address,undefined -g)
+    add_link_options(-fsanitize=address,undefined -g)
+endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 find_package(fmt REQUIRED)
