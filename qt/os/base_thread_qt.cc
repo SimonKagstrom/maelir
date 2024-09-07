@@ -35,8 +35,12 @@ BaseThread::Start(uint8_t)
 milliseconds
 os::GetTimeStamp()
 {
-    return std::chrono::duration_cast<milliseconds>(
+    static auto at_start = std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(
         std::chrono::system_clock::now().time_since_epoch());
+
+    auto now = std::chrono::system_clock::now().time_since_epoch() - at_start;
+
+    return milliseconds(now.count());
 }
 
 void
