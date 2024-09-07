@@ -216,7 +216,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 
         m_land_colors.insert(color);
     }
-    else if (selectedAction == action_add_land_color)
+    else if (selectedAction == action_calculate_land)
     {
         CalculateLand();
         UpdateRoutingInformation();
