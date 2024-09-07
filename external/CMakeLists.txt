@@ -26,8 +26,14 @@ PRIVATE
     pngdec_zlib
 )
 
-target_compile_options(pngdec PRIVATE
+target_compile_options(pngdec
+PRIVATE
     -Wno-deprecated-non-prototype
+)
+
+target_compile_definitions(pngdec
+PUBLIC
+    -D__MACH__
 )
 
 target_include_directories(pngdec PUBLIC
