@@ -1,6 +1,7 @@
 #include "nmea_parser.hh"
 
 #include <fmt/format.h>
+#include <ranges>
 
 namespace
 {

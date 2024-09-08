@@ -26,7 +26,7 @@ UartGps::UartGps(uart_port_t port_number, uint8_t rx_pin, uint8_t tx_pin)
         uart_set_pin(m_port_number, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 }
 
-GpsData
+hal::RawGpsData
 UartGps::WaitForData(os::binary_semaphore& semaphore)
 {
     std::optional<hal::RawGpsData> data;
