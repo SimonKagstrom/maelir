@@ -29,7 +29,7 @@ UartGps::UartGps(uart_port_t port_number, uint8_t rx_pin, uint8_t tx_pin)
 GpsData
 UartGps::WaitForData(os::binary_semaphore& semaphore)
 {
-    std::optional<GpsData> data;
+    std::optional<hal::RawGpsData> data;
 
     while (!data.has_value())
     {

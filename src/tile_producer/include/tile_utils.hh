@@ -24,40 +24,11 @@ PointToTileIndex(uint32_t x, uint32_t y)
     return (y / kTileSize) * kRowSize + x / kTileSize;
 }
 
-constexpr std::pair<int32_t, int32_t>
-PositionToPoint(const auto& gps_data)
+constexpr PixelPosition
+PositionToMapCenter(const auto& pixel_position)
 {
-    auto longitude_offset = gps_data.longitude - kCornerLongitude;
-    auto latitude_offset = kCornerLatitude - gps_data.latitude;
-
-    int32_t x = longitude_offset * kPixelLongitudeSize;
-    int32_t y = latitude_offset * kPixelLatitudeSize;
-
-    if (longitude_offset < 0)
-    {
-        x = 0;
-    }
-    if (latitude_offset < 0)
-    {
-        y = 0;
-    }
-
-    if (x > kTileSize * kRowSize)
-    {
-        x = kTileSize * kRowSize;
-    }
-    if (y > kTileSize * kColumnSize)
-    {
-        y = kTileSize * kColumnSize;
-    }
-
-    return {x, y};
-}
-
-constexpr std::pair<int32_t, int32_t>
-PositionToMapCenter(const auto& gps_data)
-{
-    auto [x, y] = PositionToPoint(gps_data);
+    auto x = pixel_position.x;
+    auto y = pixel_position.y;
 
     x = std::clamp(
         static_cast<int>(x - hal::kDisplayWidth / 2), 0, kRowSize * kTileSize - hal::kDisplayWidth);

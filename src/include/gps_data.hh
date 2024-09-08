@@ -1,17 +1,24 @@
 #pragma once
 
-#include <mp-units/systems/international.h>
-#include <mp-units/systems/isq.h>
-#include <mp-units/systems/si.h>
+#include <optional>
+#include <cstdint>
 
-using namespace mp_units;
-using namespace mp_units::si::unit_symbols;
-using namespace mp_units::international::unit_symbols;
-
-struct GpsData
+struct GpsPosition
 {
     double latitude;
     double longitude;
+};
+
+struct PixelPosition
+{
+    int32_t x;
+    int32_t y;
+};
+
+struct GpsData
+{
+    GpsPosition position;
+    PixelPosition pixel_position;
 
     float speed;
     float heading;

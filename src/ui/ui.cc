@@ -3,6 +3,7 @@
 #include "tile_utils.hh"
 #include "time.hh"
 
+
 UserInterface::UserInterface(TileProducer& tile_producer,
                              hal::IDisplay& display,
                              std::unique_ptr<IGpsPort> gps_port)
@@ -28,18 +29,17 @@ UserInterface::OnActivation()
 {
     if (auto position = m_gps_port->Poll())
     {
-        auto [x, y] = PositionToPoint(*position);
-        auto [map_x, map_y] = PositionToMapCenter(*position);
+        auto [map_x, map_y] = PositionToMapCenter(position->pixel_position);
 
         // Update the boat position in global pixel coordinates
-        m_x = x;
-        m_y = y;
+        m_x = position->pixel_position.x;
+        m_y = position->pixel_position.y;
 
         m_map_x = map_x;
         m_map_y = map_y;
         printf("POS now %f, %f -> b %d,%d M %d,%d (out of max %d,%d)\n",
-               position->latitude,
-               position->longitude,
+               position->position.latitude,
+               position->position.longitude,
                m_x,
                m_y,
                m_map_x,

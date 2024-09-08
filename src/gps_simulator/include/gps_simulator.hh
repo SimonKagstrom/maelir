@@ -12,8 +12,8 @@ public:
 private:
     std::optional<milliseconds> OnActivation() final;
 
-    GpsData WaitForData(os::binary_semaphore& semaphore) final;
+    hal::RawGpsData WaitForData(os::binary_semaphore& semaphore) final;
 
-    GpsData m_current_position;
+    hal::RawGpsData m_current_position;
     os::binary_semaphore m_has_data_semaphore {0};
 };

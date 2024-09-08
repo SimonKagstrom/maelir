@@ -10,4 +10,6 @@ PUBLIC
 target_link_libraries(gps_reader
 PUBLIC
     maelir_interface
+PRIVATE
+    tile_library
 )

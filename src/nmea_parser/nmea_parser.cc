@@ -17,7 +17,7 @@ ToDegrees(auto nmea)
 
 } // namespace
 
-std::optional<GpsData>
+std::optional<hal::RawGpsData>
 NmeaParser::PushData(std::string_view data)
 {
     for (auto c : data)
@@ -135,6 +135,6 @@ NmeaParser::ParseGppgaData(std::string_view line)
 
     if (latitude && longitude)
     {
-        m_pending_data.push_back(GpsData {latitude.value(), longitude.value()});
+        m_pending_data.push_back(hal::RawGpsData {{latitude.value(), longitude.value()}});
     }
 }

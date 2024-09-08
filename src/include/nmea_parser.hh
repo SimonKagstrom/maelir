@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gps_data.hh"
+#include "hal/i_gps.hh"
 
 #include <etl/string.h>
 #include <etl/vector.h>
@@ -10,7 +10,7 @@
 class NmeaParser
 {
 public:
-    std::optional<GpsData> PushData(std::string_view data);
+    std::optional<hal::RawGpsData> PushData(std::string_view data);
 
 private:
     enum class State
@@ -30,5 +30,5 @@ private:
     State m_state {State::kWaitForDollar};
     etl::string<192> m_current_line;
 
-    etl::vector<GpsData, 8> m_pending_data;
+    etl::vector<hal::RawGpsData, 8> m_pending_data;
 };
