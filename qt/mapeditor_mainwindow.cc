@@ -555,6 +555,7 @@ MapEditorMainWindow::AddExtraLand(int x, int y)
     y = y - y % kPathFinderTileSize;
 
     m_extra_land.insert({x, y});
+    m_extra_water.erase({x, y});
     m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
                 x / kPathFinderTileSize] = true;
     m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::green));
@@ -567,6 +568,7 @@ MapEditorMainWindow::AddExtraWater(int x, int y)
     y = y - y % kPathFinderTileSize;
 
     m_extra_water.insert({x, y});
+    m_extra_land.erase({x, y});
     m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
                 x / kPathFinderTileSize] = false;
     m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::cyan));
