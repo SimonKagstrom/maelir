@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 3.21)
 
 project (maelir_esp32s3 LANGUAGES CXX C ASM)
 
+set(TARGET_TYPE "esp32" CACHE STRING "Target type")
+
 # Include for ESP-IDF build system functions
 include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 
