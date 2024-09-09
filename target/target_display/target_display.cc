@@ -566,7 +566,7 @@ DisplayTarget::DisplayTarget()
      *
      *   "PCLK frequency can't go too high as the limitation of PSRAM bandwidth"
      */
-    panel_config.timings.pclk_hz = 5 * 1000 * 1000;
+    panel_config.timings.pclk_hz = 4 * 1000 * 1000;
     panel_config.timings.h_res = kWidth;
     panel_config.timings.v_res = kHeight;
     panel_config.timings.hsync_back_porch = 44;
@@ -661,26 +661,20 @@ DisplayTarget::AlphaBlit(const Image& image,
 void
 DisplayTarget::Flip()
 {
-    m_owner = FrameBufferOwner::kHardware;
+    m_vsync_end.acquire();
 
-    m_flip_end.acquire();
-    assert(m_owner == FrameBufferOwner::kDriver);
+    // If the last esp_lcd_panel_draw_bitmap arg is a frame buffer allocated in PSRAM,
+    // then esp_lcd_panel_draw_bitmap does not make a copy but switches to this frame buffer
+    esp_lcd_panel_draw_bitmap(
+        m_panel_handle, 0, 0, kWidth, kHeight, m_frame_buffers[m_current_update_frame]);
+    m_current_update_frame = !m_current_update_frame;
+    m_vsync_end.acquire();
 }
 
 void
 DisplayTarget::OnVsync()
 {
-    if (m_owner == FrameBufferOwner::kHardware)
-    {
-        // If the last esp_lcd_panel_draw_bitmap arg is a frame buffer allocated in PSRAM,
-        // then esp_lcd_panel_draw_bitmap does not make a copy but switches to this frame buffer
-        esp_lcd_panel_draw_bitmap(
-            m_panel_handle, 0, 0, kWidth, kHeight, m_frame_buffers[m_current_update_frame]);
-        m_current_update_frame = !m_current_update_frame;
-
-        m_owner = FrameBufferOwner::kDriver;
-        m_flip_end.release();
-    }
+    m_vsync_end.release();
 }
 
 bool

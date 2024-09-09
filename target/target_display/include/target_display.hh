@@ -34,5 +34,5 @@ private:
     uint8_t m_current_update_frame {1};
 
     std::atomic<FrameBufferOwner> m_owner {FrameBufferOwner::kDriver};
-    os::binary_semaphore m_flip_end {0};
+    os::binary_semaphore m_vsync_end {0};
 };

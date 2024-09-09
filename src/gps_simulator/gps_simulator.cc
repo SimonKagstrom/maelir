@@ -10,12 +10,12 @@ GpsSimulator::GpsSimulator()
 std::optional<milliseconds>
 GpsSimulator::OnActivation()
 {
-    m_current_position.position.latitude += 0.00001;
-    m_current_position.position.longitude += 0.00001;
+    m_current_position.position.latitude -= 0.00001;
+    m_current_position.position.longitude += 0.00002;
 
     m_has_data_semaphore.release();
 
-    return 50ms;
+    return 40ms;
 }
 
 hal::RawGpsData
