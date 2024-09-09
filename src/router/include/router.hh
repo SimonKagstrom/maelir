@@ -12,7 +12,7 @@ using IndexType = uint32_t;
 using CostType = IndexType;
 
 constexpr auto kTargetCacheSize = 4096;
-constexpr auto kUnitTestCacheSize = 20;
+constexpr auto kUnitTestCacheSize = 24;
 
 template <size_t CACHE_SIZE>
 class Router
