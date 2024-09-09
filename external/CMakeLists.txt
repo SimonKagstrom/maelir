@@ -1,34 +1,36 @@
-if (NOT "${IDF_TARGET}" STREQUAL "esp32")
+if (NOT "${TARGET_TYPE}" STREQUAL "esp32")
     # Build as shared for host, since this otherwise conflicts with libz
     set(LIB_TYPE SHARED)
+    message("Building pngdec_zlib as shared library, to avoid host conflicts")
 else()
     set(LIB_TYPE STATIC)
+    message("Building pngdec_zlib as a static library")
 endif()
 
 add_library(pngdec_zlib ${LIB_TYPE} EXCLUDE_FROM_ALL
-    pngdec/src/adler32.c
-    pngdec/src/crc32.c
-    pngdec/src/infback.c
-    pngdec/src/inffast.c
-    pngdec/src/inflate.c
-    pngdec/src/inftrees.c
-    pngdec/src/inftrees.c
-    pngdec/src/zutil.c
+    PNGdec/src/adler32.c
+    PNGdec/src/crc32.c
+    PNGdec/src/infback.c
+    PNGdec/src/inffast.c
+    PNGdec/src/inflate.c
+    PNGdec/src/inftrees.c
+    PNGdec/src/inftrees.c
+    PNGdec/src/zutil.c
+)
+
+target_compile_options(pngdec_zlib
+PRIVATE
+    -Wno-deprecated-non-prototype
 )
 
 # Add here, since pngdec doesn't have a CMakeLists.txt
 add_library(pngdec ${LIB_TYPE} EXCLUDE_FROM_ALL
-    pngdec/src/PNGdec.cpp
+    PNGdec/src/PNGdec.cpp
 )
 target_link_libraries(pngdec
 PRIVATE
     # Link privately, to avoid conflicts with system libz
     pngdec_zlib
-)
-
-target_compile_options(pngdec
-PRIVATE
-    -Wno-deprecated-non-prototype
 )
 
 target_compile_definitions(pngdec
@@ -37,5 +39,5 @@ PUBLIC
 )
 
 target_include_directories(pngdec PUBLIC
-    pngdec/src/
+    PNGdec/src/
 )
