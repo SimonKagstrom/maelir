@@ -45,45 +45,48 @@ private:
         kMaxNodesReached,
     };
 
+    enum class NodeState : uint8_t
+    {
+        kUnknown,
+        kOpen,
+        kClosed,
+    };
+
     struct Node
     {
         Node()
             : g(0)
             , f(0)
             , parent(nullptr)
-            , open(false)
-            , closed(false)
+            , state(NodeState::kUnknown)
         {
         }
 
         void Close()
         {
-            open = false;
-            closed = true;
+            state = NodeState::kClosed;
         }
 
         void Open()
         {
-            open = true;
-            closed = false;
+            state = NodeState::kOpen;
         }
 
         bool IsOpen() const
         {
-            return open;
+            return state == NodeState::kOpen;
         }
 
         bool IsClosed() const
         {
-            return closed;
+            return state == NodeState::kClosed;
         }
 
         CostType g;
         CostType f;
         IndexType index;
         Node* parent;
-        bool open;
-        bool closed;
+        NodeState state;
     };
 
     struct CompareNodePointers

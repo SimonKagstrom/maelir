@@ -140,14 +140,10 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
             neighbor_node->g = newg;
             neighbor_node->f = neighbor_node->g + Heuristic(neighbor_index, to); // g+h
 
-            if (neighbor_node->IsClosed())
-            {
-                neighbor_node->closed = false;
-            }
-            if (!neighbor_node->open)
+            if (!neighbor_node->IsOpen())
             {
                 m_open_set.push(neighbor_node);
-                neighbor_node->open = true;
+                neighbor_node->Open();
             }
         }
 

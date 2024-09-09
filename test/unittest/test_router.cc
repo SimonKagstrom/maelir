@@ -27,7 +27,6 @@ ToIndex(auto row_x, auto row_y)
     return row_y * kRowSize + row_x;
 }
 
-
 } // namespace
 
 class Fixture
