@@ -9,8 +9,8 @@ TEST_CASE("the NMEA parser can pass GPS data in the sunny-day case")
         parser.PushData("$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\n");
 
     REQUIRE(data);
-    REQUIRE(data->latitude == doctest::Approx(48.1173));
-    REQUIRE(data->longitude == doctest::Approx(11.5167));
+    REQUIRE(data->position.latitude == doctest::Approx(48.1173));
+    REQUIRE(data->position.longitude == doctest::Approx(11.5167));
 }
 
 TEST_CASE("the NMEA parser works if data is split up")
@@ -23,8 +23,8 @@ TEST_CASE("the NMEA parser works if data is split up")
     data = parser.PushData(",01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\n");
 
     REQUIRE(data);
-    REQUIRE(data->latitude == doctest::Approx(48.1173));
-    REQUIRE(data->longitude == doctest::Approx(11.5167));
+    REQUIRE(data->position.latitude == doctest::Approx(48.1173));
+    REQUIRE(data->position.longitude == doctest::Approx(11.5167));
 }
 
 TEST_CASE("the NMEA parser can handle broken messages")
@@ -56,8 +56,8 @@ TEST_CASE("the NMEA parser can restart after broken messages")
         parser.PushData("$GPGGA,123519,4807.038,N,01131.000,$E,1,08,0.9,545.4,M,46.9,M,,*47$GPGGA,"
                         "123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\n");
     REQUIRE(data);
-    REQUIRE(data->latitude == doctest::Approx(48.1173));
-    REQUIRE(data->longitude == doctest::Approx(11.5167));
+    REQUIRE(data->position.latitude == doctest::Approx(48.1173));
+    REQUIRE(data->position.longitude == doctest::Approx(11.5167));
 }
 
 
