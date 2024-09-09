@@ -15,6 +15,10 @@ public:
     DisplayQt(QGraphicsScene* scene);
 
     void Blit(const Image& image, Rect to, std::optional<Rect> from = std::nullopt) final;
+    void AlphaBlit(const Image& image,
+                   uint8_t alpha_percent,
+                   Rect to,
+                   std::optional<Rect> from = std::nullopt) final;
     void Flip() final;
 
 signals:

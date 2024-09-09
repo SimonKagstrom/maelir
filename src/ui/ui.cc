@@ -18,9 +18,6 @@ UserInterface::UserInterface(TileProducer& tile_producer,
         pixel = 0xF81F;
     }
 
-    m_x = 2400;
-    m_map_x = 1680;
-
     m_gps_port->AwakeOn(GetSemaphore());
 }
 

@@ -587,7 +587,7 @@ DisplayTarget::DisplayTarget()
 
     esp_lcd_rgb_panel_event_callbacks_t callbacks;
     memset(&callbacks, 0, sizeof(esp_lcd_rgb_panel_event_callbacks_t));
-    callbacks.on_vsync = DisplayTarget::OnVsync;
+    callbacks.on_vsync = DisplayTarget::OnVsyncStatic;
     ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(m_panel_handle, &callbacks, this));
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(m_panel_handle));
