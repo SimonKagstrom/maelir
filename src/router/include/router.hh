@@ -8,8 +8,8 @@
 #include <queue>
 #include <span>
 
-using IndexType = uint32_t;
-using CostType = IndexType;
+using IndexType = uint16_t;
+using CostType = uint32_t;
 
 constexpr auto kTargetCacheSize = 4096;
 constexpr auto kUnitTestCacheSize = 24;
@@ -82,10 +82,10 @@ private:
             return state == NodeState::kClosed;
         }
 
+        Node* parent;
         CostType g;
         CostType f;
         IndexType index;
-        Node* parent;
         NodeState state;
     };
 
