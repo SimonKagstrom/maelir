@@ -1,27 +1,5 @@
 #include "router.hh"
-
-namespace
-{
-
-IndexType
-PointToLandIndex(Point point, unsigned row_size)
-{
-    return (point.y / kPathFinderTileSize) * row_size + (point.x / kPathFinderTileSize);
-}
-
-bool
-IsWater(std::span<const uint32_t> land_mask, IndexType index)
-{
-    if (index / 32 >= land_mask.size())
-    {
-        printf("Index out of bounds %d (%d) vs %zu\n", index, index / 32, land_mask.size());
-        return false;
-    }
-
-    return (land_mask[index / 32] & (1 << (index % 32))) == 0;
-}
-
-} // namespace
+#include "route_utils.hh"
 
 template <size_t CACHE_SIZE>
 Router<CACHE_SIZE>::Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width)
@@ -32,7 +10,7 @@ Router<CACHE_SIZE>::Router(std::span<const uint32_t> land_mask, unsigned height,
 }
 
 template <size_t CACHE_SIZE>
-std::span<IndexType>
+std::span<const IndexType>
 Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
 {
     auto from = PointToLandIndex(from_point, m_width);
@@ -50,8 +28,20 @@ Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
         }
         else
         {
+            auto top = kInvalidIndex;
+
+            // When merging, avoid repeating the end node of the previous path
+            if (!m_result.empty())
+            {
+                top = m_result.back();
+            }
+
             for (auto rit = m_current_result.rbegin(); rit != m_current_result.rend(); ++rit)
             {
+                if (*rit == top)
+                {
+                    continue;
+                }
                 m_result.push_back(*rit);
             }
             if (rc == Router::AstarResult::kPathFound)
@@ -99,11 +89,7 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
         /* We found a path! */
         if (cur->index == to)
         {
-            while (cur->parent)
-            {
-                m_current_result.push_back(cur->index);
-                cur = cur->parent;
-            }
+            ProduceResult(cur);
 
             return Router::AstarResult::kPathFound;
         }
@@ -116,11 +102,8 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
             m_stats.nodes_expanded++;
             if (!neighbor_node)
             {
-                while (cur->parent)
-                {
-                    m_current_result.push_back(cur->index);
-                    cur = cur->parent;
-                }
+                ProduceResult(cur);
+
                 return Router::AstarResult::kMaxNodesReached;
             }
 
@@ -235,6 +218,36 @@ Router<CACHE_SIZE>::Heuristic(IndexType from, IndexType to)
     return std::abs(from_x - to_x) + std::abs(from_y - to_y);
 }
 
+
+template <size_t CACHE_SIZE>
+void
+Router<CACHE_SIZE>::ProduceResult(const Node* cur)
+{
+    auto last_direction = Direction::StandStill();
+
+    while (cur->parent)
+    {
+        auto next_direction = IndexPairToDirection(cur->index, cur->parent->index, m_width);
+
+        if (next_direction != last_direction)
+        {
+            // Can happen if multiple paths are merged
+            if (m_current_result.size() > 0 && m_current_result.back() == cur->index)
+            {
+                m_current_result.pop_back();
+            }
+
+            m_current_result.push_back(cur->index);
+        }
+        cur = cur->parent;
+        if (!cur->parent)
+        {
+            // Always push the last
+            m_current_result.push_back(cur->index);
+        }
+        last_direction = next_direction;
+    }
+}
 
 template <size_t CACHE_SIZE>
 Router<CACHE_SIZE>::Stats

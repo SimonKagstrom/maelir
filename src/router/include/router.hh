@@ -13,6 +13,7 @@ using CostType = uint32_t;
 
 constexpr auto kTargetCacheSize = 4096;
 constexpr auto kUnitTestCacheSize = 24;
+constexpr IndexType kInvalidIndex = std::numeric_limits<IndexType>::max();
 
 template <size_t CACHE_SIZE>
 class Router
@@ -32,7 +33,7 @@ public:
 
     Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width);
 
-    std::span<IndexType> CalculateRoute(Point from, Point to);
+    std::span<const IndexType> CalculateRoute(Point from, Point to);
 
     // For unit tests
     Stats GetStats() const;
@@ -104,6 +105,8 @@ private:
     etl::vector<IndexType, 8> Neighbors(IndexType index) const;
 
     CostType Heuristic(IndexType from, IndexType to);
+
+    void ProduceResult(const Node* cur);
 
     const std::span<const uint32_t> m_land_mask;
     const unsigned m_height;
