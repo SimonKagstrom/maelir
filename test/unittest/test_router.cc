@@ -184,7 +184,6 @@ TEST_CASE_FIXTURE(Fixture, "the router reports only direction changes in it's pa
 }
 
 
-
 TEST_CASE_FIXTURE(Fixture, "Indices can be translated to directions")
 {
     auto d_standstill = IndexPairToDirection(ToIndex(1, 0), ToIndex(1, 0), kRowSize);
@@ -195,7 +194,7 @@ TEST_CASE_FIXTURE(Fixture, "Indices can be translated to directions")
     auto d_right = IndexPairToDirection(ToIndex(0, 0), ToIndex(3, 0), kRowSize);
     auto d_up = IndexPairToDirection(ToIndex(3, 3), ToIndex(3, 1), kRowSize);
 
-    REQUIRE(d_standstill == Direction::StandStill());
+    REQUIRE(d_standstill == Direction::Standstill());
     REQUIRE(d_down == Direction {0, 1});
     REQUIRE(d_down_far == Direction {0, 1});
     REQUIRE(d_diagonal == Direction {1, 1});

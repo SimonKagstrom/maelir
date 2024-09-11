@@ -223,7 +223,7 @@ template <size_t CACHE_SIZE>
 void
 Router<CACHE_SIZE>::ProduceResult(const Node* cur)
 {
-    auto last_direction = Direction::StandStill();
+    auto last_direction = Direction::Standstill();
 
     while (cur->parent)
     {
