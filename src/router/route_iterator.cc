@@ -18,55 +18,48 @@ RouteIterator::RouteIterator(std::span<const IndexType> route,
 std::optional<IndexType>
 RouteIterator::Next()
 {
-    std::optional<IndexType> out;
-
-    switch (m_state)
+    while (true)
     {
-    case State::kAtNode:
-        out = m_remaining_route.front();
-
-        m_remaining_route = m_remaining_route.subspan(1);
-
-        if (m_remaining_route.empty())
+        switch (m_state)
         {
-            m_state = State::kEnd;
-        }
-        else
-        {
-            m_direction = IndexPairToDirection(out.value(), m_remaining_route.front(), m_row_size);
+        case State::kAtNode:
+            m_cur = m_remaining_route.front();
+
+            m_remaining_route = m_remaining_route.subspan(1);
+
+            if (m_remaining_route.empty())
+            {
+                m_state = State::kEnd;
+            }
+            else
+            {
+                m_direction = IndexPairToDirection(m_cur, m_remaining_route.front(), m_row_size);
+                m_state = State::kInRoute;
+            }
+
+            return m_cur;
+
+        case State::kInRoute: {
             m_cur = m_cur + m_direction.dx + m_direction.dy * m_row_size;
-            printf("To in route with %d,%d\n", m_cur % m_row_size, m_cur / m_row_size);
-            m_state = State::kInRoute;
-        }
-        break;
 
-    case State::kInRoute: {
-        out = m_cur;
-        auto next = m_cur + m_direction.dx + m_direction.dy * m_row_size;
-        printf("In route with %d,%d to %d,%d\n",
-               m_cur % m_row_size,
-               m_cur / m_row_size,
-               next % m_row_size,
-               next / m_row_size);
+            if (m_cur == m_remaining_route.front())
+            {
+                m_state = State::kAtNode;
+                break;
+            }
 
-        if (next == m_remaining_route.front())
-        {
-            m_state = State::kAtNode;
+            return m_cur;
         }
-        else
-        {
-            m_cur = next;
-            // Stay in this state
+
+        case State::kEnd:
+            return std::nullopt;
+
+        case State::kValueCount:
+            // Unrechable
+            return std::nullopt;
         }
-        break;
     }
 
-    case State::kEnd:
-        return std::nullopt;
-
-    case State::kValueCount:
-        break;
-    }
-
-    return out;
+    // Unrechable
+    return std::nullopt;
 }

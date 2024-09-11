@@ -241,4 +241,17 @@ TEST_CASE_FIXTURE(Fixture, "the route iterator handles turns")
     REQUIRE(*single_it.Next() == ToIndex(1, 3));
     REQUIRE(*single_it.Next() == ToIndex(2, 3));
     REQUIRE(single_it.Next() == std::nullopt);
+
+    // up, left, down
+    auto next_route = std::array {ToIndex(8, 8), ToIndex(8, 5), ToIndex(6, 5), ToIndex(6, 4)};
+    auto next_it = RouteIterator(next_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+
+    REQUIRE(*next_it.Next() == ToIndex(8, 8));
+    REQUIRE(*next_it.Next() == ToIndex(8, 7));
+    REQUIRE(*next_it.Next() == ToIndex(8, 6));
+    REQUIRE(*next_it.Next() == ToIndex(8, 5));
+    REQUIRE(*next_it.Next() == ToIndex(7, 5));
+    REQUIRE(*next_it.Next() == ToIndex(6, 5));
+    REQUIRE(*next_it.Next() == ToIndex(6, 4));
+    REQUIRE(next_it.Next() == std::nullopt);
 }
