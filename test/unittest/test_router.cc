@@ -1,6 +1,9 @@
+#include "route_iterator.hh"
+#include "route_utils.hh"
 #include "router.hh"
 #include "test.hh"
 
+#include <fmt/format.h>
 #include <set>
 
 constexpr auto kRowSize = 16;
@@ -8,10 +11,17 @@ constexpr auto kRowSize = 16;
 namespace
 {
 
+// Helpers for comparison
 auto
 AsSet(auto span)
 {
     return std::set(span.begin(), span.end());
+}
+
+auto
+AsVector(auto span)
+{
+    return std::vector(span.begin(), span.end());
 }
 
 
@@ -26,6 +36,13 @@ ToIndex(auto row_x, auto row_y)
 {
     return row_y * kRowSize + row_x;
 }
+
+constexpr auto
+ToXY(auto index)
+{
+    return Point {index % kRowSize, index / kRowSize};
+}
+
 
 } // namespace
 
@@ -141,5 +158,87 @@ TEST_CASE_FIXTURE(Fixture, "the router can do diagonal paths")
     auto r0 = router->CalculateRoute(ToPoint(0, 0), ToPoint(3, 3));
 
     REQUIRE_FALSE(r0.empty());
-    REQUIRE(AsSet(r0) == AsSet(std::array {ToIndex(1, 1), ToIndex(2, 2), ToIndex(3, 3)}));
+    REQUIRE(AsSet(r0) == AsSet(std::array {ToIndex(0, 0), ToIndex(3, 3)}));
+}
+
+
+TEST_CASE_FIXTURE(Fixture, "the router reports only direction changes in it's paths")
+{
+    auto r0 = router->CalculateRoute(ToPoint(0, 0), ToPoint(5, 0));
+
+    REQUIRE(r0.size() == 2);
+    REQUIRE(AsVector(r0) == AsVector(std::array {ToIndex(0, 0), ToIndex(5, 0)}));
+
+    // r0 is a span, so now invalid
+    r0 = router->CalculateRoute(ToPoint(7, 1), ToPoint(8, 3));
+    REQUIRE(r0.size() == 5);
+
+    REQUIRE(AsVector(r0) ==
+            AsVector(std::array {
+                ToIndex(7, 1), ToIndex(9, 1), ToIndex(10, 2), ToIndex(9, 3), ToIndex(8, 3)}));
+
+    r0 = router->CalculateRoute(ToPoint(15, 3), ToPoint(15, 0));
+
+    REQUIRE(r0.size() == 2);
+    REQUIRE(AsVector(r0) == AsVector(std::array {ToIndex(15, 3), ToIndex(15, 0)}));
+}
+
+
+
+TEST_CASE_FIXTURE(Fixture, "Indices can be translated to directions")
+{
+    auto d_standstill = IndexPairToDirection(ToIndex(1, 0), ToIndex(1, 0), kRowSize);
+    auto d_down = IndexPairToDirection(ToIndex(0, 0), ToIndex(0, 1), kRowSize);
+    auto d_down_far = IndexPairToDirection(ToIndex(0, 0), ToIndex(0, 2), kRowSize);
+    auto d_diagonal = IndexPairToDirection(ToIndex(0, 0), ToIndex(1, 1), kRowSize);
+    auto d_diagonal_left = IndexPairToDirection(ToIndex(3, 3), ToIndex(0, 0), kRowSize);
+    auto d_right = IndexPairToDirection(ToIndex(0, 0), ToIndex(3, 0), kRowSize);
+    auto d_up = IndexPairToDirection(ToIndex(3, 3), ToIndex(3, 1), kRowSize);
+
+    REQUIRE(d_standstill == Direction::StandStill());
+    REQUIRE(d_down == Direction {0, 1});
+    REQUIRE(d_down_far == Direction {0, 1});
+    REQUIRE(d_diagonal == Direction {1, 1});
+    REQUIRE(d_diagonal_left == Direction {-1, -1});
+    REQUIRE(d_right == Direction {1, 0});
+    REQUIRE(d_up == Direction {0, -1});
+}
+
+
+
+
+TEST_CASE_FIXTURE(Fixture, "the route iterator handles corner cases")
+{
+    auto empty_it = RouteIterator({}, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+    REQUIRE(empty_it.Next() == std::nullopt);
+
+    auto single_node = std::array {ToIndex(0, 0)};
+    auto single_it = RouteIterator(single_node, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+    REQUIRE(single_it.Next() == ToIndex(0, 0));
+    REQUIRE(single_it.Next() == std::nullopt);
+}
+
+TEST_CASE_FIXTURE(Fixture, "the route iterator handles regular iteration")
+{
+    auto single_route = std::array {ToIndex(0, 0), ToIndex(0, 2)};
+    auto single_it = RouteIterator(single_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+
+    REQUIRE(single_it.Next() == ToIndex(0, 0));
+    REQUIRE(single_it.Next() == ToIndex(0, 1));
+    REQUIRE(single_it.Next() == ToIndex(0, 2));
+    REQUIRE(single_it.Next() == std::nullopt);
+}
+
+TEST_CASE_FIXTURE(Fixture, "the route iterator handles turns")
+{
+    // Right-down, down, right
+    auto single_route = std::array {ToIndex(0, 0), ToIndex(1, 1), ToIndex(1, 3), ToIndex(2, 3)};
+    auto single_it = RouteIterator(single_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+
+    REQUIRE(*single_it.Next() == ToIndex(0, 0));
+    REQUIRE(*single_it.Next() == ToIndex(1, 1));
+    REQUIRE(*single_it.Next() == ToIndex(1, 2));
+    REQUIRE(*single_it.Next() == ToIndex(1, 3));
+    REQUIRE(*single_it.Next() == ToIndex(2, 3));
+    REQUIRE(single_it.Next() == std::nullopt);
 }

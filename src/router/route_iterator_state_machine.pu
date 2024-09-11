@@ -1,0 +1,13 @@
+@startuml
+
+state kAtNode : direction = to_next\nreturn cur
+state kInRoute : return cur,\ncur += direction
+state kEnd : return std::nullopt
+
+[*] --> kAtNode
+kAtNode --> kInRoute : cur != next_index
+kAtNode --> kEnd : no next point
+
+kInRoute --> kAtNode : cur == next_index
+
+@enduml
