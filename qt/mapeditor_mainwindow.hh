@@ -118,5 +118,5 @@ private:
     std::vector<uint32_t> m_land_mask_uint32;
     std::unique_ptr<Router<kTargetCacheSize>> m_router;
 
-    std::vector<Point> m_current_route;
+    std::span<const IndexType> m_current_route;
 };

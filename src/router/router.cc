@@ -46,10 +46,6 @@ Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
             }
             if (rc == Router::AstarResult::kPathFound)
             {
-                for (auto cur : m_result)
-                {
-                    printf("  Path %d,%d\n", cur % m_width, cur / m_width);
-                }
                 return m_result;
             }
             else

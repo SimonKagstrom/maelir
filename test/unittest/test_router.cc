@@ -204,8 +204,6 @@ TEST_CASE_FIXTURE(Fixture, "Indices can be translated to directions")
 }
 
 
-
-
 TEST_CASE_FIXTURE(Fixture, "the route iterator handles corner cases")
 {
     auto empty_it = RouteIterator({}, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
@@ -223,7 +221,6 @@ TEST_CASE_FIXTURE(Fixture, "the route iterator handles regular iteration")
     auto single_it = RouteIterator(single_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
 
     REQUIRE(single_it.Next() == ToIndex(0, 0));
-    REQUIRE(single_it.Next() == ToIndex(0, 1));
     REQUIRE(single_it.Next() == ToIndex(0, 2));
     REQUIRE(single_it.Next() == std::nullopt);
 }
@@ -236,7 +233,6 @@ TEST_CASE_FIXTURE(Fixture, "the route iterator handles turns")
 
     REQUIRE(*single_it.Next() == ToIndex(0, 0));
     REQUIRE(*single_it.Next() == ToIndex(1, 1));
-    REQUIRE(*single_it.Next() == ToIndex(1, 2));
     REQUIRE(*single_it.Next() == ToIndex(1, 3));
     REQUIRE(*single_it.Next() == ToIndex(2, 3));
     REQUIRE(single_it.Next() == std::nullopt);
@@ -246,10 +242,7 @@ TEST_CASE_FIXTURE(Fixture, "the route iterator handles turns")
     auto next_it = RouteIterator(next_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
 
     REQUIRE(*next_it.Next() == ToIndex(8, 8));
-    REQUIRE(*next_it.Next() == ToIndex(8, 7));
-    REQUIRE(*next_it.Next() == ToIndex(8, 6));
     REQUIRE(*next_it.Next() == ToIndex(8, 5));
-    REQUIRE(*next_it.Next() == ToIndex(7, 5));
     REQUIRE(*next_it.Next() == ToIndex(6, 5));
     REQUIRE(*next_it.Next() == ToIndex(6, 4));
     REQUIRE(next_it.Next() == std::nullopt);

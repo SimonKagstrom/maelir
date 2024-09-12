@@ -234,7 +234,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
         if (m_wanted_route.size() == 2)
         {
             m_wanted_route.clear();
-            m_current_route.clear();
+            m_current_route = {};
         }
         m_wanted_route.push_back(Point {x, y});
 
@@ -243,8 +243,8 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             auto from = m_wanted_route.front();
             auto to = m_wanted_route.back();
 
-            auto route = m_router->CalculateRoute(from, to);
-            if (!route.empty())
+            m_current_route = m_router->CalculateRoute(from, to);
+            if (!m_current_route.empty())
             {
                 auto stats = m_router->GetStats();
                 fmt::print(
@@ -255,15 +255,6 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
                     to.y,
                     stats.nodes_expanded,
                     stats.partial_paths);
-            }
-
-            for (auto index : route)
-            {
-                auto x = index % (m_map->width() / kPathFinderTileSize);
-                auto y = index / (m_map->width() / kPathFinderTileSize);
-
-                m_current_route.push_back(Point {static_cast<int32_t>(x * kPathFinderTileSize),
-                                                 static_cast<int32_t>(y * kPathFinderTileSize)});
             }
         }
     }

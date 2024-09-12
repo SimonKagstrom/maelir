@@ -1,12 +1,12 @@
 @startuml
 
 state kNode : direction = to_next\nreturn cur
-state kOutsideNode
 state kInRoute : return cur,\ncur += direction
 state kEnd : return std::nullopt
 
 [*] --> kNode
-kNode --> kInRoute : cur != next_index
+kNode --> kInRoute : cur != next_index\n(disabled)
+kNode --> kNode : not empty
 kNode --> kEnd : no next point
 
 kInRoute --> kNode : cur == next_index

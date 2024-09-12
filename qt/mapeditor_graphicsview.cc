@@ -1,6 +1,8 @@
 #include "mapeditor_graphicsview.hh"
 
 #include "mapeditor_mainwindow.hh"
+#include "route_iterator.hh"
+#include "route_utils.hh"
 
 #include <QPainter>
 
@@ -49,13 +51,48 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
         painter->drawRect(outer);
     }
 
-    for (const auto& cur : m_owner->m_current_route)
+    if (!m_owner->m_current_route.empty())
     {
-        QPen pen(Qt::yellow);
-        pen.setWidth(3);
+        const auto row_size = m_owner->m_map->width() / kPathFinderTileSize;
 
-        painter->setPen(pen);
-        painter->drawRect(cur.x, cur.y, kPathFinderTileSize, kPathFinderTileSize);
+        auto route_iterator =
+            RouteIterator(m_owner->m_current_route,
+                          PointToLandIndex({0, 0}, row_size),
+                          PointToLandIndex({m_owner->m_map->width() / kPathFinderTileSize,
+                                            m_owner->m_map->height() / kPathFinderTileSize},
+                                           row_size),
+                          row_size);
+
+        auto last = route_iterator.Next();
+        while (auto cur = route_iterator.Next())
+        {
+            auto index = *cur;
+            auto last_x = *last % row_size;
+            auto last_y = *last / row_size;
+            auto cur_x = index % row_size;
+            auto cur_y = index / row_size;
+
+            QPen pen(Qt::yellow);
+            pen.setWidth(3);
+
+            painter->setPen(pen);
+            // Will draw twice, but let's ignore that for now
+            painter->drawRect(last_x * kPathFinderTileSize,
+                              last_y * kPathFinderTileSize,
+                              kPathFinderTileSize,
+                              kPathFinderTileSize);
+            painter->drawRect(cur_x * kPathFinderTileSize,
+                              cur_y * kPathFinderTileSize,
+                              kPathFinderTileSize,
+                              kPathFinderTileSize);
+            // And a line between them
+            painter->drawLine(last_x * kPathFinderTileSize + kPathFinderTileSize / 2,
+                              last_y * kPathFinderTileSize + kPathFinderTileSize / 2,
+                              cur_x * kPathFinderTileSize + kPathFinderTileSize / 2,
+                              cur_y * kPathFinderTileSize + kPathFinderTileSize / 2);
+
+            last = cur;
+        }
     }
 
     // Get the visible area in scene coordinates

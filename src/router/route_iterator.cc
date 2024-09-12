@@ -34,7 +34,9 @@ RouteIterator::Next()
             else
             {
                 m_direction = IndexPairToDirection(m_cur, m_remaining_route.front(), m_row_size);
-                m_state = State::kInRoute;
+
+                // For now, don't iterate over the intervening nodes
+                //m_state = State::kInRoute;
             }
 
             return m_cur;
