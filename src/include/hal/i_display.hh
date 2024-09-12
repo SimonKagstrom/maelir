@@ -2,6 +2,7 @@
 
 #include "image.hh"
 #include "rect.hh"
+#include "tile.hh"
 
 #include <optional>
 
@@ -21,9 +22,12 @@ public:
 
     // Black is translucent in the image to write
     virtual void AlphaBlit(const Image& image,
-                           uint8_t alpha_percent,
+                           uint8_t alpha_byte,
                            Rect to,
                            std::optional<Rect> from = std::nullopt) = 0;
+
+    virtual void
+    DrawAlphaLine(Point from, Point to, uint8_t width, uint16_t rgb565, uint8_t alpha_byte) = 0;
 
     virtual void Flip() = 0;
 };

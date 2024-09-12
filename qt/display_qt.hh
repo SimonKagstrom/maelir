@@ -19,6 +19,7 @@ public:
                    uint8_t alpha_percent,
                    Rect to,
                    std::optional<Rect> from = std::nullopt) final;
+    void DrawAlphaLine(Point from, Point to, uint8_t width,  uint16_t rgb565,uint8_t alpha_byte) final;
     void Flip() final;
 
 signals:

@@ -26,7 +26,7 @@ add_executable(ut
 target_link_libraries(ut
     nmea_parser
     router
-    router_internal_interface
+    router_interface
     doctest::doctest
     trompeloeil::trompeloeil
 )

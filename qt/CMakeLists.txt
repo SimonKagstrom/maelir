@@ -73,5 +73,5 @@ target_link_libraries(map_editor
     os_qt
     yaml-cpp
     router
-    router_internal_interface
+    router_interface
 )

@@ -1,4 +1,5 @@
 #include "router.hh"
+#include "tile.hh"
 
 static IndexType
 PointToLandIndex(Point point, unsigned row_size)
@@ -21,30 +22,10 @@ IsWater(std::span<const uint32_t> land_mask, IndexType index)
 static Direction
 IndexPairToDirection(IndexType from, IndexType to, unsigned row_size)
 {
-    auto from_x = from % row_size;
-    auto from_y = from / row_size;
-    auto to_x = to % row_size;
-    auto to_y = to / row_size;
+    int from_x = from % row_size;
+    int from_y = from / row_size;
+    int to_x = to % row_size;
+    int to_y = to / row_size;
 
-    Direction out = {0, 0};
-
-    if (from_x < to_x)
-    {
-        out.dx = 1;
-    }
-    else if (from_x > to_x)
-    {
-        out.dx = -1;
-    }
-
-    if (from_y < to_y)
-    {
-        out.dy = 1;
-    }
-    else if (from_y > to_y)
-    {
-        out.dy = -1;
-    }
-
-    return out;
+    return PointPairToDirection({from_x, from_y}, {to_x, to_y});
 }

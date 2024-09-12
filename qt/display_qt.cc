@@ -55,7 +55,7 @@ DisplayQt::Blit(const Image& image, Rect to, std::optional<Rect> from)
 }
 
 void
-DisplayQt::AlphaBlit(const Image& image, uint8_t alpha_percent, Rect to, std::optional<Rect> from)
+DisplayQt::AlphaBlit(const Image& image, uint8_t alpha_byte, Rect to, std::optional<Rect> from)
 {
     auto height = from.has_value() ? from->height : image.height;
     auto width = from.has_value() ? from->width : image.width;
@@ -113,12 +113,47 @@ DisplayQt::AlphaBlit(const Image& image, uint8_t alpha_percent, Rect to, std::op
             auto dst_g = (dst_color >> 5) & 0x3F;
             auto dst_b = dst_color & 0x1F;
 
-            auto r = ((src_r * alpha_percent) + (dst_r * (100 - alpha_percent))) / 100;
-            auto g = ((src_g * alpha_percent) + (dst_g * (100 - alpha_percent))) / 100;
-            auto b = ((src_b * alpha_percent) + (dst_b * (100 - alpha_percent))) / 100;
+            auto r = ((src_r * alpha_byte) + (dst_r * (255 - alpha_byte))) / 255;
+            auto g = ((src_g * alpha_byte) + (dst_g * (255 - alpha_byte))) / 255;
+            auto b = ((src_b * alpha_byte) + (dst_b * (255 - alpha_byte))) / 255;
 
             m_frame_buffer[dst_y * hal::kDisplayWidth + dst_x] = (r << 11) | (g << 5) | b;
         }
+    }
+}
+
+void
+DisplayQt::DrawAlphaLine(Point from, Point to, uint8_t width, uint16_t rgb565, uint8_t alpha_byte)
+{
+    // Only draws horizontal, vertical, or diagonal lines
+    auto direction = PointPairToDirection(from, to);
+    auto perpendicular = direction.Perpendicular();
+    auto next = from;
+
+    auto dst_r = (rgb565 >> 11) & 0x1F;
+    auto dst_g = (rgb565 >> 5) & 0x3F;
+    auto dst_b = rgb565 & 0x1F;
+
+    while (next != to)
+    {
+        for (auto i = -width / 2; i < width / 2; ++i)
+        {
+            auto cur = next + perpendicular * i;
+
+            auto src_color = m_frame_buffer[cur.y * hal::kDisplayWidth + cur.x];
+
+            auto src_r = (src_color >> 11) & 0x1F;
+            auto src_g = (src_color >> 5) & 0x3F;
+            auto src_b = src_color & 0x1F;
+
+            auto r = ((src_r * alpha_byte) + (dst_r * (255 - alpha_byte))) / 255;
+            auto g = ((src_g * alpha_byte) + (dst_g * (255 - alpha_byte))) / 255;
+            auto b = ((src_b * alpha_byte) + (dst_b * (255 - alpha_byte))) / 255;
+
+            m_frame_buffer[cur.y * hal::kDisplayWidth + cur.x] = (r << 11) | (g << 5) | b;
+        }
+
+        next = next + direction;
     }
 }
 

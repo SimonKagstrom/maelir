@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 
 constexpr auto kTileSize = 240;
@@ -15,6 +16,11 @@ struct Direction
 {
     int8_t dx;
     int8_t dy;
+
+    Direction Perpendicular()
+    {
+        return Direction {static_cast<int8_t>(-dy), dx};
+    }
 
     static consteval auto Standstill()
     {
@@ -63,7 +69,34 @@ struct Direction
 };
 
 inline auto
+PointPairToDirection(Point from, Point to)
+{
+    int8_t dx = std::clamp(to.x - from.x, -1, 1);
+    int8_t dy = std::clamp(to.y - from.y, -1, 1);
+
+    return Direction {dx, dy};
+}
+
+inline auto
+operator==(const Point& lhs, const Point& rhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+inline auto
 operator==(const Direction& lhs, const Direction& rhs)
 {
     return lhs.dx == rhs.dx && lhs.dy == rhs.dy;
+}
+
+inline auto
+operator*(Direction lhs, int rhs)
+{
+    return Direction {static_cast<int8_t>(lhs.dx * rhs), static_cast<int8_t>(lhs.dy * rhs)};
+}
+
+inline auto
+operator+(Point lhs, Direction rhs)
+{
+    return Point {lhs.x + rhs.dx, lhs.y + rhs.dy};
 }
