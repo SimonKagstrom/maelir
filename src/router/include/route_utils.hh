@@ -19,7 +19,7 @@ IsWater(std::span<const uint32_t> land_mask, IndexType index)
     return (land_mask[index / 32] & (1 << (index % 32))) == 0;
 }
 
-static Direction
+static Vector
 IndexPairToDirection(IndexType from, IndexType to, unsigned row_size)
 {
     int from_x = from % row_size;

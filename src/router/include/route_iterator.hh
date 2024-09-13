@@ -31,5 +31,5 @@ private:
 
     State m_state {State::kAtNode};
     IndexType m_cur {0};
-    Direction m_direction {Direction::Standstill()};
+    Vector m_direction {Vector::Standstill()};
 };

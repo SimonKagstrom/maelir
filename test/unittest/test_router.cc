@@ -194,13 +194,13 @@ TEST_CASE_FIXTURE(Fixture, "Indices can be translated to directions")
     auto d_right = IndexPairToDirection(ToIndex(0, 0), ToIndex(3, 0), kRowSize);
     auto d_up = IndexPairToDirection(ToIndex(3, 3), ToIndex(3, 1), kRowSize);
 
-    REQUIRE(d_standstill == Direction::Standstill());
-    REQUIRE(d_down == Direction {0, 1});
-    REQUIRE(d_down_far == Direction {0, 1});
-    REQUIRE(d_diagonal == Direction {1, 1});
-    REQUIRE(d_diagonal_left == Direction {-1, -1});
-    REQUIRE(d_right == Direction {1, 0});
-    REQUIRE(d_up == Direction {0, -1});
+    REQUIRE(d_standstill == Vector::Standstill());
+    REQUIRE(d_down == Vector {0, 1});
+    REQUIRE(d_down_far == Vector {0, 1});
+    REQUIRE(d_diagonal == Vector {1, 1});
+    REQUIRE(d_diagonal_left == Vector {-1, -1});
+    REQUIRE(d_right == Vector {1, 0});
+    REQUIRE(d_up == Vector {0, -1});
 }
 
 

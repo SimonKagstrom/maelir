@@ -12,59 +12,59 @@ struct Point
     int32_t y;
 };
 
-struct Direction
+struct Vector
 {
     int8_t dx;
     int8_t dy;
 
-    Direction Perpendicular()
+    Vector Perpendicular()
     {
-        return Direction {static_cast<int8_t>(-dy), dx};
+        return Vector {static_cast<int8_t>(-dy), dx};
     }
 
     static consteval auto Standstill()
     {
-        return Direction {0, 0};
+        return Vector {0, 0};
     };
 
     static consteval auto Up()
     {
-        return Direction {0, -1};
+        return Vector {0, -1};
     };
 
     static consteval auto Down()
     {
-        return Direction {0, 1};
+        return Vector {0, 1};
     };
 
     static consteval auto Left()
     {
-        return Direction {-1, 0};
+        return Vector {-1, 0};
     };
 
     static consteval auto Right()
     {
-        return Direction {1, 0};
+        return Vector {1, 0};
     };
 
     static consteval auto UpLeft()
     {
-        return Direction {-1, -1};
+        return Vector {-1, -1};
     };
 
     static consteval auto UpRight()
     {
-        return Direction {1, -1};
+        return Vector {1, -1};
     };
 
     static consteval auto DownLeft()
     {
-        return Direction {-1, 1};
+        return Vector {-1, 1};
     };
 
     static consteval auto DownRight()
     {
-        return Direction {1, 1};
+        return Vector {1, 1};
     };
 };
 
@@ -74,7 +74,7 @@ PointPairToDirection(Point from, Point to)
     int8_t dx = std::clamp(to.x - from.x, -1, 1);
     int8_t dy = std::clamp(to.y - from.y, -1, 1);
 
-    return Direction {dx, dy};
+    return Vector {dx, dy};
 }
 
 inline auto
@@ -84,19 +84,19 @@ operator==(const Point& lhs, const Point& rhs)
 }
 
 inline auto
-operator==(const Direction& lhs, const Direction& rhs)
+operator==(const Vector& lhs, const Vector& rhs)
 {
     return lhs.dx == rhs.dx && lhs.dy == rhs.dy;
 }
 
 inline auto
-operator*(Direction lhs, int rhs)
+operator*(Vector lhs, int rhs)
 {
-    return Direction {static_cast<int8_t>(lhs.dx * rhs), static_cast<int8_t>(lhs.dy * rhs)};
+    return Vector {static_cast<int8_t>(lhs.dx * rhs), static_cast<int8_t>(lhs.dy * rhs)};
 }
 
 inline auto
-operator+(Point lhs, Direction rhs)
+operator+(Point lhs, Vector rhs)
 {
     return Point {lhs.x + rhs.dx, lhs.y + rhs.dy};
 }
