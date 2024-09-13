@@ -17,7 +17,12 @@ struct Vector
     int8_t dx;
     int8_t dy;
 
-    Vector Perpendicular()
+    bool IsDiagonal() const
+    {
+        return dx != 0 && dy != 0;
+    }
+
+    Vector Perpendicular() const
     {
         return Vector {static_cast<int8_t>(-dy), dx};
     }
