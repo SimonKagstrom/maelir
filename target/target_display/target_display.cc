@@ -607,56 +607,12 @@ DisplayTarget::DisplayTarget()
     my_PCA9554_digital_write(&handle, PCA_TFT_BACKLIGHT, HIGH);
 }
 
-void
-DisplayTarget::Blit(const Image& image, Rect to, std::optional<Rect> from = std::nullopt)
+uint16_t*
+DisplayTarget::GetFrameBuffer()
 {
-    auto height = from.has_value() ? from->height : image.height;
-    auto width = from.has_value() ? from->width : image.width;
-    auto from_y = from.has_value() ? from->y : 0;
-    auto from_x = from.has_value() ? from->x : 0;
-
-    if (to.x < 0)
-    {
-        from_x += -to.x;
-        width += to.x;
-    }
-    if (to.y < 0)
-    {
-        from_y += -to.y;
-        height += to.y;
-    }
-
-    auto row_length = image.width - from_x;
-
-    to.x = std::max(static_cast<int32_t>(0), to.x);
-    to.y = std::max(static_cast<int32_t>(0), to.y);
-    if (to.x + row_length > hal::kDisplayWidth)
-    {
-        row_length = hal::kDisplayWidth - to.x;
-    }
-
-    for (int y = 0; y < height; ++y)
-    {
-        auto dst_y = to.y + y;
-
-        if (dst_y < 0 || dst_y >= hal::kDisplayHeight)
-        {
-            continue;
-        }
-
-        memcpy(&m_frame_buffers[m_current_update_frame][dst_y * hal::kDisplayWidth + to.x],
-               &image.data[(from_y + y) * image.width + from_x],
-               row_length * sizeof(uint16_t));
-    }
+    return m_frame_buffers[m_current_update_frame];
 }
 
-void
-DisplayTarget::AlphaBlit(const Image& image,
-                         uint8_t alpha_percent,
-                         Rect to,
-                         std::optional<Rect> from)
-{
-}
 
 void
 DisplayTarget::Flip()

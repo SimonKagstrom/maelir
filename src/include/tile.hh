@@ -76,8 +76,8 @@ struct Vector
 inline auto
 PointPairToDirection(Point from, Point to)
 {
-    int8_t dx = std::clamp(to.x - from.x, -1, 1);
-    int8_t dy = std::clamp(to.y - from.y, -1, 1);
+    int8_t dx = std::clamp(to.x - from.x, static_cast<int32_t>(-1), static_cast<int32_t>(1));
+    int8_t dy = std::clamp(to.y - from.y, static_cast<int32_t>(-1), static_cast<int32_t>(1));
 
     return Vector {dx, dy};
 }

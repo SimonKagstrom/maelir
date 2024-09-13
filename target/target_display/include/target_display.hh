@@ -11,9 +11,7 @@ class DisplayTarget : public hal::IDisplay
 public:
     DisplayTarget();
 
-    void Blit(const Image& image, Rect to, std::optional<Rect> from) final;
-    void
-    AlphaBlit(const Image& image, uint8_t alpha_percent, Rect to, std::optional<Rect> from) final;
+    uint16_t *GetFrameBuffer() final;
     void Flip() final;
 
 private:

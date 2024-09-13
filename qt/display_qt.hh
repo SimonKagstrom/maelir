@@ -14,12 +14,7 @@ class DisplayQt : public QObject, public hal::IDisplay
 public:
     DisplayQt(QGraphicsScene* scene);
 
-    void Blit(const Image& image, Rect to, std::optional<Rect> from = std::nullopt) final;
-    void AlphaBlit(const Image& image,
-                   uint8_t alpha_percent,
-                   Rect to,
-                   std::optional<Rect> from = std::nullopt) final;
-    void DrawAlphaLine(Point from, Point to, uint8_t width,  uint16_t rgb565,uint8_t alpha_byte) final;
+    uint16_t* GetFrameBuffer();
     void Flip() final;
 
 signals:

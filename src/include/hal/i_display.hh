@@ -17,18 +17,16 @@ class IDisplay
 public:
     virtual ~IDisplay() = default;
 
+    /**
+     * @brief Return a pointer to the frame buffer.
+     *
+     * @note only valid until @a Flip is called.
+     *
+     * @return the frame buffer
+     */
+    virtual uint16_t* GetFrameBuffer() = 0;
+
     // Inspired by SDL2
-    virtual void Blit(const Image& image, Rect to, std::optional<Rect> from = std::nullopt) = 0;
-
-    // Black is translucent in the image to write
-    virtual void AlphaBlit(const Image& image,
-                           uint8_t alpha_byte,
-                           Rect to,
-                           std::optional<Rect> from = std::nullopt) = 0;
-
-    virtual void
-    DrawAlphaLine(Point from, Point to, uint8_t width, uint16_t rgb565, uint8_t alpha_byte) = 0;
-
     virtual void Flip() = 0;
 };
 
