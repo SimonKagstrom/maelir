@@ -134,23 +134,41 @@ DisplayQt::DrawAlphaLine(Point from, Point to, uint8_t width, uint16_t rgb565, u
     auto dst_g = (rgb565 >> 5) & 0x3F;
     auto dst_b = rgb565 & 0x1F;
 
+    auto pixel_w = perpendicular.IsDiagonal() ? 2 : 1;
+    if (perpendicular.IsDiagonal())
+    {
+        // Looks better
+        width = std::max(width - 1, 1);
+    }
+
     while (next != to)
     {
-        for (auto i = -width / 2; i < width / 2; ++i)
+        for (auto w = -width / 2; w < width / 2; ++w)
         {
-            auto cur = next + perpendicular * i;
+            auto cur = next + perpendicular * w;
 
-            auto src_color = m_frame_buffer[cur.y * hal::kDisplayWidth + cur.x];
+            if (cur.y < 0 || cur.y >= hal::kDisplayHeight)
+            {
+                continue;
+            }
+            for (auto x = 0; x < pixel_w; x++)
+            {
+                if (cur.x + x < 0 || cur.x + x >= hal::kDisplayWidth)
+                {
+                    continue;
+                }
+                auto src_color = m_frame_buffer[cur.y * hal::kDisplayWidth + cur.x];
 
-            auto src_r = (src_color >> 11) & 0x1F;
-            auto src_g = (src_color >> 5) & 0x3F;
-            auto src_b = src_color & 0x1F;
+                auto src_r = (src_color >> 11) & 0x1F;
+                auto src_g = (src_color >> 5) & 0x3F;
+                auto src_b = src_color & 0x1F;
 
-            auto r = ((src_r * alpha_byte) + (dst_r * (255 - alpha_byte))) / 255;
-            auto g = ((src_g * alpha_byte) + (dst_g * (255 - alpha_byte))) / 255;
-            auto b = ((src_b * alpha_byte) + (dst_b * (255 - alpha_byte))) / 255;
+                auto r = ((src_r * alpha_byte) + (dst_r * (255 - alpha_byte))) / 255;
+                auto g = ((src_g * alpha_byte) + (dst_g * (255 - alpha_byte))) / 255;
+                auto b = ((src_b * alpha_byte) + (dst_b * (255 - alpha_byte))) / 255;
 
-            m_frame_buffer[cur.y * hal::kDisplayWidth + cur.x] = (r << 11) | (g << 5) | b;
+                m_frame_buffer[cur.y * hal::kDisplayWidth + cur.x + x] = (r << 11) | (g << 5) | b;
+            }
         }
 
         next = next + direction;
