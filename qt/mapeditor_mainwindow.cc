@@ -30,7 +30,8 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
 
     *m_map = m_map->copy(0, 0, cropped_width, cropped_height);
 
-    m_land_mask.resize((cropped_height * cropped_width) / kPathFinderTileSize, false);
+    m_land_mask.resize(
+        (cropped_height / kPathFinderTileSize) * (cropped_width / kPathFinderTileSize), false);
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
 
     m_ui->setupUi(this);
@@ -367,6 +368,11 @@ MapEditorMainWindow::LoadYaml(const char* filename)
         {
             auto val = mask_uint32.as<uint32_t>();
 
+            if (index >= m_land_mask.size())
+            {
+                break;
+            }
+
             for (auto i = 0; i < 32; ++i)
             {
                 m_land_mask[index] = val & (1 << i);
@@ -389,6 +395,7 @@ MapEditorMainWindow::SaveYaml()
     // Globals
     node["map_filename"] = m_map_name.toStdString();
     node["tile_size"] = kTileSize;
+    node["path_finder_tile_size"] = kPathFinderTileSize;
 
     for (const auto& pos : m_positions)
     {
