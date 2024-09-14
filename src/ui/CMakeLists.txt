@@ -12,6 +12,7 @@ PUBLIC
     maelir_interface
     tile_producer
     gps_reader
+    route_service
 PRIVATE
     painter
 )

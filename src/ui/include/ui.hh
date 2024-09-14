@@ -3,6 +3,7 @@
 #include "base_thread.hh"
 #include "gps_port.hh"
 #include "hal/i_display.hh"
+#include "route_service.hh"
 #include "tile_producer.hh"
 
 class UserInterface : public os::BaseThread
@@ -24,6 +25,7 @@ private:
 
     hal::IDisplay& m_display;
     std::unique_ptr<IGpsPort> m_gps_port;
+    std::unique_ptr<IRouteListener> m_route_listener;
 
     // Global pixel position of the boat
     int32_t m_x {0};
