@@ -11,7 +11,8 @@ class UserInterface : public os::BaseThread
 public:
     UserInterface(TileProducer& tile_producer,
                   hal::IDisplay& display,
-                  std::unique_ptr<IGpsPort> gps_port);
+                  std::unique_ptr<IGpsPort> gps_port,
+                  std::unique_ptr<IRouteListener> route_listener);
 
 private:
     std::optional<milliseconds> OnActivation() final;
@@ -19,6 +20,7 @@ private:
     bool NeedsRedraw(int32_t x, int32_t y) const;
 
     void DrawMap();
+    void DrawRoute();
     void DrawBoat();
 
     TileProducer& m_tile_producer;
@@ -34,6 +36,7 @@ private:
     // Global pixel position of the left corner of the map
     int32_t m_map_x {0};
     int32_t m_map_y {0};
+    std::span<const IndexType> m_current_route;
 
     std::array<uint16_t, 5 * 5> m_boat_pixels;
     Image m_boat;

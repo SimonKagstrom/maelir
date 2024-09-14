@@ -35,7 +35,7 @@ def create_land_mask_cpp(yaml_data: dict, row_length: int, dst_dir: str, out_bas
 #include <cstdint>
 
 constexpr auto kLandMaskRowSize = {row_length};
-constexpr auto kLandMaskRows = {len(data) // row_length};
+constexpr auto kLandMaskRows = {len(data) // (row_length // 32)};
 
 extern const uint32_t kLandMask[];
 """)

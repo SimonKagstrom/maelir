@@ -17,6 +17,13 @@ Router<CACHE_SIZE>::CalculateRoute(Point from_point, Point to_point)
     auto from = PointToLandIndex(from_point, m_width);
     auto to = PointToLandIndex(to_point, m_width);
 
+    return CalculateRoute(from, to);
+}
+
+template <size_t CACHE_SIZE>
+std::span<const IndexType>
+Router<CACHE_SIZE>::CalculateRoute(IndexType from, IndexType to)
+{
     m_stats.Reset();
     m_result.clear();
 

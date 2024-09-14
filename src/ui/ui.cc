@@ -1,15 +1,20 @@
 #include "ui.hh"
 
+#include "generated_land_mask.hh"
 #include "painter.hh"
+#include "route_iterator.hh"
+#include "route_utils.hh"
 #include "tile_utils.hh"
 #include "time.hh"
 
 UserInterface::UserInterface(TileProducer& tile_producer,
                              hal::IDisplay& display,
-                             std::unique_ptr<IGpsPort> gps_port)
+                             std::unique_ptr<IGpsPort> gps_port,
+                             std::unique_ptr<IRouteListener> route_listener)
     : m_tile_producer(tile_producer)
     , m_display(display)
     , m_gps_port(std::move(gps_port))
+    , m_route_listener(std::move(route_listener))
     , m_boat(m_boat_pixels, 5, 5)
 {
     for (auto& pixel : m_boat_pixels)
@@ -19,6 +24,7 @@ UserInterface::UserInterface(TileProducer& tile_producer,
     }
 
     m_gps_port->AwakeOn(GetSemaphore());
+    m_route_listener->AwakeOn(GetSemaphore());
 }
 
 std::optional<milliseconds>
@@ -45,17 +51,21 @@ UserInterface::OnActivation()
                kTileSize * kColumnSize);
     }
 
-    DrawMap();
-    DrawBoat();
+    if (auto route = m_route_listener->Poll())
+    {
+        if (route->type == IRouteListener::EventType::kRouteReady)
+        {
+            m_current_route = route->route;
+        }
+        else
+        {
+            m_current_route = {};
+        }
+    }
 
-    auto fb = m_display.GetFrameBuffer();
-    painter::DrawAlphaLine(fb, {300, 300}, {320, 320}, 5, 0xF81F, 0);
-    painter::DrawAlphaLine(fb, {220, 220}, {200, 200}, 10, 0x381F, 0);
-    painter::DrawAlphaLine(fb, {240, 240}, {240, 220}, 10, 0x381F, 0);
-    painter::DrawAlphaLine(fb, {300, 300}, {280, 280}, 3, 0xF21F, 128);
-    painter::DrawAlphaLine(fb, {300, 300}, {300, 320}, 15, 0xc81F, 128);
-    painter::DrawAlphaLine(fb, {300, 300}, {200, 300}, 7, 0x681F, 0);
-    painter::DrawAlphaLine(fb, {300, 300}, {300, 200}, 6, 0x981F, 0);
+    DrawMap();
+    DrawRoute();
+    DrawBoat();
 
     m_display.Flip();
     os::Sleep(10ms);
@@ -90,6 +100,44 @@ UserInterface::DrawMap()
                               {x * kTileSize - x_remainder, y * kTileSize - y_remainder});
             }
         }
+    }
+}
+
+void
+UserInterface::DrawRoute()
+{
+    if (m_current_route.empty())
+    {
+        return;
+    }
+
+    auto fb = m_display.GetFrameBuffer();
+
+    auto route_iterator =
+        RouteIterator(m_current_route,
+                      PointToLandIndex({0, 0}, kLandMaskRows),
+                      PointToLandIndex({kLandMaskRowSize, kLandMaskRows}, kLandMaskRowSize),
+                      kLandMaskRows);
+
+    auto last = route_iterator.Next();
+    while (auto cur = route_iterator.Next())
+    {
+        auto index = *cur;
+
+        auto last_point = LandIndexToPoint(*last, kLandMaskRowSize);
+        auto cur_point = LandIndexToPoint(index, kLandMaskRowSize);
+
+        painter::DrawAlphaLine(fb,
+                               {last_point.x + kPathFinderTileSize / 2 - m_map_x,
+                                last_point.y + kPathFinderTileSize / 2 - m_map_y},
+                               {cur_point.x + kPathFinderTileSize / 2 - m_map_x,
+                                cur_point.y + kPathFinderTileSize / 2 - m_map_y},
+                               5,
+                               // Green in RGB565
+                               0x07E0,
+                               128);
+
+        last = cur;
     }
 }
 

@@ -34,6 +34,7 @@ public:
     Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width);
 
     std::span<const IndexType> CalculateRoute(Point from, Point to);
+    std::span<const IndexType> CalculateRoute(IndexType from, IndexType to);
 
     // For unit tests
     Stats GetStats() const;

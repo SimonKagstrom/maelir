@@ -7,6 +7,13 @@ PointToLandIndex(Point point, unsigned row_size)
     return (point.y / kPathFinderTileSize) * row_size + (point.x / kPathFinderTileSize);
 }
 
+static Point
+LandIndexToPoint(IndexType index, unsigned row_size)
+{
+    return {static_cast<int32_t>((index % row_size) * kPathFinderTileSize),
+            static_cast<int32_t>((index / row_size) * kPathFinderTileSize)};
+}
+
 static bool
 IsWater(std::span<const uint32_t> land_mask, IndexType index)
 {

@@ -57,6 +57,7 @@ target_link_libraries(maelir_qt
     ui
     tile_producer
     gps_simulator
+    route_service
 )
 
 
