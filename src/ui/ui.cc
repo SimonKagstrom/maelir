@@ -132,7 +132,7 @@ UserInterface::DrawRoute()
                                 last_point.y + kPathFinderTileSize / 2 - m_map_y},
                                {cur_point.x + kPathFinderTileSize / 2 - m_map_x,
                                 cur_point.y + kPathFinderTileSize / 2 - m_map_y},
-                               5,
+                               8,
                                // Green in RGB565
                                0x07E0,
                                128);
