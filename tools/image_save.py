@@ -6,10 +6,6 @@ from haralyzer import HarParser, HarPage
 import time
 import os
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
 from sweden_crs_transformations.crs_projection import CrsProjection
 from sweden_crs_transformations.crs_coordinate import CrsCoordinate
 
@@ -41,7 +37,7 @@ class SjofartsverketEntry:
     #        `------y    Bottom right
     #
     #
-    def __init__(self, entry, cache_dir: str, session):
+    def __init__(self, entry, cache_dir: str):
         bbox = None
         for key in entry["queryString"]:
             if key["name"] == "BBOX":
@@ -52,12 +48,14 @@ class SjofartsverketEntry:
         bbox = bbox.split("%2C")
 
         corners = []
+        corners_sweref = []
         for i in range(0, len(bbox), 2):
             longitude = float(bbox[i + 1])
             latitude = float(bbox[i])
             as_SWEREF: CrsCoordinate = CrsCoordinate.create_coordinate(
                 CrsProjection.SWEREF_99_TM, latitude, longitude
             )
+            corners_sweref.append([latitude, longitude])
             corners.append(
                 [
                     float(as_SWEREF.transform(CrsProjection.WGS84).get_latitude_y()),
@@ -65,8 +63,17 @@ class SjofartsverketEntry:
                 ]
             )
 
+        self.top_left_sweref = Position(corners_sweref[0][0], corners_sweref[0][1])
+        self.bottom_right_sweref = Position(corners_sweref[1][0], corners_sweref[1][1])
+
         self.top_left = Position(corners[0][0], corners[0][1])
         self.bottom_right = Position(corners[1][0], corners[1][1])
+
+        self.center_position = Position(
+            (self.top_left.latitude + self.bottom_right.latitude) / 2,
+            (self.top_left.longitude + self.bottom_right.longitude) / 2,
+        )
+
         self.url = entry["url"]
         self.cache_entry = os.path.join(
             cache_dir,
@@ -106,17 +113,6 @@ class OrderTiles:
     def __init__(self, entries):
         self.entries = entries
 
-        # Sorted by top_left longitude
-        self.entries.sort(key=lambda x: x.top_left.longitude)
-        sorted_by_longitude = self.entries
-
-        self.lowest_longitude = sorted_by_longitude[0].top_left.longitude
-
-        # sorted by top_left latitude
-        self.entries.sort(key=lambda x: x.top_left.latitude, reverse=True)
-        sorted_by_latitude = self.entries
-        self.lowest_latitude = sorted_by_latitude[0].top_left.latitude
-
         self.lat_size = abs(
             self.entries[0].top_left.latitude - self.entries[0].bottom_right.latitude
         )
@@ -124,66 +120,73 @@ class OrderTiles:
             self.entries[0].top_left.longitude - self.entries[0].bottom_right.longitude
         )
 
-        self.one_connection = None
-        for entry in sorted_by_latitude:
-            for other in sorted_by_latitude:
-                if entry == other:
-                    continue
-                if (
-                    entry.bottom_right.latitude == other.top_left.latitude
-                    and entry.bottom_right.longitude == other.top_left.longitude
-                ):
-                    self.one_connection = [entry, other]
-                    break
+        # the lowest longitude in the list
+        lowest_longitude = 10000
+        lowest_latitude = -10000
+        for x in self.entries:
+            lowest_longitude = min(lowest_longitude, x.bottom_right.longitude)
+            lowest_latitude = max(lowest_latitude, x.bottom_right.latitude)
 
-        assert self.one_connection is not None
-        print(self.lat_size, self.long_size, self.one_connection)
+        #self.one_connection = None
+        #for entry in sorted_by_latitude:
+        #    for other in sorted_by_latitude:
+        #        if entry == other:
+        #            continue
+        #        if (
+        #            entry.bottom_right.latitude == other.top_left.latitude
+        #            and entry.bottom_right.longitude == other.top_left.longitude
+        #        ):
+        #            self.one_connection = [entry, other]
+        #            break
+#
+        #assert self.one_connection is not None
 
         width = 0
         height = 0
-        for entry in sorted_by_latitude:
-            x = int((entry.top_left.longitude - self.lowest_longitude) / self.long_size)
-            y = int((self.lowest_latitude - entry.top_left.latitude) / self.lat_size)
+        entries_by_position = {}
+        print(lowest_longitude, lowest_latitude)
+        empties = []
 
+        for index in range(0,len(self.entries)):
+            entry = self.entries[index]
+            #print("E: {} {}".format(entry.bottom_right, entry.top_left))
+            x = int(round((entry.center_position.longitude - lowest_longitude) / self.long_size))
+            y = int(round((lowest_latitude - entry.center_position.latitude) / self.lat_size))
+
+            entry.place(x, y)
+
+            if (x, y) in entries_by_position:
+                other = entries_by_position[(x, y)]
+                print("Already have {} vs {} at {},{} (long diff {})".format(other.bottom_right, entry.bottom_right, x, y, other.bottom_right.longitude - entry.bottom_right.longitude))
+                continue
             width = max(width, x * entry.image.size[0])
             height = max(height, y * entry.image.size[1])
 
-            entry.place(x, y)
+            #print("X {}. From {}".format(entry, entry.bottom_right.latitude - lowest_latitude))
+            entries_by_position[(x, y)] = entry
+
 
         print(width, height)
         img = Image.new("RGB", (width, height), (255, 255, 255))
 
-        for entry in sorted_by_latitude:
+        for entry in self.entries:
             img.paste(entry.image, (entry.x * 256, entry.y * 256))
 
         img.save("test.png")
-
-    def find_tile_with_neighbors(self, entry):
-        for neighbor in self.entries:
-            if (
-                neighbor.top_left == entry.bottom_right
-                and neighbor.top_left == entry.bottom_right
-            ):
-                return neighbor
-        return None
 
 
 # Download the .har file from Developer tools(roughly the same as your operations), and we can parse it offline.
 # Even if we have many image files to be download, it will not take too much time to wait to paste.
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4:
         print(
-            "Usage: {} <har_file> <cache_directory> <out_directory>".format(sys.argv[0])
+            "Usage: {} <cache_directory> <out_directory> <har_file ...>".format(
+                sys.argv[0]
+            )
         )
         sys.exit(1)
-    har_file = sys.argv[1]
-    cache_dir = sys.argv[2]
-    out_dir = sys.argv[3]
-
-    with open(har_file, "r") as f:
-        har_parser = HarParser(json.loads(f.read()))
-
-    data = har_parser.har_data["entries"]
+    cache_dir = sys.argv[1]
+    out_dir = sys.argv[2]
     entries = []
 
     try:
@@ -192,26 +195,15 @@ if __name__ == "__main__":
     except:
         pass
 
-    # https://stackoverflow.com/questions/23013220/max-retries-exceeded-with-url-in-requests
-    session = requests.Session()
-    session.trust_env = True
-    retry = Retry(connect=3, backoff_factor=1.0)
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
+    for har_file in sys.argv[3:]:
 
-    for entry in data:
-        if entry["response"]["content"]["mimeType"].find("image/") == 0:
-            entries.append(SjofartsverketEntry(entry["request"], cache_dir, session))
+        with open(har_file, "r") as f:
+            har_parser = HarParser(json.loads(f.read()))
+
+        data = har_parser.har_data["entries"]
+
+        for entry in data:
+            if entry["response"]["content"]["mimeType"].find("image/") == 0:
+                entries.append(SjofartsverketEntry(entry["request"], cache_dir))
 
     tile_orderer = OrderTiles(entries)
-
-    # i=0
-    # for link in entries:
-    #    print(link)
-    #    # data = requests.get(link).content
-    #    # with open('image_{}.png'.format(i), 'wb') as f:
-    #    #    f.write(data)
-    #    i=i + 1
-    #    if i > 10:
-    #        break
