@@ -18,9 +18,10 @@ MapEditorGraphicsView::SetOwner(MapEditorMainWindow* owner)
 }
 
 void
-MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
+MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
 {
-    Q_UNUSED(rect);
+    // Get the visible area in scene coordinates
+    QRectF visibleArea = mapToScene(viewport()->rect()).boundingRect();
 
     painter->setPen(Qt::NoPen);
 
@@ -49,6 +50,20 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
         painter->drawRect(inner);
         painter->setBrush(Qt::cyan);
         painter->drawRect(outer);
+    }
+
+    for (const auto [x, y] : m_owner->m_skip_tiles)
+    {
+        QRectF tileRect(x, y, kTileSize, kTileSize);
+        if (visibleArea.intersects(tileRect))
+        {
+            // Convert the underlying map image to grayscale
+            QImage grayscaleImage =
+                m_owner->m_map->copy(tileRect.toRect()).convertToFormat(QImage::Format_Grayscale8);
+
+            // Draw the grayscale image
+            painter->drawImage(tileRect, grayscaleImage);
+        }
     }
 
     if (!m_owner->m_current_route.empty())
@@ -95,8 +110,24 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
         }
     }
 
-    // Get the visible area in scene coordinates
-    QRectF visibleArea = mapToScene(viewport()->rect()).boundingRect();
+    // Fill the 240x240 tiles with black rectangles
+    for (int y = 0; y < m_owner->m_map->height(); y += kTileSize)
+    {
+        for (int x = 0; x < m_owner->m_map->width(); x += kTileSize)
+        {
+            QRectF tileRect(x, y, kTileSize, kTileSize);
+            if (visibleArea.intersects(tileRect))
+            {
+                // Set brush to NoBrush to make the rectangles hollow
+                painter->setBrush(Qt::NoBrush);
+                QPen pen(Qt::black);
+                pen.setWidth(2);
+                painter->setPen(pen);
+
+                painter->drawRect(tileRect);
+            }
+        }
+    }
 
     // Fill the visible land with red boxes
     for (int y = 0; y < m_owner->m_map->height(); y += kPathFinderTileSize)
@@ -109,10 +140,9 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF& rect)
                                          kPathFinderTileSize +
                                      x / kPathFinderTileSize])
             {
-                // Set brush to NoBrush to make the rectangles hollow
                 painter->setBrush(Qt::NoBrush);
                 QPen pen(Qt::red);
-                pen.setWidth(1); // Set the pen width to 3 pixels
+                pen.setWidth(1);
                 painter->setPen(pen);
 
                 painter->drawRect(tileRect);

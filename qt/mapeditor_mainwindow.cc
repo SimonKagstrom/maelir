@@ -154,8 +154,11 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     QMenu contextMenu(this);
     auto action_add_extra_land = contextMenu.addAction("Mark this route tile as land");
     auto action_add_extra_water = contextMenu.addAction("Mark this route tile as water");
-    auto action_route_add_point = contextMenu.addAction("Add route point");
+    auto action_skip_tile = contextMenu.addAction("Don't use this image tile for generation");
     // Add delimiter
+    contextMenu.addSeparator();
+    auto action_route_add_point = contextMenu.addAction("Add route point");
+    // .. and here
     contextMenu.addSeparator();
     auto action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
     auto action_add_land_color = contextMenu.addAction("Add land color for this point");
@@ -232,6 +235,10 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     else if (selectedAction == action_add_extra_water)
     {
         AddExtraWater(x, y);
+    }
+    else if (selectedAction == action_skip_tile)
+    {
+        AddSkipTile(x, y);
     }
     else if (selectedAction == action_route_add_point)
     {
@@ -354,7 +361,7 @@ MapEditorMainWindow::LoadYaml(const char* filename)
         {
             if (pos["x_pixel"] && pos["y_pixel"])
             {
-                m_extra_land.insert({pos["x_pixel"].as<int>(), pos["y_pixel"].as<int>()});
+                AddExtraLand(pos["x_pixel"].as<int>(), pos["y_pixel"].as<int>());
             }
         }
 
@@ -362,7 +369,15 @@ MapEditorMainWindow::LoadYaml(const char* filename)
         {
             if (pos["x_pixel"] && pos["y_pixel"])
             {
-                m_extra_water.insert({pos["x_pixel"].as<int>(), pos["y_pixel"].as<int>()});
+                AddExtraWater(pos["x_pixel"].as<int>(), pos["y_pixel"].as<int>());
+            }
+        }
+
+        for (const auto& pos : node["skip_tiles"])
+        {
+            if (pos["x_pixel"] && pos["y_pixel"])
+            {
+                AddSkipTile(pos["x_pixel"].as<int>(), pos["y_pixel"].as<int>());
             }
         }
 
@@ -472,6 +487,21 @@ MapEditorMainWindow::SaveYaml()
         node["extra_water"] = extra_water;
     }
 
+    if (!m_skip_tiles.empty())
+    {
+        YAML::Node skip_tiles;
+        for (const auto& pos : m_skip_tiles)
+        {
+            YAML::Node pos_node;
+
+            pos_node["x_pixel"] = pos.first;
+            pos_node["y_pixel"] = pos.second;
+
+            skip_tiles.push_back(pos_node);
+        }
+
+        node["skip_tiles"] = skip_tiles;
+    }
 
     node["land_mask"] = m_land_mask_uint32;
     UpdateRoutingInformation();
@@ -573,6 +603,15 @@ MapEditorMainWindow::AddExtraWater(int x, int y)
     m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
                 x / kPathFinderTileSize] = false;
     m_scene->addRect(x, y, kPathFinderTileSize, kPathFinderTileSize, QPen(Qt::cyan));
+}
+
+void
+MapEditorMainWindow::AddSkipTile(int x, int y)
+{
+    x = x - x % kTileSize;
+    y = y - y % kTileSize;
+
+    m_skip_tiles.insert({x, y});
 }
 
 

@@ -30,6 +30,13 @@ land_pixel_colors:
     g: 185
     b: 158
 
+# Areas where no source tiles are present
+no_tile_pixel_colors:
+  - r: 255
+    g: 255
+    b: 255
+
+
 extra_land:
   - x_pixel: 100
     y_pixel: 110
@@ -37,5 +44,10 @@ extra_land:
     y_pixel: 220
 
 extra_water:
+  - x_pixel: 900
+    y_pixel: 910
+
+# Skip these 240x240 tiles (x_pixel, y_pixel) when generating the map
+skip_tiles:
   - x_pixel: 900
     y_pixel: 910

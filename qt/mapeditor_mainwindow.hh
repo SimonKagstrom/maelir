@@ -86,6 +86,7 @@ private:
     void UpdateRoutingInformation();
     void AddExtraLand(int x, int y);
     void AddExtraWater(int x, int y);
+    void AddSkipTile(int x, int y);
     unsigned CountLandPixels(QImage& image);
 
     void LoadYaml(const char* filename);
@@ -108,6 +109,8 @@ private:
     std::unordered_set<std::pair<int, int>> m_extra_land;
     // "Extra water", marked manually
     std::unordered_set<std::pair<int, int>> m_extra_water;
+    // "Skip tiles", marked manually
+    std::unordered_set<std::pair<int, int>> m_skip_tiles;
 
     etl::list<Point, 2> m_wanted_route;
 
