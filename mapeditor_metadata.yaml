@@ -51,3 +51,14 @@ extra_water:
 skip_tiles:
   - x_pixel: 900
     y_pixel: 910
+
+all_land_tiles:
+  - x_pixel: 100
+    y_pixel: 110
+  - x_pixel: 200
+    y_pixel: 220
+
+# 24x24 tiles, 1 bit per tile set to 1 if land
+land_mask:
+  - 41241243
+  - 5992399

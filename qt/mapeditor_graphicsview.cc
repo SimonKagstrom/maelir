@@ -125,6 +125,20 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
                 painter->setPen(pen);
 
                 painter->drawRect(tileRect);
+
+                if (m_owner
+                        ->m_all_land_tiles[(y / kTileSize) * m_owner->m_map->width() / kTileSize +
+                                           x / kTileSize])
+                {
+
+                    painter->drawRect(tileRect);
+                    // Convert the underlying map image to grayscale
+                    QImage grayscaleImage = m_owner->m_map->copy(tileRect.toRect())
+                                                .convertToFormat(QImage::Format_Grayscale8);
+
+                    // Draw the grayscale image
+                    painter->drawImage(tileRect, grayscaleImage);
+                }
             }
         }
     }

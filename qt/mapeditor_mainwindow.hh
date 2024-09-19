@@ -118,6 +118,7 @@ private:
     QPoint m_last_mouse_pos {0, 0};
 
     std::vector<bool> m_land_mask;
+    std::vector<bool> m_all_land_tiles;
     std::vector<uint32_t> m_land_mask_uint32;
     std::unique_ptr<Router<kTargetCacheSize>> m_router;
 

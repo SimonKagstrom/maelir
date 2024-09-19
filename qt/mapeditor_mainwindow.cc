@@ -33,6 +33,7 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
 
     *m_map = m_map->copy(0, 0, cropped_width, cropped_height);
 
+    m_all_land_tiles.resize((cropped_height / kTileSize) * (cropped_width / kTileSize), false);
     m_land_mask.resize(
         (cropped_height / kPathFinderTileSize) * (cropped_width / kPathFinderTileSize), false);
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
@@ -381,6 +382,16 @@ MapEditorMainWindow::LoadYaml(const char* filename)
             }
         }
 
+        for (const auto& pos : node["all_land_tiles"])
+        {
+            if (pos["x_pixel"] && pos["y_pixel"])
+            {
+                auto index = (pos["y_pixel"].as<int>() / kTileSize) * m_map->width() / kTileSize +
+                             pos["x_pixel"].as<int>() / kTileSize;
+                m_all_land_tiles[index] = true;
+            }
+        }
+
         auto index = 0;
         for (const auto& mask_uint32 : node["land_mask"])
         {
@@ -503,6 +514,25 @@ MapEditorMainWindow::SaveYaml()
         node["skip_tiles"] = skip_tiles;
     }
 
+    YAML::Node all_land_tiles;
+    for (auto y = 0; y < m_map->height(); y += kTileSize)
+    {
+        for (auto x = 0; x < m_map->width(); x += kTileSize)
+        {
+            if (m_all_land_tiles[(y / kTileSize) * m_map->width() / kTileSize + x / kTileSize])
+            {
+                YAML::Node pos_node;
+
+                pos_node["x_pixel"] = x;
+                pos_node["y_pixel"] = y;
+
+                all_land_tiles.push_back(pos_node);
+            }
+        }
+    }
+
+    node["all_land_tiles"] = all_land_tiles;
+
     node["land_mask"] = m_land_mask_uint32;
     UpdateRoutingInformation();
 
@@ -533,6 +563,39 @@ MapEditorMainWindow::CalculateLand()
             }
         }
     }
+
+    for (auto y = 0; y < m_map->height(); y += kTileSize)
+    {
+        for (auto x = 0; x < m_map->width(); x += kTileSize)
+        {
+            bool water = false;
+
+            for (auto y2 = y; y2 < y + kTileSize; y2 += kPathFinderTileSize)
+            {
+                for (auto x2 = x; x2 < x + kTileSize; x2 += kPathFinderTileSize)
+                {
+                    if (m_land_mask[(y2 / kPathFinderTileSize) * m_map->width() /
+                                        kPathFinderTileSize +
+                                    x2 / kPathFinderTileSize] == false)
+                    {
+                        water = true;
+                        break;
+                    }
+                }
+                if (water)
+                {
+                    break;
+                }
+            }
+
+            if (!water)
+            {
+                m_all_land_tiles[(y / kTileSize) * m_map->width() / kTileSize + x / kTileSize] =
+                    true;
+            }
+        }
+    }
+
     printf("Land mask calculated for %d,%d -> %d,%d\n",
            m_map->width(),
            m_map->height(),
