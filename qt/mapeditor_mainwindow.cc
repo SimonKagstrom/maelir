@@ -4,6 +4,7 @@
 #include "tile.hh"
 #include "ui_mapeditor_mainwindow.h"
 
+#include <QImageReader>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <fmt/format.h>
@@ -18,6 +19,8 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
     , m_out_yaml(out_yaml)
     , m_scene(std::make_unique<QGraphicsScene>())
 {
+    QImageReader::setAllocationLimit(4096);
+
     m_map = std::make_unique<QImage>(map_name);
     if (m_map->isNull())
     {
