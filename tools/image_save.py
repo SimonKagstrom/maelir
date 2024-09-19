@@ -63,11 +63,22 @@ class SjofartsverketEntry:
                 ]
             )
 
-        self.top_left_sweref = Position(corners_sweref[0][0], corners_sweref[0][1])
-        self.bottom_right_sweref = Position(corners_sweref[1][0], corners_sweref[1][1])
-
         self.top_left = Position(corners[0][0], corners[0][1])
         self.bottom_right = Position(corners[1][0], corners[1][1])
+
+        # More or less...
+        self.top_right = Position(self.top_left.latitude, self.bottom_right.longitude)
+        self.bottom_left = Position(self.bottom_right.latitude, self.top_left.longitude)
+
+        self.longitude_size = abs(self.top_left.longitude - self.bottom_right.longitude)
+        self.latitude_size = abs(self.top_left.latitude - self.bottom_right.latitude)
+
+        self.tiles_around = {
+            (0, 1): None, # below
+            (1, 0): None, # right
+            (0, -1): None, # top
+            (-1, 0): None, # left
+        }
 
         self.center_position = Position(
             (self.top_left.latitude + self.bottom_right.latitude) / 2,
@@ -86,6 +97,7 @@ class SjofartsverketEntry:
             if rv != 0:
                 print("Failed to download {}".format(self.url))
                 sys.exit(1)
+            time.sleep(0.1)
         #            data = session.get(self.url).content
         #            with open(self.cache_entry, 'wb') as f:
         #                f.write(data)
@@ -96,12 +108,70 @@ class SjofartsverketEntry:
         assert self.image.size[1] == 256
 
         #        print("E: {} {}".format(self.bottom_right, self.top_left))
-        self.x = 0
-        self.y = 0
+        self.x = None
+        self.y = None
+
+        self.next = None
+        self.prev = None
 
     def place(self, x, y):
         self.x = x
         self.y = y
+
+    def direction_of_other(self, other):
+        # Other is to the right
+        if abs(other.top_left.longitude - self.top_right.longitude) < self.longitude_size * 0.05 and abs(other.top_left.latitude - self.top_right.latitude) < self.latitude_size * 0.05:
+            return (1, 0)
+        # Other is to the left
+        if abs(other.top_right.longitude - self.top_left.longitude) < self.longitude_size * 0.05 and abs(other.top_right.latitude - self.top_left.latitude) < self.latitude_size * 0.05:
+            return (-1, 0)
+        # Other is below
+        if abs(other.top_left.longitude - self.bottom_left.longitude) < self.longitude_size * 0.05 and abs(other.top_left.latitude - self.bottom_left.latitude) < self.latitude_size * 0.05:
+            return (0, -1)
+        # Other is above
+        if abs(other.bottom_left.longitude - self.top_left.longitude) < self.longitude_size * 0.05 and abs(other.bottom_left.latitude - self.top_left.latitude) < self.latitude_size * 0.05:
+            return (0, 1)
+
+
+        return None
+
+    def place_other(self, other):
+        direction = self.direction_of_other(other)
+        if direction is None:
+            return
+
+        self.tiles_around[direction] = other
+        other.tiles_around[(-direction[0], -direction[1])] = self
+
+    def is_resolved(self):
+        return all(v is not None for v in self.tiles_around.values())
+
+    def resolve_neighbors(self, x, y):
+        if x is not None:
+            if self.x is not None:
+                # Already resolved
+                return
+
+            self.x = x
+
+            for key, neighbor in self.tiles_around.items():
+                if neighbor is None:
+                    continue
+                dx,dy = key
+                neighbor.resolve_neighbors(x + dx, None)
+        if y is not None:
+            if self.y is not None:
+                # Already resolved
+                return
+
+            self.y = y
+
+            for key, neighbor in self.tiles_around.items():
+                if neighbor is None:
+                    continue
+                dx,dy = key
+                neighbor.resolve_neighbors(None, y + dy)
+
 
     def __str__(self) -> str:
         return "({}, {}) -> ({}, {})".format(
@@ -113,67 +183,70 @@ class OrderTiles:
     def __init__(self, entries):
         self.entries = entries
 
-        self.lat_size = abs(
-            self.entries[0].top_left.latitude - self.entries[0].bottom_right.latitude
-        )
         self.long_size = abs(
             self.entries[0].top_left.longitude - self.entries[0].bottom_right.longitude
         )
+        self.lat_size = abs(
+            self.entries[0].top_left.latitude - self.entries[0].bottom_right.latitude
+        )
 
-        # the lowest longitude in the list
-        lowest_longitude = 10000
-        lowest_latitude = -10000
-        for x in self.entries:
-            lowest_longitude = min(lowest_longitude, x.bottom_right.longitude)
-            lowest_latitude = max(lowest_latitude, x.bottom_right.latitude)
-
-        #self.one_connection = None
-        #for entry in sorted_by_latitude:
-        #    for other in sorted_by_latitude:
-        #        if entry == other:
-        #            continue
-        #        if (
-        #            entry.bottom_right.latitude == other.top_left.latitude
-        #            and entry.bottom_right.longitude == other.top_left.longitude
-        #        ):
-        #            self.one_connection = [entry, other]
-        #            break
-#
-        #assert self.one_connection is not None
+        # the lowest longitude and highest latitude in the list
+        lowest_longitude = min(entry.bottom_right.longitude for entry in self.entries)
+        highest_longitude = max(entry.bottom_right.longitude for entry in self.entries)
+        highest_latitude = max(entry.bottom_right.latitude for entry in self.entries)
 
         width = 0
         height = 0
         entries_by_position = {}
-        print(lowest_longitude, lowest_latitude)
+        print(lowest_longitude, highest_latitude)
         empties = []
 
-        for index in range(0,len(self.entries)):
-            entry = self.entries[index]
-            #print("E: {} {}".format(entry.bottom_right, entry.top_left))
-            x = int(round((entry.center_position.longitude - lowest_longitude) / self.long_size))
-            y = int(round((lowest_latitude - entry.center_position.latitude) / self.lat_size))
+        # Sort entries by latitude and longitude
+        sorted_entries = sorted(self.entries, key=lambda e: (e.center_position.latitude, e.center_position.longitude))
 
-            entry.place(x, y)
+        width = 0
+        height = 0
 
-            if (x, y) in entries_by_position:
-                other = entries_by_position[(x, y)]
-                print("Already have {} vs {} at {},{} (long diff {})".format(other.bottom_right, entry.bottom_right, x, y, other.bottom_right.longitude - entry.bottom_right.longitude))
+
+        resolved = []
+        unresolved = sorted_entries
+
+        for entry in unresolved:
+            if entry.is_resolved():
                 continue
-            width = max(width, x * entry.image.size[0])
-            height = max(height, y * entry.image.size[1])
 
-            #print("X {}. From {}".format(entry, entry.bottom_right.latitude - lowest_latitude))
-            entries_by_position[(x, y)] = entry
+            for other in sorted_entries:
+                if entry == other:
+                    continue
 
+                entry.place_other(other)
+                if entry.is_resolved():
+                    resolved.append(entry)
+                    break
+
+
+        lowest_longitude_entry = min(resolved, key=lambda e: e.top_left.longitude)
+        lowest_latitude_entry = max(resolved, key=lambda e: e.bottom_right.latitude)
+
+        lowest_longitude_entry.resolve_neighbors(0, None)
+        lowest_latitude_entry.resolve_neighbors(None, 0)
+
+        width = 0
+        height = 0
+        for entry in resolved:
+            if entry.x is not None:
+                width = max(width, entry.x * 256)
+            if entry.y is not None:
+                height = max(height, entry.y * 256)
 
         print(width, height)
         img = Image.new("RGB", (width, height), (255, 255, 255))
 
         for entry in self.entries:
-            img.paste(entry.image, (entry.x * 256, entry.y * 256))
+            if entry.x is not None and entry.y is not None:
+                img.paste(entry.image, (entry.x * 256, entry.y * 256))
 
         img.save("test.png")
-
 
 # Download the .har file from Developer tools(roughly the same as your operations), and we can parse it offline.
 # Even if we have many image files to be download, it will not take too much time to wait to paste.
@@ -188,6 +261,9 @@ if __name__ == "__main__":
     cache_dir = sys.argv[1]
     out_dir = sys.argv[2]
     entries = []
+
+    # Muhahaha!
+    sys.setrecursionlimit(10000)
 
     try:
         os.mkdir(cache_dir)
