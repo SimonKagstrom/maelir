@@ -5,8 +5,11 @@ import sys
 import io
 import yaml
 
+import PIL
 from PIL import Image
 
+# Allow huge images
+PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
 def create_tiles(img: Image, tile_size: int):
     tiles = []
