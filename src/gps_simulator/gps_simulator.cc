@@ -4,7 +4,7 @@
 
 GpsSimulator::GpsSimulator()
 {
-    m_current_position = {kCornerLatitude - 0.0481, kCornerLongitude + 0.090};
+    m_current_position = {59.51414995879205, 17.040945581855294};
 }
 
 std::optional<milliseconds>
