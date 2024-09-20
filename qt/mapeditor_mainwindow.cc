@@ -256,9 +256,9 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             auto to = m_wanted_route.back();
 
             m_current_route = m_router->CalculateRoute(from, to);
+            auto stats = m_router->GetStats();
             if (!m_current_route.empty())
             {
-                auto stats = m_router->GetStats();
                 fmt::print(
                     "Route from {},{} to {},{} with {} expanded nodes for {} partial paths\n",
                     from.x,
@@ -270,7 +270,12 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             }
             else
             {
-                fmt::print("No route found between {},{} and {},{}\n", from.x, from.y, to.x, to.y);
+                fmt::print("No route found between {},{} and {},{} with {} expanded nodes\n",
+                           from.x,
+                           from.y,
+                           to.x,
+                           to.y,
+                           stats.nodes_expanded);
             }
         }
     }

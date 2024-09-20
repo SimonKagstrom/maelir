@@ -8,7 +8,7 @@
 #include <queue>
 #include <span>
 
-using IndexType = uint16_t;
+using IndexType = uint32_t;
 using CostType = uint32_t;
 
 constexpr auto kTargetCacheSize = 4096;
