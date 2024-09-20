@@ -240,7 +240,7 @@ class OrderTiles:
                 height = max(height, entry.y * 256)
 
         print(width, height)
-        img = Image.new("RGB", (width, height), (255, 255, 255))
+        img = Image.new("RGB", (width, height), (255,0,0))
 
         for entry in self.entries:
             if entry.x is not None and entry.y is not None:
