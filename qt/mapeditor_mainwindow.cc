@@ -42,7 +42,7 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
     m_ui->displayGraphicsView->SetOwner(this);
 
     m_ui->displayGraphicsView->setScene(m_scene.get());
-    m_ui->displayGraphicsView->centerOn(0, 0);
+    m_ui->displayGraphicsView->centerOn(cropped_width / 2, cropped_height / 2);
 
     // Install the event filter on the viewport
     m_ui->displayGraphicsView->viewport()->installEventFilter(this);
@@ -267,6 +267,10 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
                     to.y,
                     stats.nodes_expanded,
                     stats.partial_paths);
+            }
+            else
+            {
+                fmt::print("No route found between {},{} and {},{}\n", from.x, from.y, to.x, to.y);
             }
         }
     }
