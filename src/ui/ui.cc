@@ -63,11 +63,15 @@ UserInterface::OnActivation()
         }
     }
 
+    m_frame_buffer = m_display.GetFrameBuffer();
+
     DrawMap();
     DrawRoute();
     DrawBoat();
 
     m_display.Flip();
+    // Now invalid
+    m_frame_buffer = nullptr;
     os::Sleep(10ms);
 
     return std::nullopt;
@@ -81,8 +85,6 @@ UserInterface::DrawMap()
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
     auto num_tiles_y = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!y_remainder;
 
-    auto fb = m_display.GetFrameBuffer();
-
     // Blit all needed tiles
     for (auto y = 0; y < num_tiles_y; y++)
     {
@@ -95,7 +97,7 @@ UserInterface::DrawMap()
             if (tile)
             {
                 auto& image = static_cast<const ImageImpl&>(tile->GetImage());
-                painter::Blit(fb,
+                painter::Blit(m_frame_buffer,
                               tile->GetImage(),
                               {x * kTileSize - x_remainder, y * kTileSize - y_remainder});
             }
@@ -111,8 +113,6 @@ UserInterface::DrawRoute()
         return;
     }
 
-    auto fb = m_display.GetFrameBuffer();
-
     auto route_iterator =
         RouteIterator(m_current_route,
                       PointToLandIndex({0, 0}, kLandMaskRows),
@@ -127,7 +127,7 @@ UserInterface::DrawRoute()
         auto last_point = LandIndexToPoint(*last, kLandMaskRowSize);
         auto cur_point = LandIndexToPoint(index, kLandMaskRowSize);
 
-        painter::DrawAlphaLine(fb,
+        painter::DrawAlphaLine(m_frame_buffer,
                                {last_point.x + kPathFinderTileSize / 2 - m_map_x,
                                 last_point.y + kPathFinderTileSize / 2 - m_map_y},
                                {cur_point.x + kPathFinderTileSize / 2 - m_map_x,
@@ -147,5 +147,5 @@ UserInterface::DrawBoat()
     auto x = m_x - m_map_x;
     auto y = m_y - m_map_y;
 
-    painter::Blit(m_display.GetFrameBuffer(), m_boat, {x, y});
+    painter::Blit(m_frame_buffer, m_boat, {x, y});
 }

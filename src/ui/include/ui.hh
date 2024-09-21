@@ -39,5 +39,6 @@ private:
     std::span<const IndexType> m_current_route;
 
     std::array<uint16_t, 5 * 5> m_boat_pixels;
+    uint16_t* m_frame_buffer {nullptr};
     Image m_boat;
 };
