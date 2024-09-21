@@ -23,18 +23,22 @@ def get_tile_positions_to_ignore(yaml_data: dict, img: Image, tile_size: int):
     for key, _ in out.items():
         x,y = key
 
-        land_count = 0
-        for dx in range(-1, 2):
-            for dy in range(-1, 2):
+        has_water = False
+        for dx in range(-2, 3):
+            for dy in range(-2, 3):
+                dx *= tile_size
+                dy *= tile_size
+
                 if dx == 0 and dy == 0:
                     continue
                 if x + dx < 0 or x + dx >= cropped_width:
-                    land_count += 1
+                    continue
                 if y + dy < 0 or y + dy >= cropped_height:
-                    land_count += 1
-                if (x + dx,y + dy) in out:
-                    land_count += 1
-        if land_count >= 8:
+                    continue
+                if (x + dx,y + dy) not in out:
+                    has_water = True
+                    break
+        if has_water:
             to_remove.append(key)
 
     for key in to_remove:
@@ -206,5 +210,5 @@ if __name__ == "__main__":
     data_size = create_tile_cpp(yaml_data,
                                 tiles, row_length=tile_row_length, dst_dir=sys.argv[2], out_base=sys.argv[3])
 
-    print("tiler: Converted to {} tiles, total size: {:.2f} KiB".format(
-        len(tiles), data_size / 1024.0))
+    print("tiler: Converted to {} tiles ({} ignored), total size: {:.2f} KiB".format(
+        len(tiles), len(to_ignore), data_size / 1024.0))
