@@ -1,11 +1,11 @@
 cmake_minimum_required (VERSION 3.21)
 
+# Include for ESP-IDF build system functions
+include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
+
 project (maelir_esp32s3 LANGUAGES CXX C ASM)
 
 set(TARGET_TYPE "esp32" CACHE STRING "Target type")
-
-# Include for ESP-IDF build system functions
-include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 
 # Create idf::{target} and idf::freertos static libraries
 idf_build_process(esp32s3

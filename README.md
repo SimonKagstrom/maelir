@@ -10,5 +10,5 @@ Target:
 ```
 conan install -of ~/projects/build/maelir_esp32s3/ -pr ~/projects/maelir/target/conanprofile.txt --build=missing -s build_type=Release ~/projects/maelir/conanfile-target.txt
 
-cmake -DMAP_YAML_PATH=~/projects/build/maelir_metadata.yaml -DCMAKE_PREFIX_PATH="`pwd`/build/Release/generators/" -DCMAKE_BUILD_TYPE=Release ~/projects/maelir/target/
+cmake -GNinja -B maelir_esp32s3/ -DMAP_YAML_PATH=~/projects/build/maelir_metadata.yaml -DCMAKE_PREFIX_PATH="`pwd`/maelir_esp32s3/build/Release/generators/" -DCMAKE_BUILD_TYPE=Release ~/projects/maelir/target/
 ```
