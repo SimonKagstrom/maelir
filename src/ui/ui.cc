@@ -40,15 +40,6 @@ UserInterface::OnActivation()
 
         m_map_x = map_x;
         m_map_y = map_y;
-        printf("POS now %f, %f -> b %d,%d M %d,%d (out of max %d,%d)\n",
-               position->position.latitude,
-               position->position.longitude,
-               m_x,
-               m_y,
-               m_map_x,
-               m_map_y,
-               kTileSize * kRowSize,
-               kTileSize * kColumnSize);
     }
 
     if (auto route = m_route_listener->Poll())
