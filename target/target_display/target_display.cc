@@ -538,7 +538,7 @@ DisplayTarget::DisplayTarget()
 
     panel_config.data_width = 16; // RGB565 in parallel mode, thus 16bit in width
     panel_config.psram_trans_align = 64;
-    panel_config.clk_src = LCD_CLK_SRC_PLL160M;
+    panel_config.clk_src = LCD_CLK_SRC_DEFAULT;
     panel_config.disp_gpio_num = GPIO_NUM_NC;
     panel_config.pclk_gpio_num = TFT_PCLK;
     panel_config.vsync_gpio_num = TFT_VSYNC;
@@ -566,7 +566,7 @@ DisplayTarget::DisplayTarget()
      *
      *   "PCLK frequency can't go too high as the limitation of PSRAM bandwidth"
      */
-    panel_config.timings.pclk_hz = 4 * 1000 * 1000;
+    panel_config.timings.pclk_hz = 5.5 * 1000 * 1000;
     panel_config.timings.h_res = kWidth;
     panel_config.timings.v_res = kHeight;
     panel_config.timings.hsync_back_porch = 44;
