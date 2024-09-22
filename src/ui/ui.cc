@@ -54,6 +54,9 @@ UserInterface::OnActivation()
         }
     }
 
+    RequestMapTiles();
+
+    // Can potentially have to wait
     m_frame_buffer = m_display.GetFrameBuffer();
 
     DrawMap();
@@ -69,8 +72,10 @@ UserInterface::OnActivation()
 }
 
 void
-UserInterface::DrawMap()
+UserInterface::RequestMapTiles()
 {
+    m_tiles.clear();
+
     auto x_remainder = m_map_x % kTileSize;
     auto y_remainder = m_map_y % kTileSize;
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
@@ -87,12 +92,20 @@ UserInterface::DrawMap()
             auto tile = m_tile_producer.LockTile(m_map_x + x * kTileSize, m_map_y + y * kTileSize);
             if (tile)
             {
-                auto& image = static_cast<const ImageImpl&>(tile->GetImage());
-                painter::Blit(m_frame_buffer,
-                              tile->GetImage(),
-                              {x * kTileSize - x_remainder, y * kTileSize - y_remainder});
+                m_tiles.push_back(
+                    {std::move(tile), {x * kTileSize - x_remainder, y * kTileSize - y_remainder}});
             }
         }
+    }
+}
+
+void
+UserInterface::DrawMap()
+{
+    for (const auto& [tile, position] : m_tiles)
+    {
+        auto& image = static_cast<const ImageImpl&>(tile->GetImage());
+        painter::Blit(m_frame_buffer, tile->GetImage(), {position.x, position.y});
     }
 }
 
