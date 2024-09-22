@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.21)
 
 # Include for ESP-IDF build system functions
+# include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 
 project (maelir_esp32s3 LANGUAGES CXX C ASM)
