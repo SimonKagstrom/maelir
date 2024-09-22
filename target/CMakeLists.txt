@@ -21,7 +21,6 @@ idf_build_process(esp32s3
         bootloader
         bootloader_support
         bt
-        cmock
         console
         cxx
         driver
@@ -32,14 +31,12 @@ idf_build_process(esp32s3
         esp_coex
         esp_common
         esp_driver_ana_cmpr
-        esp_driver_cam
         esp_driver_dac
         esp_driver_gpio
         esp_driver_gptimer
         esp_driver_i2c
         esp_driver_i2s
         esp_driver_isp
-        esp_driver_jpeg
         esp_driver_ledc
         esp_driver_mcpwm
         esp_driver_parlio
@@ -48,7 +45,6 @@ idf_build_process(esp32s3
         esp_driver_rmt
         esp_driver_sdio
         esp_driver_sdm
-        esp_driver_sdmmc
         esp_driver_sdspi
         esp_driver_spi
         esp_driver_tsens
@@ -73,7 +69,6 @@ idf_build_process(esp32s3
         esp_vfs_console
         espcoredump
         esptool_py
-        fatfs
         freertos
         hal
         heap
@@ -84,24 +79,18 @@ idf_build_process(esp32s3
         log
         lwip
         mbedtls
-        mqtt
         newlib
         nvs_flash
         nvs_sec_provider
-        openthread
         partition_table
         perfmon
         protocomm
         pthread
-        sdmmc
         soc
         spi_flash
-        spiffs
         tcp_transport
         touch_element
         ulp
-        unity
-        usb
         vfs
         wear_levelling
         xtensa
