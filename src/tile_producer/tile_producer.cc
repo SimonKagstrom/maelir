@@ -146,6 +146,7 @@ TileProducer::CacheTile(unsigned requested_index)
 
     std::scoped_lock lock(m_mutex);
     auto cache_index = m_tiles.size();
+
     if (m_tiles.full())
     {
         cache_index = EvictTile();
@@ -156,6 +157,7 @@ TileProducer::CacheTile(unsigned requested_index)
     {
         m_tiles.push_back(std::move(tile));
     }
+    m_tile_request_order.push_back(requested_index);
 
     m_tile_index_to_cache[requested_index] = cache_index;
 
@@ -165,45 +167,14 @@ TileProducer::CacheTile(unsigned requested_index)
 uint8_t
 TileProducer::EvictTile()
 {
-    if (m_current_position)
+    if (m_tile_request_order.empty())
     {
-        auto [x, y] = PositionToMapCenter(m_current_position->pixel_position);
-
-        auto center_tile = PointToTileIndex(x, y);
-        assert(center_tile);
-
-        auto center_tile_x = *center_tile % kRowSize;
-        auto center_tile_y = *center_tile / kRowSize;
-
-        for (auto i = 0; i < m_tiles.size(); i++)
-        {
-            auto& tile = m_tiles[i];
-            if (!tile)
-            {
-                // Shouldn't be possible, but anyway
-                continue;
-            }
-
-            if (m_locked_cache_entries & (1 << i))
-            {
-                // Tile is locked, can't evict
-                continue;
-            }
-
-            auto tile_x = tile->index % kRowSize;
-            auto tile_y = tile->index / kRowSize;
-
-            // Not one of the displayed tiles? Evict!
-            if (tile_x < center_tile_x - 2 || tile_x > center_tile_x + 2 ||
-                tile_y < center_tile_y - 2 || tile_y > center_tile_y + 2)
-            {
-                m_tile_index_to_cache[tile->index] = kInvalidTileIndex;
-                m_tiles[i] = nullptr;
-
-                return i;
-            }
-        }
+        assert(false);
+        return 0;
     }
+
+    auto index = m_tile_request_order.front();
+    m_tile_request_order.pop_front();
 
     for (auto i = 0; i < m_tiles.size(); i++)
     {
@@ -213,20 +184,17 @@ TileProducer::EvictTile()
             // Shouldn't be possible, but anyway
             continue;
         }
-
-        if (m_locked_cache_entries & (1 << i))
+        if (tile->index == index)
         {
-            // Tile is locked, can't evict
-            continue;
+            m_tile_index_to_cache[tile->index] = kInvalidTileIndex;
+            m_tiles[i] = nullptr;
+
+            return i;
         }
-
-        m_tile_index_to_cache[tile->index] = kInvalidTileIndex;
-        m_tiles[i] = nullptr;
-
-        return i;
     }
 
     assert(false);
+
     return 0;
 }
 

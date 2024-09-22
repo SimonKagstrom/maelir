@@ -10,6 +10,7 @@
 #include <etl/mutex.h>
 #include <etl/queue_spsc_atomic.h>
 #include <etl/vector.h>
+#include <etl/list.h>
 #include <memory>
 #include <vector>
 
@@ -63,6 +64,7 @@ private:
     uint8_t EvictTile();
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
+    etl::list<uint32_t, kTileCacheSize> m_tile_request_order;
     std::atomic<uint32_t> m_locked_cache_entries {0};
     std::vector<uint8_t> m_tile_index_to_cache;
 
