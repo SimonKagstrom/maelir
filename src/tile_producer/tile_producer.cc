@@ -68,13 +68,11 @@ private:
 
 } // namespace
 
-TileProducer::TileProducer(std::unique_ptr<IGpsPort> gps_port)
-    : m_gps_port(std::move(gps_port))
+TileProducer::TileProducer()
 {
     m_tile_index_to_cache.resize(kRowSize * kColumnSize);
-    std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
 
-    m_gps_port->AwakeOn(GetSemaphore());
+    std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
 }
 
 
@@ -118,14 +116,8 @@ TileProducer::LockTile(uint32_t x, uint32_t y)
 std::optional<milliseconds>
 TileProducer::OnActivation()
 {
-    auto gps_data = m_gps_port->Poll();
-    if (gps_data)
-    {
-        // Make sure these tiles are decoded
-        m_current_position = gps_data;
-    }
-
     uint32_t requested_index = 0;
+
     while (m_tile_requests.pop(requested_index))
     {
         CacheTile(requested_index);

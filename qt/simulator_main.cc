@@ -18,7 +18,7 @@ main(int argc, char* argv[])
 
     auto gps_simulator = std::make_unique<GpsSimulator>();
     auto gps_reader = std::make_unique<GpsReader>(*gps_simulator);
-    auto producer = std::make_unique<TileProducer>(gps_reader->AttachListener());
+    auto producer = std::make_unique<TileProducer>();
     auto route_service = std::make_unique<RouteService>();
 
     auto ui = std::make_unique<UserInterface>(*producer,

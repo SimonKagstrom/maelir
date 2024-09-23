@@ -1,7 +1,6 @@
 #pragma once
 
 #include "base_thread.hh"
-#include "gps_port.hh"
 #include "hal/i_display.hh"
 #include "image.hh"
 #include "tile.hh"
@@ -49,7 +48,7 @@ public:
 class TileProducer : public os::BaseThread
 {
 public:
-    TileProducer(std::unique_ptr<IGpsPort> gps_port);
+    TileProducer();
 
     // Context: Another thread
     std::unique_ptr<ITileHandle> LockTile(uint32_t x, uint32_t y);
@@ -71,7 +70,5 @@ private:
     etl::queue_spsc_atomic<uint32_t, kTileCacheSize> m_tile_requests;
     os::binary_semaphore m_tile_request_semaphore {0};
 
-    std::unique_ptr<IGpsPort> m_gps_port;
-    std::optional<GpsData> m_current_position;
     etl::mutex m_mutex;
 };
