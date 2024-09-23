@@ -9,6 +9,13 @@
 namespace os
 {
 
+enum ThreadPriority : uint8_t
+{
+    kLow = 1,
+    kNormal,
+    kHigh,
+};
+
 class BaseThread
 {
 public:
@@ -21,7 +28,7 @@ public:
         m_semaphore.release();
     }
 
-    void Start(uint8_t core = 0);
+    void Start(uint8_t core = 0, ThreadPriority priority = ThreadPriority::kLow);
 
     void Stop()
     {
@@ -33,7 +40,7 @@ protected:
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
 
-    os::binary_semaphore &GetSemaphore()
+    os::binary_semaphore& GetSemaphore()
     {
         return m_semaphore;
     }

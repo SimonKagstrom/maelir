@@ -26,11 +26,11 @@ app_main(void)
     auto ui = std::make_unique<UserInterface>(
         *producer, *display, gps_reader->AttachListener(), route_service->AttachListener());
 
-    gps->Start(0);
-    gps_reader->Start(0);
-    producer->Start(1);
+    gps->Start(1);
+    gps_reader->Start(1);
+    producer->Start(0);
     route_service->Start(0);
-    ui->Start(1);
+    ui->Start(0, os::ThreadPriority::kHigh);
 
     route_service->RequestRoute({678, 865}, {1844, 777});
 

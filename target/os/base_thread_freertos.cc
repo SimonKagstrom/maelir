@@ -26,13 +26,17 @@ BaseThread::~BaseThread()
 }
 
 void
-BaseThread::Start(uint8_t core)
+BaseThread::Start(uint8_t core, ThreadPriority priority)
 {
+    static_assert(tskIDLE_PRIORITY == 0, "FreeRTOS priority assumption broken");
+    assert(priority < configMAX_PRIORITIES);
+    assert(priority > 0);
+
     xTaskCreatePinnedToCore([](void* arg) { static_cast<BaseThread*>(arg)->ThreadLoop(); },
                             "x",
                             5000,
                             this,
-                            tskIDLE_PRIORITY + 1,
+                            priority,
                             &m_impl->m_task,
                             core);
 }
