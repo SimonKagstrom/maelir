@@ -8,12 +8,31 @@
 #include "uart_gps.hh"
 #include "ui.hh"
 
+#include <esp_partition.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
 extern "C" void
 app_main(void)
 {
+    auto map_partition = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, "map_data");
+    assert(map_partition);
+
+    const void* p = nullptr;
+    esp_partition_mmap_handle_t handle = 0;
+    if (esp_partition_mmap(esp_partition_get(map_partition),
+                           0,
+                           esp_partition_get(map_partition)->size,
+                           ESP_PARTITION_MMAP_DATA,
+                           &p,
+                           &handle) != ESP_OK)
+    {
+        assert(false);
+    }
+    esp_partition_iterator_release(map_partition);
+
+    auto flash_tiles = reinterpret_cast<const FlashTileMetadata*>(p);
+
     auto display = std::make_unique<DisplayTarget>();
     //auto gps = std::make_unique<UartGps>(UART_NUM_1,
     //                                     17,  // RX -> A0
@@ -21,7 +40,7 @@ app_main(void)
     auto gps = std::make_unique<GpsSimulator>();
 
     auto gps_reader = std::make_unique<GpsReader>(*gps);
-    auto producer = std::make_unique<TileProducer>();
+    auto producer = std::make_unique<TileProducer>(flash_tiles);
     auto route_service = std::make_unique<RouteService>();
     auto ui = std::make_unique<UserInterface>(
         *producer, *display, gps_reader->AttachListener(), route_service->AttachListener());

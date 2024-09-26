@@ -68,7 +68,9 @@ private:
 
 } // namespace
 
-TileProducer::TileProducer()
+TileProducer::TileProducer(const FlashTileMetadata* flash_tile_data)
+    : m_flash_tile_data(flash_tile_data)
+    , m_flash_start(reinterpret_cast<const uint8_t*>(flash_tile_data))
 {
     m_tile_index_to_cache.resize(kRowSize * kColumnSize);
 
@@ -193,13 +195,21 @@ TileProducer::EvictTile()
 std::unique_ptr<ImageImpl>
 TileProducer::DecodeTile(unsigned index)
 {
+    if (index >= kNumberOfMapTiles)
+    {
+        return nullptr;
+    }
+
     auto png = std::make_unique<PNG>();
 
-    auto& src = tile_array[index];
-    auto in_psram = std::make_unique<uint8_t[]>(src.size());
-    memcpy(in_psram.get(), src.data(), src.size());
+    const auto& tile = m_flash_tile_data->tiles[index];
+    const auto flash_data = m_flash_start + tile.flash_offset;
+    const auto tile_size = tile.size;
 
-    auto rc = png->openFLASH(in_psram.get(), src.size(), PngDraw);
+    auto in_psram = std::make_unique<uint8_t[]>(tile_size);
+    memcpy(in_psram.get(), flash_data, tile_size);
+
+    auto rc = png->openFLASH(in_psram.get(), tile_size, PngDraw);
 
     if (rc != PNG_SUCCESS)
     {
@@ -213,7 +223,7 @@ TileProducer::DecodeTile(unsigned index)
     png->close();
     if (rc != PNG_SUCCESS)
     {
-        printf("Argh tile %d @%p\n", index, src.data());
+        printf("Argh tile %d @%p\n", index, flash_data);
         return nullptr;
     }
 

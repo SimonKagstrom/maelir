@@ -6,6 +6,20 @@
 constexpr auto kTileSize = 240;
 constexpr auto kPathFinderTileSize = kTileSize / 10;
 
+struct FlashTile
+{
+    uint32_t size;
+    uint32_t flash_offset;
+};
+static_assert(sizeof(FlashTile) == 8);
+
+struct FlashTileMetadata
+{
+    uint32_t tile_count;
+    FlashTile tiles[];
+};
+static_assert(sizeof(FlashTileMetadata) == 4);
+
 struct Point
 {
     int32_t x;

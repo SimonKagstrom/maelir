@@ -120,6 +120,7 @@ add_executable(${elf_file}
 target_link_libraries(${elf_file}
     idf::freertos
     idf::spi_flash
+    idf::esp_partition
     tile_producer
     gps_simulator
     ui

@@ -6,10 +6,10 @@
 #include "tile.hh"
 
 #include <atomic>
+#include <etl/list.h>
 #include <etl/mutex.h>
 #include <etl/queue_spsc_atomic.h>
 #include <etl/vector.h>
-#include <etl/list.h>
 #include <memory>
 #include <vector>
 
@@ -48,7 +48,7 @@ public:
 class TileProducer : public os::BaseThread
 {
 public:
-    TileProducer();
+    TileProducer(const FlashTileMetadata* flash_tile_data);
 
     // Context: Another thread
     std::unique_ptr<ITileHandle> LockTile(uint32_t x, uint32_t y);
@@ -61,6 +61,9 @@ private:
     bool CacheTile(unsigned index);
 
     uint8_t EvictTile();
+
+    const FlashTileMetadata* m_flash_tile_data;
+    const uint8_t *m_flash_start;
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     etl::list<uint32_t, kTileCacheSize> m_tile_request_order;
