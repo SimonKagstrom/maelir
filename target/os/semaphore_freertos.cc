@@ -41,15 +41,16 @@ template <ptrdiff_t least_max_value>
 void
 counting_semaphore<least_max_value>::release(ptrdiff_t update) noexcept
 {
-    if (xPortInIsrContext())
-    {
-        BaseType_t woken;
-        xSemaphoreGiveFromISR(m_impl->m_sem, &woken);
-    }
-    else
-    {
-        xSemaphoreGive(m_impl->m_sem);
-    }
+    xSemaphoreGive(m_impl->m_sem);
+}
+
+template <ptrdiff_t least_max_value>
+bool IRAM_ATTR
+counting_semaphore<least_max_value>::release_from_isr(ptrdiff_t update) noexcept
+{
+    BaseType_t woken = false;
+    xSemaphoreGiveFromISR(m_impl->m_sem, &woken);
+    return woken;
 }
 
 template <ptrdiff_t least_max_value>

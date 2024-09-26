@@ -25,6 +25,9 @@ public:
 
     void release(ptrdiff_t __update = 1) noexcept;
 
+    // Return true if a higher prio task was awoken
+    bool release_from_isr(ptrdiff_t __update = 1) noexcept;
+
     void acquire() noexcept;
 
     bool try_acquire() noexcept;

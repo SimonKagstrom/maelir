@@ -38,6 +38,15 @@ counting_semaphore<least_max_value>::release(ptrdiff_t update) noexcept
 }
 
 template <ptrdiff_t least_max_value>
+bool
+counting_semaphore<least_max_value>::release_from_isr(ptrdiff_t update) noexcept
+{
+    release(update);
+
+    return false;
+}
+
+template <ptrdiff_t least_max_value>
 void
 counting_semaphore<least_max_value>::acquire() noexcept
 {

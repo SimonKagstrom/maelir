@@ -6,6 +6,7 @@ extern "C" {
 }
 
 #include <cstring>
+#include <esp_attr.h>
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -566,7 +567,7 @@ DisplayTarget::DisplayTarget()
      *
      *   "PCLK frequency can't go too high as the limitation of PSRAM bandwidth"
      */
-    panel_config.timings.pclk_hz = 5.5 * 1000 * 1000;
+    panel_config.timings.pclk_hz = 6 * 1000 * 1000;
     panel_config.timings.h_res = kWidth;
     panel_config.timings.v_res = kHeight;
     panel_config.timings.hsync_back_porch = 44;
@@ -614,7 +615,7 @@ DisplayTarget::GetFrameBuffer()
 }
 
 
-void
+void IRAM_ATTR
 DisplayTarget::Flip()
 {
     m_vsync_end.acquire();
@@ -627,10 +628,10 @@ DisplayTarget::Flip()
     m_vsync_end.acquire();
 }
 
-void
+void IRAM_ATTR
 DisplayTarget::OnVsync()
 {
-    m_vsync_end.release();
+    m_vsync_end.release_from_isr();
 }
 
 bool
