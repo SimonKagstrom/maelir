@@ -196,7 +196,10 @@ TileProducer::DecodeTile(unsigned index)
     auto png = std::make_unique<PNG>();
 
     auto& src = tile_array[index];
-    auto rc = png->openFLASH((uint8_t*)src.data(), src.size(), PngDraw);
+    auto in_psram = std::make_unique<uint8_t[]>(src.size());
+    memcpy(in_psram.get(), src.data(), src.size());
+
+    auto rc = png->openFLASH(in_psram.get(), src.size(), PngDraw);
 
     if (rc != PNG_SUCCESS)
     {
