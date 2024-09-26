@@ -12,6 +12,8 @@ extern "C" {
 #include <freertos/task.h>
 #include <hal/gpio_types.h>
 
+#include <esp_heap_caps.h>
+
 #define PCA_TFT_BACKLIGHT 4
 
 #define TFT_DE    2
@@ -533,9 +535,7 @@ DisplayTarget::DisplayTarget()
     vTaskDelay(1);
     my_PCA9554_batch(&handle, hd40015c40_init_operations, sizeof(hd40015c40_init_operations));
 
-    esp_lcd_rgb_panel_config_t panel_config;
-
-    memset(&panel_config, 0, sizeof(esp_lcd_rgb_panel_config_t));
+    esp_lcd_rgb_panel_config_t panel_config = {};
 
     panel_config.data_width = 16; // RGB565 in parallel mode, thus 16bit in width
     panel_config.psram_trans_align = 64;
@@ -567,7 +567,7 @@ DisplayTarget::DisplayTarget()
      *
      *   "PCLK frequency can't go too high as the limitation of PSRAM bandwidth"
      */
-    panel_config.timings.pclk_hz = 5.5 * 1000 * 1000;
+    panel_config.timings.pclk_hz = 16 * 1000 * 1000;
     panel_config.timings.h_res = kWidth;
     panel_config.timings.v_res = kHeight;
     panel_config.timings.hsync_back_porch = 44;
@@ -580,29 +580,30 @@ DisplayTarget::DisplayTarget()
 
     panel_config.timings.flags.vsync_idle_low = 1;
 
-    // Request 2 frame buffers in PSRAM
-    panel_config.num_fbs = 2;
-    panel_config.flags.fb_in_psram = true;
+    // Bounce buffer
+    panel_config.bounce_buffer_size_px = 720 * 8;
+    panel_config.flags.no_fb = 1;
+    panel_config.flags.bb_invalidate_cache = 0;
+
+    m_frame_buffers[0] = static_cast<uint16_t*>(heap_caps_malloc(kWidth * kHeight * 2, MALLOC_CAP_SPIRAM));
+    m_frame_buffers[1] = static_cast<uint16_t*>(heap_caps_malloc(kWidth * kHeight * 2, MALLOC_CAP_SPIRAM));
+
+    assert(m_frame_buffers[0]);
+    assert(m_frame_buffers[1]);
+
+    memset(m_frame_buffers[0], 0, kWidth * kHeight * 2);
+    memset(m_frame_buffers[1], 0, kWidth * kHeight * 2);
 
     ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(&panel_config, &m_panel_handle));
 
-    esp_lcd_rgb_panel_event_callbacks_t callbacks;
-    memset(&callbacks, 0, sizeof(esp_lcd_rgb_panel_event_callbacks_t));
-    callbacks.on_vsync = DisplayTarget::OnVsyncStatic;
+    esp_lcd_rgb_panel_event_callbacks_t callbacks = {};
+    callbacks.on_bounce_empty = DisplayTarget::OnBounceBufferFillStatic;
+    callbacks.on_bounce_frame_finish = DisplayTarget::OnBounceBufferFinishStatic;
+
     ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(m_panel_handle, &callbacks, this));
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(m_panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(m_panel_handle));
-
-    // Retrieve allocated frame buffers
-    ESP_ERROR_CHECK(
-        esp_lcd_rgb_panel_get_frame_buffer(m_panel_handle,
-                                           2,
-                                           reinterpret_cast<void**>(&m_frame_buffers[0]),
-                                           reinterpret_cast<void**>(&m_frame_buffers[1])));
-
-    memset(m_frame_buffers[0], 0, kWidth * kHeight * 2);
-    memset(m_frame_buffers[1], 0, kWidth * kHeight * 2);
 
     my_PCA9554_pin_mode(&handle, PCA_TFT_BACKLIGHT, OUTPUT);
     my_PCA9554_digital_write(&handle, PCA_TFT_BACKLIGHT, HIGH);
@@ -618,23 +619,51 @@ DisplayTarget::GetFrameBuffer()
 void IRAM_ATTR
 DisplayTarget::Flip()
 {
-    m_vsync_end.acquire();
+    m_flip_requested = true;
+    m_bounce_copy_end.acquire();
+}
 
-    // If the last esp_lcd_panel_draw_bitmap arg is a frame buffer allocated in PSRAM,
-    // then esp_lcd_panel_draw_bitmap does not make a copy but switches to this frame buffer
-    esp_lcd_panel_draw_bitmap(
-        m_panel_handle, 0, 0, kWidth, kHeight, m_frame_buffers[m_current_update_frame]);
-    m_current_update_frame = !m_current_update_frame;
-    m_vsync_end.acquire();
+
+void IRAM_ATTR
+DisplayTarget::OnBounceBufferFill(void* bounce_buf, int pos_px, int len_bytes)
+{
+    // Fill bounce buffer with the frame buffer data
+    memcpy(bounce_buf,
+           reinterpret_cast<const uint8_t*>(m_frame_buffers[!m_current_update_frame] + pos_px),
+           len_bytes);
+}
+
+void IRAM_ATTR
+DisplayTarget::OnBounceBufferFinish()
+{
+    if (m_flip_requested)
+    {
+        m_flip_requested = false;
+        m_current_update_frame = !m_current_update_frame;
+        m_bounce_copy_end.release_from_isr();
+    }
 }
 
 
 bool IRAM_ATTR
-DisplayTarget::OnVsyncStatic(esp_lcd_panel_handle_t panel,
-                             const esp_lcd_rgb_panel_event_data_t* data,
-                             void* user_ctx)
+DisplayTarget::OnBounceBufferFillStatic(
+    esp_lcd_panel_handle_t panel, void* bounce_buf, int pos_px, int len_bytes, void* user_ctx)
 {
     auto p = static_cast<DisplayTarget*>(user_ctx);
 
-    return p->m_vsync_end.release_from_isr();
+    p->OnBounceBufferFill(bounce_buf, pos_px, len_bytes);
+
+    return false;
+}
+
+bool IRAM_ATTR
+DisplayTarget::OnBounceBufferFinishStatic(esp_lcd_panel_handle_t panel,
+                                          const esp_lcd_rgb_panel_event_data_t* edata,
+                                          void* user_ctx)
+{
+    auto p = static_cast<DisplayTarget*>(user_ctx);
+
+    p->OnBounceBufferFinish();
+
+    return false;
 }

@@ -62,7 +62,7 @@ app_main(void)
     gps_simulator->Start(1);
     gps_reader->Start(1);
     producer->Start(0);
-    route_service->Start(0);
+    route_service->Start(1);
     ui->Start(0, os::ThreadPriority::kHigh);
 
     while (true)
