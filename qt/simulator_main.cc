@@ -13,13 +13,14 @@
 int
 main(int argc, char* argv[])
 {
-    QApplication a(argc, argv);
-    MainWindow window;
-
     if (argc != 2)
     {
         fmt::print("Usage: {} <path_to_generated_tiles.bin>\n", argv[0]);
+        exit(1);
     }
+
+    QApplication a(argc, argv);
+    MainWindow window;
 
     auto bin_file = QFile(argv[1]);
     auto rv = bin_file.open(QIODevice::ReadOnly);
