@@ -14,7 +14,8 @@
 extern "C" void
 app_main(void)
 {
-    auto map_partition = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, "map_data");
+    auto map_partition =
+        esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, "map_data");
     assert(map_partition);
 
     const void* p = nullptr;
@@ -30,7 +31,7 @@ app_main(void)
     }
     esp_partition_iterator_release(map_partition);
 
-    auto flash_tiles = reinterpret_cast<const MapMetadata*>(p);
+    auto map_metadata = reinterpret_cast<const MapMetadata*>(p);
 
     auto display = std::make_unique<DisplayTarget>();
     //auto gps = std::make_unique<UartGps>(UART_NUM_1,
@@ -38,11 +39,14 @@ app_main(void)
     //                                     16); // TX -> A1
     auto gps = std::make_unique<GpsSimulator>();
 
-    auto gps_reader = std::make_unique<GpsReader>(*gps);
-    auto producer = std::make_unique<TileProducer>(flash_tiles);
-    auto route_service = std::make_unique<RouteService>();
-    auto ui = std::make_unique<UserInterface>(
-        *producer, *display, gps_reader->AttachListener(), route_service->AttachListener());
+    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps);
+    auto producer = std::make_unique<TileProducer>(*map_metadata);
+    auto route_service = std::make_unique<RouteService>(*map_metadata);
+    auto ui = std::make_unique<UserInterface>(*map_metadata,
+                                              *producer,
+                                              *display,
+                                              gps_reader->AttachListener(),
+                                              route_service->AttachListener());
 
     gps->Start(1);
     gps_reader->Start(1);
