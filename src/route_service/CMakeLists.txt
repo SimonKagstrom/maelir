@@ -10,6 +10,4 @@ PUBLIC
 target_link_libraries(route_service
 PUBLIC
     router
-PRIVATE
-    tile_library
 )

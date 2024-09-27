@@ -1,6 +1,5 @@
 #include "route_service.hh"
 
-#include "generated_land_mask.hh"
 #include "route_utils.hh"
 
 class RouteService::RouteListenerImpl : public IRouteListener
@@ -38,20 +37,26 @@ private:
 };
 
 
-RouteService::RouteService()
+RouteService::RouteService(const MapMetadata& metadata)
+    : m_row_size(metadata.land_mask_row_size)
+    , m_rows(metadata.land_mask_rows)
 {
+    const auto land_mask = reinterpret_cast<const uint32_t*>(
+        reinterpret_cast<const uint8_t*>(&metadata) + metadata.land_mask_data_offset);
+
     m_router = std::make_unique<Router<kTargetCacheSize>>(
-        std::span<const uint32_t> {kLandMask, kLandMaskRowSize * kLandMaskRows},
-        kLandMaskRows,
-        kLandMaskRowSize);
+        std::span<const uint32_t> {land_mask,
+                                   metadata.land_mask_row_size * metadata.land_mask_rows},
+        metadata.land_mask_rows,
+        metadata.land_mask_row_size);
 }
 
 void
 RouteService::RequestRoute(Point from, Point to)
 {
     // Context: Another thread
-    m_requested_route.push(std::make_pair(PointToLandIndex(from, kLandMaskRowSize),
-                                          PointToLandIndex(to, kLandMaskRowSize)));
+    m_requested_route.push(
+        std::make_pair(PointToLandIndex(from, m_row_size), PointToLandIndex(to, m_row_size)));
 
     Awake();
 }

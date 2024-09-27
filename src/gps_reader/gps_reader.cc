@@ -1,45 +1,9 @@
 #include "gps_reader.hh"
 
-#include "generated_tiles.hh"
 #include "tile.hh"
 
 #include <cassert>
 #include <etl/queue_spsc_atomic.h>
-
-namespace
-{
-
-constexpr auto
-PositionToPoint(const auto& gps_data)
-{
-    auto longitude_offset = gps_data.longitude - kCornerLongitude;
-    auto latitude_offset = kCornerLatitude - gps_data.latitude;
-
-    int32_t x = longitude_offset * kPixelLongitudeSize;
-    int32_t y = latitude_offset * kPixelLatitudeSize;
-
-    if (longitude_offset < 0)
-    {
-        x = 0;
-    }
-    if (latitude_offset < 0)
-    {
-        y = 0;
-    }
-
-    if (x > kTileSize * kRowSize)
-    {
-        x = kTileSize * kRowSize;
-    }
-    if (y > kTileSize * kColumnSize)
-    {
-        y = kTileSize * kColumnSize;
-    }
-
-    return PixelPosition {x, y};
-}
-
-} // namespace
 
 class GpsReader::GpsPortImpl : public IGpsPort
 {
@@ -93,8 +57,14 @@ private:
 };
 
 
-GpsReader::GpsReader(hal::IGps& gps)
+GpsReader::GpsReader(const MapMetadata& metadata, hal::IGps& gps)
     : m_gps(gps)
+    , m_corner_latitude(metadata.corner_latitude)
+    , m_corner_longitude(metadata.corner_longitude)
+    , m_latitude_pixel_size(metadata.pixel_latitude_size)
+    , m_longitude_pixel_size(metadata.pixel_longitude_size)
+    , m_tile_columns(metadata.tile_column_size)
+    , m_tile_rows(metadata.tile_row_size)
 {
 }
 
@@ -132,4 +102,35 @@ GpsReader::OnActivation()
     }
 
     return std::nullopt;
+}
+
+
+PixelPosition
+GpsReader::PositionToPoint(const GpsPosition& gps_data) const
+{
+    auto longitude_offset = gps_data.longitude - m_corner_longitude;
+    auto latitude_offset = m_corner_latitude - gps_data.latitude;
+
+    int32_t x = longitude_offset * m_longitude_pixel_size;
+    int32_t y = latitude_offset * m_latitude_pixel_size;
+
+    if (longitude_offset < 0)
+    {
+        x = 0;
+    }
+    if (latitude_offset < 0)
+    {
+        y = 0;
+    }
+
+    if (x > kTileSize * m_tile_rows)
+    {
+        x = kTileSize * m_tile_rows;
+    }
+    if (y > kTileSize * m_tile_columns)
+    {
+        y = kTileSize * m_tile_columns;
+    }
+
+    return PixelPosition {x, y};
 }

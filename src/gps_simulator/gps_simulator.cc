@@ -1,6 +1,5 @@
 #include "gps_simulator.hh"
 
-#include "generated_tiles.hh"
 
 GpsSimulator::GpsSimulator()
 {

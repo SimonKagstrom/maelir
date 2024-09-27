@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tile.hh"
 #include "base_thread.hh"
 #include "i_route_listener.hh"
 
@@ -10,7 +11,7 @@
 class RouteService : public os::BaseThread
 {
 public:
-    RouteService();
+    RouteService(const MapMetadata &metadata);
 
     // Context: Another thread
     void RequestRoute(Point from, Point to);
@@ -22,6 +23,9 @@ private:
 
 
     std::optional<milliseconds> OnActivation() final;
+
+    const uint32_t m_row_size;
+    const uint32_t m_rows;
 
     etl::mutex m_lock;
     etl::queue_spsc_atomic<std::pair<IndexType, IndexType>, 8> m_requested_route;

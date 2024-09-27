@@ -3,8 +3,13 @@
 #include <algorithm>
 #include <cstdint>
 
+#include <cstddef>
+
 constexpr auto kTileSize = 240;
 constexpr auto kPathFinderTileSize = kTileSize / 10;
+
+// TILRSWFT
+constexpr auto kMetadataMagic = 0x54494C5253574654ull;
 
 struct FlashTile
 {
@@ -13,12 +18,27 @@ struct FlashTile
 };
 static_assert(sizeof(FlashTile) == 8);
 
-struct FlashTileMetadata
+struct MapMetadata
 {
+    uint64_t magic;
+    double corner_latitude;
+    double corner_longitude;
+
     uint32_t tile_count;
-    FlashTile tiles[];
+    uint32_t pixel_longitude_size;
+    uint32_t pixel_latitude_size;
+    uint32_t tile_row_size;
+    uint32_t tile_column_size;
+
+    uint32_t land_mask_row_size;
+    uint32_t land_mask_rows;
+
+    // Offset from the start of the metadata
+    uint32_t tile_data_offset;
+    uint32_t land_mask_data_offset;
 };
-static_assert(sizeof(FlashTileMetadata) == 4);
+static_assert(offsetof(MapMetadata, tile_count) == 24);
+static_assert(offsetof(MapMetadata, land_mask_data_offset) == 56);
 
 struct Point
 {

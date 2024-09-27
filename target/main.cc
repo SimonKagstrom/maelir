@@ -4,7 +4,6 @@
 #include "sdkconfig.h"
 #include "target_display.hh"
 #include "tile_producer.hh"
-#include "tile_utils.hh"
 #include "uart_gps.hh"
 #include "ui.hh"
 
@@ -31,7 +30,7 @@ app_main(void)
     }
     esp_partition_iterator_release(map_partition);
 
-    auto flash_tiles = reinterpret_cast<const FlashTileMetadata*>(p);
+    auto flash_tiles = reinterpret_cast<const MapMetadata*>(p);
 
     auto display = std::make_unique<DisplayTarget>();
     //auto gps = std::make_unique<UartGps>(UART_NUM_1,

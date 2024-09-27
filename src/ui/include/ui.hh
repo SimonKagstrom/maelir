@@ -9,7 +9,8 @@
 class UserInterface : public os::BaseThread
 {
 public:
-    UserInterface(TileProducer& tile_producer,
+    UserInterface(const MapMetadata& metadata,
+                  TileProducer& tile_producer,
                   hal::IDisplay& display,
                   std::unique_ptr<IGpsPort> gps_port,
                   std::unique_ptr<IRouteListener> route_listener);
@@ -29,6 +30,14 @@ private:
     void DrawMap();
     void DrawRoute();
     void DrawBoat();
+
+    PixelPosition PositionToMapCenter(const auto& pixel_position) const;
+
+
+    const uint32_t m_tile_rows;
+    const uint32_t m_tile_columns;
+    const uint32_t m_land_mask_rows;
+    const uint32_t m_land_mask_row_size;
 
     TileProducer& m_tile_producer;
 

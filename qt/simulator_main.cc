@@ -36,12 +36,15 @@ main(int argc, char* argv[])
         return 1;
     }
 
-    auto gps_simulator = std::make_unique<GpsSimulator>();
-    auto gps_reader = std::make_unique<GpsReader>(*gps_simulator);
-    auto producer = std::make_unique<TileProducer>(reinterpret_cast<const FlashTileMetadata*>(mmap_bin));
-    auto route_service = std::make_unique<RouteService>();
+    auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
 
-    auto ui = std::make_unique<UserInterface>(*producer,
+    auto gps_simulator = std::make_unique<GpsSimulator>();
+    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_simulator);
+    auto producer = std::make_unique<TileProducer>(*map_metadata);
+    auto route_service = std::make_unique<RouteService>(*map_metadata);
+
+    auto ui = std::make_unique<UserInterface>(*map_metadata,
+                                              *producer,
                                               window.GetDisplay(),
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());

@@ -1,8 +1,6 @@
 #include "tile_producer.hh"
 
-#include "generated_tiles.hh"
 #include "hal/i_display.hh"
-#include "tile_utils.hh"
 
 #include <PNGdec.h>
 #include <mutex>
@@ -68,11 +66,15 @@ private:
 
 } // namespace
 
-TileProducer::TileProducer(const FlashTileMetadata* flash_tile_data)
-    : m_flash_tile_data(flash_tile_data)
-    , m_flash_start(reinterpret_cast<const uint8_t*>(flash_tile_data))
+TileProducer::TileProducer(const MapMetadata& map_metadata)
+    : m_flash_start(reinterpret_cast<const uint8_t*>(&map_metadata))
+    , m_flash_tile_data(
+          reinterpret_cast<const FlashTile*>(m_flash_start + map_metadata.tile_data_offset))
+    , m_tile_count(map_metadata.tile_count)
+    , m_tile_rows(map_metadata.tile_row_size)
+    , m_tile_columns(map_metadata.tile_column_size)
 {
-    m_tile_index_to_cache.resize(kRowSize * kColumnSize);
+    m_tile_index_to_cache.resize(map_metadata.tile_row_size * map_metadata.tile_column_size);
 
     std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
 }
@@ -195,14 +197,14 @@ TileProducer::EvictTile()
 std::unique_ptr<ImageImpl>
 TileProducer::DecodeTile(unsigned index)
 {
-    if (index >= kNumberOfMapTiles)
+    if (index >= m_tile_count)
     {
         return nullptr;
     }
 
     auto png = std::make_unique<PNG>();
 
-    const auto& tile = m_flash_tile_data->tiles[index];
+    const auto& tile = m_flash_tile_data[index];
     const auto flash_data = m_flash_start + tile.flash_offset;
     const auto tile_size = tile.size;
 
@@ -228,4 +230,21 @@ TileProducer::DecodeTile(unsigned index)
     }
 
     return img;
+}
+
+
+std::optional<unsigned>
+TileProducer::PointToTileIndex(uint32_t x, uint32_t y) const
+{
+    if (x >= kTileSize * m_tile_rows)
+    {
+        return std::nullopt;
+    }
+
+    if (y >= kTileSize * m_tile_columns)
+    {
+        return std::nullopt;
+    }
+
+    return (y / kTileSize) * m_tile_rows + x / kTileSize;
 }

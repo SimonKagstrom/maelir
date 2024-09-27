@@ -48,7 +48,7 @@ public:
 class TileProducer : public os::BaseThread
 {
 public:
-    TileProducer(const FlashTileMetadata* flash_tile_data);
+    TileProducer(const MapMetadata& flash_tile_data);
 
     // Context: Another thread
     std::unique_ptr<ITileHandle> LockTile(uint32_t x, uint32_t y);
@@ -61,9 +61,13 @@ private:
     bool CacheTile(unsigned index);
 
     uint8_t EvictTile();
+    std::optional<unsigned> PointToTileIndex(uint32_t x, uint32_t y) const;
 
-    const FlashTileMetadata* m_flash_tile_data;
-    const uint8_t *m_flash_start;
+    const uint8_t* m_flash_start;
+    const FlashTile* m_flash_tile_data;
+    const uint32_t m_tile_count;
+    const uint32_t m_tile_rows;
+    const uint32_t m_tile_columns;
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     etl::list<uint32_t, kTileCacheSize> m_tile_request_order;
