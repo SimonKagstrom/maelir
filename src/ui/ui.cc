@@ -21,8 +21,15 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
     , m_boat(DecodePng(boat_data))
+    , m_rotated_boat(*m_boat)
 {
     assert(m_boat);
+
+    // Data for the rotated boat
+    auto size = static_cast<size_t>(m_boat->width * 1.5f * m_boat->height * 1.5f);
+    m_boat_rotation_buffer = std::make_unique<uint16_t[]>(size);
+    memset(m_boat_rotation_buffer.get(), 0, size * sizeof(uint16_t));
+    m_boat_rotation = {m_boat_rotation_buffer.get(), size};
 
     m_gps_port->AwakeOn(GetSemaphore());
     m_route_listener->AwakeOn(GetSemaphore());
@@ -41,6 +48,8 @@ UserInterface::OnActivation()
 
         m_map_x = map_x;
         m_map_y = map_y;
+
+        m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
     }
 
     if (auto route = m_route_listener->Poll())
@@ -68,7 +77,7 @@ UserInterface::OnActivation()
     // Now invalid
     m_frame_buffer = nullptr;
 
-    return std::nullopt;
+    return 20ms;
 }
 
 void
@@ -149,10 +158,10 @@ UserInterface::DrawRoute()
 void
 UserInterface::DrawBoat()
 {
-    auto x = m_x - m_map_x - m_boat->width / 2;
-    auto y = m_y - m_map_y - m_boat->height / 2;
+    auto x = m_x - m_map_x - m_rotated_boat.width / 2;
+    auto y = m_y - m_map_y - m_rotated_boat.height / 2;
 
-    painter::AlphaBlit(m_frame_buffer, *m_boat, 210, {x, y});
+    painter::AlphaBlit(m_frame_buffer, m_rotated_boat, 210, {x, y});
 }
 
 PixelPosition

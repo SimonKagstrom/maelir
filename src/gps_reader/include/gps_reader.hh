@@ -23,6 +23,8 @@ private:
 
     PixelPosition PositionToPoint(const GpsPosition& gps_data) const;
 
+    void Reset();
+
     hal::IGps& m_gps;
     // From the metadata
     const double m_corner_latitude;
@@ -34,4 +36,8 @@ private:
 
     etl::vector<GpsPortImpl*, 8> m_listeners;
     std::array<std::atomic_bool, 8> m_stale_listeners;
+
+    std::optional<GpsPosition> m_position;
+    std::optional<float> m_speed;
+    std::optional<float> m_heading;
 };

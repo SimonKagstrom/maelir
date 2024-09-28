@@ -3,8 +3,8 @@
 
 #include "hal/i_display.hh"
 
+#include <cmath>
 #include <cstring>
-
 namespace painter
 {
 
@@ -185,6 +185,58 @@ DrawAlphaLine(uint16_t* frame_buffer,
 
         next = next + direction;
     }
+}
+
+
+// From https://github.com/anim1311/Image-Rotation
+Image
+Rotate(const Image& image, std::span<uint16_t> new_image_data, int angle)
+{
+    // Convert angle to radians
+    float radians = angle * M_PI / 180.0f;
+
+    // Compute sine and cosine of angle
+    float s = sin(radians);
+    float c = cos(radians);
+
+    // Compute new image size and allocate memory for it
+    int new_width = (int)round(abs(image.width * c) + abs(image.height * s));
+    int new_height = (int)round(abs(image.width * s) + abs(image.height * c));
+
+    // Initialize new image with black
+    memset(new_image_data.data(), 0, new_width * new_height * sizeof(uint16_t));
+
+    // Compute center of old and new images
+    auto old_cx = (float)image.width / 2.0f;
+    auto old_cy = (float)image.height / 2.0f;
+    auto new_cx = (float)new_width / 2.0f;
+    auto new_cy = (float)new_height / 2.0f;
+
+    // Iterate over new image pixels and map them back to old image pixels
+    for (int y = 0; y < new_height; y++)
+    {
+        for (int x = 0; x < new_width; x++)
+        {
+            // Compute old image pixel coordinates corresponding to current new image pixel
+            float old_x = (x - new_cx) * c + (y - new_cy) * s + old_cx;
+            float old_y = -(x - new_cx) * s + (y - new_cy) * c + old_cy;
+
+            // Check if old image pixel coordinates are within bounds
+            if (old_x >= 0 && old_x < image.width && old_y >= 0 && old_y < image.height)
+            {
+                // Compute indices of old image pixel
+                int old_index = ((int)old_x + (int)old_y * image.width);
+
+                // Copy old image pixel to new image
+                int new_index = (x + y * new_width);
+
+                // Copy old image pixel to new image
+                new_image_data[new_index] = image.data[old_index];
+            }
+        }
+    }
+
+    return Image(new_image_data, new_width, new_height);
 }
 
 } // namespace painter

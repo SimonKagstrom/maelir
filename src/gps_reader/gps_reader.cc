@@ -83,10 +83,32 @@ std::optional<milliseconds>
 GpsReader::OnActivation()
 {
     auto data = m_gps.WaitForData(GetSemaphore());
+
+    if (data.position)
+    {
+        m_position = data.position;
+    }
+    if (data.speed)
+    {
+        m_speed = data.speed;
+    }
+    if (data.heading)
+    {
+        m_heading = data.heading;
+    }
+
+    if (!m_position || !m_speed || !m_heading)
+    {
+        // Wait for the complete data
+        return std::nullopt;
+    }
+
     GpsData mangled;
 
-    mangled.position = data.position;
-    mangled.pixel_position = PositionToPoint(data.position);
+    mangled.position = *m_position;
+    mangled.heading = *m_heading;
+    mangled.speed = *m_speed;
+    mangled.pixel_position = PositionToPoint(*m_position);
 
     for (auto i = 0u; i < m_stale_listeners.size(); i++)
     {
@@ -100,6 +122,8 @@ GpsReader::OnActivation()
     {
         l->PushGpsData(mangled);
     }
+
+    Reset();
 
     return std::nullopt;
 }
@@ -133,4 +157,11 @@ GpsReader::PositionToPoint(const GpsPosition& gps_data) const
     }
 
     return PixelPosition {x, y};
+}
+
+void GpsReader::Reset()
+{
+    m_position = std::nullopt;
+    m_speed = std::nullopt;
+    m_heading = std::nullopt;
 }

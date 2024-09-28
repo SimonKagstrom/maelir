@@ -14,6 +14,8 @@ private:
 
     hal::RawGpsData WaitForData(os::binary_semaphore& semaphore) final;
 
-    hal::RawGpsData m_current_position;
+    GpsPosition m_current_position;
+    float m_speed {0};
+    float m_heading {0};
     os::binary_semaphore m_has_data_semaphore {0};
 };

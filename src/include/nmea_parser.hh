@@ -26,6 +26,7 @@ private:
 
     void ParseLine(std::string_view line);
     void ParseGppgaData(std::string_view line);
+    void ParseGpvtgData(std::string_view line);
 
     State m_state {State::kWaitForDollar};
     etl::string<192> m_current_line;

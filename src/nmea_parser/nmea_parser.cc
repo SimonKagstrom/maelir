@@ -1,3 +1,4 @@
+// https://aprs.gids.nl/nmea
 #include "nmea_parser.hh"
 
 #include <fmt/format.h>
@@ -85,12 +86,16 @@ NmeaParser::RunStateMachine(char c)
 void
 NmeaParser::ParseLine(std::string_view line)
 {
-    if (!line.starts_with("$GPGGA,"))
+    if (line.starts_with("$GPGGA,"))
     {
-        return;
+        // $GPGGA,174558.00,5917.60788,N,01757.40192,E,1,08,1.08,48.3,M,24.6,M,,*69
+        ParseGppgaData(line.substr(7));
     }
-    // $GPGGA,174558.00,5917.60788,N,01757.40192,E,1,08,1.08,48.3,M,24.6,M,,*69
-    ParseGppgaData(line.substr(7));
+    else if (line.starts_with("$GPVTG,"))
+    {
+        // $GPVTG,360.0,T,348.7,M,000.0,N,000.0,K*43
+        ParseGpvtgData(line.substr(7));
+    }
 }
 
 void
@@ -136,6 +141,46 @@ NmeaParser::ParseGppgaData(std::string_view line)
 
     if (latitude && longitude)
     {
-        m_pending_data.push_back(hal::RawGpsData {{latitude.value(), longitude.value()}});
+        hal::RawGpsData cur;
+
+        cur.position = {latitude.value(), longitude.value()};
+        m_pending_data.push_back(cur);
+    }
+}
+
+void
+NmeaParser::ParseGpvtgData(std::string_view line)
+{
+    auto index = 0;
+    std::optional<float> course;
+    std::optional<float> speed;
+
+    // course T, course M, speed N, speed K
+    // 360.0,T,348.7,M,000.0,N,000.0,K*43
+    for (const auto sub_range : std::views::split(line, ','))
+    {
+        const auto word = std::string_view(sub_range.begin(), sub_range.end());
+        char* end;
+
+        if (index == 0)
+        {
+            course = std::strtof(word.data(), &end);
+        }
+        else if (index == 4)
+        {
+            speed = std::strtof(word.data(), &end);
+        }
+
+        index++;
+    }
+
+    if (speed && course)
+    {
+        hal::RawGpsData cur;
+
+        cur.heading = course.value();
+        cur.speed = speed.value();
+
+        m_pending_data.push_back(cur);
     }
 }

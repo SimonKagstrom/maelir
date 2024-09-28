@@ -10,7 +10,9 @@ namespace hal
 
 struct RawGpsData
 {
-    GpsPosition position;
+    std::optional<GpsPosition> position;
+    std::optional<float> heading;
+    std::optional<float> speed;
 };
 
 class IGps
