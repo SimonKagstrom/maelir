@@ -5,7 +5,6 @@
 #include <PNGdec.h>
 #include <mutex>
 
-
 constexpr auto kInvalidTileIndex = kTileCacheSize;
 
 namespace
@@ -23,6 +22,20 @@ struct DecodeHelper
     uint16_t* dst;
     size_t offset;
 };
+
+class StandaloneImage : public Image
+{
+public:
+    StandaloneImage(std::unique_ptr<uint16_t[]> data, size_t width, size_t height)
+        : Image(std::span<const uint16_t>({data.get(), width * height}), width, height)
+        , m_data(std::move(data))
+    {
+    }
+
+private:
+    std::unique_ptr<uint16_t[]> m_data;
+};
+
 
 void
 PngDraw(PNGDRAW* pDraw)
@@ -247,4 +260,31 @@ TileProducer::PointToTileIndex(uint32_t x, uint32_t y) const
     }
 
     return (y / kTileSize) * m_tile_rows + x / kTileSize;
+}
+
+std::unique_ptr<Image>
+DecodePng(std::span<const uint8_t> data)
+{
+    auto png = std::make_unique<PNG>();
+
+    auto rc = png->openFLASH((uint8_t*)data.data(), data.size(), PngDraw);
+
+    if (rc != PNG_SUCCESS)
+    {
+        return nullptr;
+    }
+
+    auto rgb565_data = std::make_unique<uint16_t[]>(png->getWidth() * png->getHeight() * 2);
+
+    DecodeHelper priv {*png, rgb565_data.get(), 0};
+
+    rc = png->decode((void*)&priv, 0);
+    png->close();
+    if (rc != PNG_SUCCESS)
+    {
+        return nullptr;
+    }
+
+    return std::make_unique<StandaloneImage>(
+        std::move(rgb565_data), png->getWidth(), png->getHeight());
 }

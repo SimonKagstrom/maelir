@@ -16,7 +16,7 @@ void AlphaBlit(uint16_t* frame_buffer,
                const Image& image,
                uint8_t alpha_byte,
                Rect to,
-               std::optional<Rect> from);
+               std::optional<Rect> from = std::nullopt);
 
 void DrawAlphaLine(uint16_t* frame_buffer,
                    Point from,

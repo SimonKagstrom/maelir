@@ -1,5 +1,6 @@
 #include "ui.hh"
 
+#include "boat.hh"
 #include "painter.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
@@ -19,13 +20,9 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_display(display)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
-    , m_boat(m_boat_pixels, 5, 5)
+    , m_boat(DecodePng(boat_data))
 {
-    for (auto& pixel : m_boat_pixels)
-    {
-        // Magenta in rgb565
-        pixel = 0xF81F;
-    }
+    assert(m_boat);
 
     m_gps_port->AwakeOn(GetSemaphore());
     m_route_listener->AwakeOn(GetSemaphore());
@@ -70,7 +67,6 @@ UserInterface::OnActivation()
     m_display.Flip();
     // Now invalid
     m_frame_buffer = nullptr;
-    os::Sleep(10ms);
 
     return std::nullopt;
 }
@@ -153,10 +149,10 @@ UserInterface::DrawRoute()
 void
 UserInterface::DrawBoat()
 {
-    auto x = m_x - m_map_x;
-    auto y = m_y - m_map_y;
+    auto x = m_x - m_map_x - m_boat->width / 2;
+    auto y = m_y - m_map_y - m_boat->height / 2;
 
-    painter::Blit(m_frame_buffer, m_boat, {x, y});
+    painter::AlphaBlit(m_frame_buffer, *m_boat, 210, {x, y});
 }
 
 PixelPosition

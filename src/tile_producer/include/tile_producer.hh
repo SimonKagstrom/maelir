@@ -79,3 +79,5 @@ private:
 
     etl::mutex m_mutex;
 };
+
+std::unique_ptr<Image> DecodePng(std::span<const uint8_t> data);

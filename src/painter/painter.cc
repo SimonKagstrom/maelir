@@ -114,6 +114,12 @@ AlphaBlit(uint16_t* frame_buffer,
             auto dst_g = (dst_color >> 5) & 0x3F;
             auto dst_b = dst_color & 0x1F;
 
+            // Ignore black
+            if (src_r == 0 && src_g == 0 && src_b == 0)
+            {
+                continue;
+            }
+
             auto r = ((src_r * alpha_byte) + (dst_r * (255 - alpha_byte))) / 255;
             auto g = ((src_g * alpha_byte) + (dst_g * (255 - alpha_byte))) / 255;
             auto b = ((src_b * alpha_byte) + (dst_b * (255 - alpha_byte))) / 255;
