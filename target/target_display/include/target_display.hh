@@ -21,8 +21,6 @@ private:
         kHardware,
     };
 
-    void OnVsync();
-
     static bool OnVsyncStatic(esp_lcd_panel_handle_t panel,
                               const esp_lcd_rgb_panel_event_data_t* data,
                               void* user_ctx);

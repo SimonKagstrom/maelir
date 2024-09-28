@@ -628,20 +628,13 @@ DisplayTarget::Flip()
     m_vsync_end.acquire();
 }
 
-void IRAM_ATTR
-DisplayTarget::OnVsync()
-{
-    m_vsync_end.release_from_isr();
-}
 
-bool
+bool IRAM_ATTR
 DisplayTarget::OnVsyncStatic(esp_lcd_panel_handle_t panel,
                              const esp_lcd_rgb_panel_event_data_t* data,
                              void* user_ctx)
 {
     auto p = static_cast<DisplayTarget*>(user_ctx);
 
-    p->OnVsync();
-
-    return false;
+    return p->m_vsync_end.release_from_isr();
 }
