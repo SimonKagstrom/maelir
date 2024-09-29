@@ -30,6 +30,7 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     m_boat_rotation_buffer = std::make_unique<uint16_t[]>(size);
     memset(m_boat_rotation_buffer.get(), 0, size * sizeof(uint16_t));
     m_boat_rotation = {m_boat_rotation_buffer.get(), size};
+    m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, 0);
 
     m_gps_port->AwakeOn(GetSemaphore());
     m_route_listener->AwakeOn(GetSemaphore());
@@ -161,7 +162,7 @@ UserInterface::DrawBoat()
     auto x = m_x - m_map_x - m_rotated_boat.width / 2;
     auto y = m_y - m_map_y - m_rotated_boat.height / 2;
 
-    painter::AlphaBlit(m_frame_buffer, m_rotated_boat, 210, {x, y});
+    painter::MaskBlit(m_frame_buffer, m_rotated_boat, {x, y});
 }
 
 PixelPosition

@@ -5,11 +5,12 @@
 
 #include <cmath>
 #include <cstring>
-namespace painter
+
+namespace
 {
 
-void
-Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> from)
+auto
+Prepare(const auto& image, auto &from, auto &to)
 {
     auto height = from.has_value() ? from->height : image.height;
     auto width = from.has_value() ? from->width : image.width;
@@ -35,6 +36,19 @@ Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> fr
     {
         row_length = hal::kDisplayWidth - to.x;
     }
+
+    return std::array {height, width, from_y, from_x, row_length};
+}
+
+} // namespace
+
+namespace painter
+{
+
+void
+Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> from)
+{
+    auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);
 
     for (int y = 0; y < height; ++y)
     {
@@ -52,36 +66,50 @@ Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> fr
 }
 
 void
+MaskBlit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> from)
+{
+    auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);
+
+    for (int y = 0; y < height; ++y)
+    {
+        auto dst_y = to.y + y;
+
+        if (dst_y < 0 || dst_y >= hal::kDisplayHeight)
+        {
+            continue;
+        }
+
+        for (auto x = 0; x < row_length; ++x)
+        {
+            auto dst_x = to.x + x;
+            auto src_x = from_x + x;
+            auto src_y = from_y + y;
+
+            if (dst_x < 0 || dst_x >= hal::kDisplayWidth)
+            {
+                continue;
+            }
+
+            auto src_color = image.data[src_y * image.width + src_x];
+            if (src_color == 0)
+            {
+                continue;
+            }
+
+            frame_buffer[dst_y * hal::kDisplayWidth + dst_x] = src_color;
+        }
+    }
+}
+
+
+void
 AlphaBlit(uint16_t* frame_buffer,
           const Image& image,
           uint8_t alpha_byte,
           Rect to,
           std::optional<Rect> from)
 {
-    auto height = from.has_value() ? from->height : image.height;
-    auto width = from.has_value() ? from->width : image.width;
-    auto from_y = from.has_value() ? from->y : 0;
-    auto from_x = from.has_value() ? from->x : 0;
-
-    if (to.x < 0)
-    {
-        from_x += -to.x;
-        width += to.x;
-    }
-    if (to.y < 0)
-    {
-        from_y += -to.y;
-        height += to.y;
-    }
-
-    auto row_length = image.width - from_x;
-
-    to.x = std::max(static_cast<int32_t>(0), to.x);
-    to.y = std::max(static_cast<int32_t>(0), to.y);
-    if (to.x + row_length > hal::kDisplayWidth)
-    {
-        row_length = hal::kDisplayWidth - to.x;
-    }
+    auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);
 
     for (int y = 0; y < height; ++y)
     {
