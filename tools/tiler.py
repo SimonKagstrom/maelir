@@ -156,7 +156,8 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_dir: str):
     land_mask_data_offset = tile_data_offset + len(tile_metadata) * 8 + len(tile_data)
 
     # Align the land mask to 4 bytes
-    land_mask_data_offset += 4 - (land_mask_data_offset % 4)
+    if land_mask_data_offset % 4 != 0:
+        land_mask_data_offset += 4 - (land_mask_data_offset % 4)
 
     # Pack the data into binary format
     header_data = struct.pack(
@@ -177,13 +178,18 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_dir: str):
 
     offset = bin_file.write(header_data)
 
-    for size, offset in tile_metadata:
-        offset += bin_file.write(struct.pack("<II", size, offset))
+    assert(offset == tile_data_offset)
+    for size, png_offset in tile_metadata:
+        cur = bin_file.write(struct.pack("<II", size, png_offset))
+        assert(cur == 8)
+        offset += cur
+
     offset += bin_file.write(tile_data)
 
     # Align the land mask to 4 bytes
     while offset % 4 != 0:
-        offset += bin_file.write(b'\0')
+        offset += bin_file.write(b'\xaa')
+    assert(offset == land_mask_data_offset)
 
     bin_file.write(land_mask)
 
