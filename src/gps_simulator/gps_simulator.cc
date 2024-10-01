@@ -21,7 +21,7 @@ GpsSimulator::OnActivation()
 {
     if (auto route = m_route_listener->Poll())
     {
-        if (route->type == IRouteListener::EventType::kRouteReady)
+        if (route->type == IRouteListener::EventType::kReady)
         {
             m_route_iterator = nullptr;
             m_next_position = std::nullopt;
@@ -38,28 +38,79 @@ GpsSimulator::OnActivation()
                 m_angle = m_direction.Angle();
                 m_speed = 20;
             }
-
-            m_waiting_for_route = false;
+        }
+        else
+        {
+            m_route_iterator = nullptr;
+            m_next_position = std::nullopt;
         }
     }
 
-    if (!m_waiting_for_route && (!m_route_iterator || !m_next_position))
+    auto before = m_state;
+    do
     {
-        auto from = m_route_service.RandomWaterPoint();
-        auto to = m_route_service.RandomWaterPoint();
+        switch (m_state)
+        {
+        case State::kForwarding:
+            if (m_application_state.demo_mode)
+            {
+                m_state = State::kRequestRoute;
+                break;
+            }
 
-        printf("Request route from %d %d to %d %d\n", from.x, from.y, to.x, to.y);
-        m_route_service.RequestRoute(from, to);
+            return std::nullopt;
 
-        m_waiting_for_route = true;
-        return std::nullopt;
-    }
+        case State::kRequestRoute:
+            if (m_route_iterator)
+            {
+                m_state = State::kDemo;
+                break;
+            }
+            else
+            {
+                auto from = m_route_service.RandomWaterPoint();
+                auto to = m_route_service.RandomWaterPoint();
 
-    if (!m_next_position)
-    {
-        return std::nullopt;
-    }
+                printf("Request route from %d %d to %d %d\n", from.x, from.y, to.x, to.y);
+                m_route_service.RequestRoute(from, to);
+                m_state = State::kDemo;
+            }
+            break;
 
+        case State::kDemo:
+            if (m_application_state.demo_mode == false)
+            {
+                m_state = State::kForwarding;
+                break;
+            }
+            RunDemo();
+
+            return 82ms + milliseconds(m_speed);
+
+        case State::kValueCount:
+            break;
+        }
+
+    } while (m_state != before);
+
+    return std::nullopt;
+}
+
+hal::RawGpsData
+GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
+{
+    m_has_data_semaphore.acquire();
+
+    auto position = gps::PointToPosition(m_map_metadata, m_position);
+
+    semaphore.release();
+
+    return {position, m_angle, m_speed};
+}
+
+void
+GpsSimulator::RunDemo()
+{
     auto target_angle = m_direction.Angle();
     if (m_angle != target_angle)
     {
@@ -94,18 +145,4 @@ GpsSimulator::OnActivation()
 
     m_position = m_position + m_direction;
     m_has_data_semaphore.release();
-
-    return 82ms + milliseconds(m_speed);
-}
-
-hal::RawGpsData
-GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
-{
-    m_has_data_semaphore.acquire();
-
-    auto position = gps::PointToPosition(m_map_metadata, m_position);
-
-    semaphore.release();
-
-    return {position, m_angle, m_speed};
 }

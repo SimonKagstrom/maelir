@@ -11,8 +11,8 @@ class IRouteListener
 public:
     enum class EventType
     {
-        kRouteCalculating,
-        kRouteReady,
+        kCalculating,
+        kReady,
 
         kValueCount,
     };

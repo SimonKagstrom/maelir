@@ -56,6 +56,8 @@ RouteService::RouteService(const MapMetadata& metadata)
 void
 RouteService::RequestRoute(Point from, Point to)
 {
+    m_calculating_semaphore.acquire();
+
     // Context: Another thread
     m_requested_route.push(
         std::make_pair(PointToLandIndex(from, m_row_size), PointToLandIndex(to, m_row_size)));
@@ -85,14 +87,15 @@ RouteService::OnActivation()
 
         for (auto listener : m_listeners)
         {
-            listener->PushEvent(IRouteListener::EventType::kRouteCalculating, {});
+            listener->PushEvent(IRouteListener::EventType::kCalculating, {});
         }
         auto route = m_router->CalculateRoute(from, to);
 
         for (auto listener : m_listeners)
         {
-            listener->PushEvent(IRouteListener::EventType::kRouteReady, route);
+            listener->PushEvent(IRouteListener::EventType::kReady, route);
         }
+        m_calculating_semaphore.release();
     }
 
     return std::nullopt;

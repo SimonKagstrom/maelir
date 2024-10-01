@@ -14,9 +14,18 @@ public:
                  RouteService& route_service);
 
 private:
-    std::optional<milliseconds> OnActivation() final;
+    enum class State
+    {
+        kForwarding,
+        kRequestRoute,
+        kDemo,
+        kValueCount,
+    };
 
+    std::optional<milliseconds> OnActivation() final;
     hal::RawGpsData WaitForData(os::binary_semaphore& semaphore) final;
+
+    void RunDemo();
 
     const MapMetadata m_map_metadata;
     ApplicationState& m_application_state;
@@ -26,11 +35,13 @@ private:
 
     std::unique_ptr<RouteIterator> m_route_iterator;
     std::optional<Point> m_next_position;
-    bool m_waiting_for_route {false};
     Point m_position;
     Vector m_direction;
 
-    int m_angle{0};
+
+    State m_state {State::kForwarding};
+
+    int m_angle {0};
     uint32_t m_speed {0};
     os::binary_semaphore m_has_data_semaphore {0};
 };

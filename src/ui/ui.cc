@@ -55,7 +55,7 @@ UserInterface::OnActivation()
 
     if (auto route = m_route_listener->Poll())
     {
-        if (route->type == IRouteListener::EventType::kRouteReady)
+        if (route->type == IRouteListener::EventType::kReady)
         {
             m_current_route = route->route;
         }

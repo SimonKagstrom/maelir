@@ -40,7 +40,7 @@ private:
     const uint32_t m_rows;
     const uint32_t* m_land_mask;
 
-    etl::mutex m_lock;
+    os::binary_semaphore m_calculating_semaphore {1};
     etl::queue_spsc_atomic<std::pair<IndexType, IndexType>, 8> m_requested_route;
     etl::vector<RouteListenerImpl*, 4> m_listeners;
 
