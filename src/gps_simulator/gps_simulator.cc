@@ -73,7 +73,7 @@ GpsSimulator::OnActivation()
             diff += 360;
         }
 
-        auto step = std::min(5, std::abs(diff));
+        auto step = std::min(3, std::abs(diff));
         if (diff < 0)
         {
             step = -step;
@@ -95,7 +95,7 @@ GpsSimulator::OnActivation()
     m_position = m_position + m_direction;
     m_has_data_semaphore.release();
 
-    return 100ms + milliseconds(m_speed);
+    return 82ms + milliseconds(m_speed);
 }
 
 hal::RawGpsData
