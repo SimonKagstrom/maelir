@@ -182,23 +182,32 @@ TileProducer::EvictTile()
         return 0;
     }
 
-    auto index = m_tile_request_order.front();
-    m_tile_request_order.pop_front();
-
-    for (auto i = 0; i < m_tiles.size(); i++)
+    while (true)
     {
-        auto& tile = m_tiles[i];
-        if (!tile)
-        {
-            // Shouldn't be possible, but anyway
-            continue;
-        }
-        if (tile->index == index)
-        {
-            m_tile_index_to_cache[tile->index] = kInvalidTileIndex;
-            m_tiles[i] = nullptr;
+        auto index = m_tile_request_order.front();
+        m_tile_request_order.pop_front();
 
-            return i;
+        for (auto i = 0; i < m_tiles.size(); i++)
+        {
+            auto& tile = m_tiles[i];
+            if (!tile)
+            {
+                // Shouldn't be possible, but anyway
+                continue;
+            }
+            if (tile->index == index)
+            {
+                if (m_locked_cache_entries & (1 << i))
+                {
+                    m_tile_request_order.push_back(index);
+                    break;
+                }
+
+                m_tile_index_to_cache[tile->index] = kInvalidTileIndex;
+                m_tiles[i] = nullptr;
+
+                return i;
+            }
         }
     }
 

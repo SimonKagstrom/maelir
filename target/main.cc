@@ -8,6 +8,7 @@
 #include "ui.hh"
 
 #include <esp_partition.h>
+#include <esp_random.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -30,6 +31,7 @@ app_main(void)
         assert(false);
     }
     esp_partition_iterator_release(map_partition);
+    srand(esp_random());
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(p);
 

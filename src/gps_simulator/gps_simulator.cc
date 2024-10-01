@@ -35,6 +35,7 @@ GpsSimulator::OnActivation()
             if (m_next_position)
             {
                 m_direction = PointPairToVector(m_position, *m_next_position);
+                m_angle = m_direction.Angle();
                 m_speed = 20;
             }
 
@@ -56,13 +57,29 @@ GpsSimulator::OnActivation()
 
     if (!m_next_position)
     {
-        //        auto from = m_route_service.RandomWaterPoint();
-        //        auto to = m_route_service.RandomWaterPoint();
-        //
-        //        printf("Route from %d %d to %d %d\n", from.x, from.y, to.x, to.y);
-        //        m_route_service.RequestRoute(from, to);
-
         return std::nullopt;
+    }
+
+    auto target_angle = m_direction.Angle();
+    if (m_angle != target_angle)
+    {
+        auto diff = target_angle - m_angle;
+        if (diff > 180)
+        {
+            diff -= 360;
+        }
+        else if (diff < -180)
+        {
+            diff += 360;
+        }
+
+        auto step = std::min(5, std::abs(diff));
+        if (diff < 0)
+        {
+            step = -step;
+        }
+
+        m_angle += step;
     }
 
     if (m_position == m_next_position)
@@ -87,11 +104,8 @@ GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
     m_has_data_semaphore.acquire();
 
     auto position = gps::PointToPosition(m_map_metadata, m_position);
-    auto vobb = gps::PositionToPoint(m_map_metadata, position);
-
-    auto angle = m_direction.Angle();
 
     semaphore.release();
 
-    return {position, angle, m_speed};
+    return {position, m_angle, m_speed};
 }

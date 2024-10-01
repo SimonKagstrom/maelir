@@ -30,6 +30,7 @@ private:
     Point m_position;
     Vector m_direction;
 
+    int m_angle{0};
     uint32_t m_speed {0};
     os::binary_semaphore m_has_data_semaphore {0};
 };

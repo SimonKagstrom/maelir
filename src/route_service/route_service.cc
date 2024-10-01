@@ -107,7 +107,7 @@ RouteService::RandomWaterPoint() const
     do
     {
         p = {static_cast<int32_t>((rand() % m_row_size) * kPathFinderTileSize),
-             static_cast<int32_t>((rand() % m_rows) * kPathFinderTileSize)};
+             static_cast<int32_t>((rand() % m_rows) * kPathFinderTileSize) / 4};
     } while (IsWater(land_mask_span, PointToLandIndex(p, m_row_size)) == false);
 
     return p;
