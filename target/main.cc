@@ -38,7 +38,7 @@ app_main(void)
 
     ApplicationState state;
 
-//    state.demo_mode = true;
+    state.demo_mode = true;
 
     auto display = std::make_unique<DisplayTarget>();
     auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,
@@ -64,8 +64,6 @@ app_main(void)
     producer->Start(0);
     route_service->Start(0);
     ui->Start(0, os::ThreadPriority::kHigh);
-
-    route_service->RequestRoute({678, 865}, {1844, 777});
 
     while (true)
     {

@@ -16,8 +16,9 @@ public:
 private:
     enum class State
     {
-        kForwarding,
+        kIdle,
         kRequestRoute,
+        kWaitForRoute,
         kDemo,
         kValueCount,
     };
@@ -39,7 +40,7 @@ private:
     Vector m_direction;
 
 
-    State m_state {State::kForwarding};
+    State m_state {State::kIdle};
 
     int m_angle {0};
     uint32_t m_speed {0};

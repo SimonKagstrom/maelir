@@ -51,7 +51,7 @@ GpsSimulator::OnActivation()
     {
         switch (m_state)
         {
-        case State::kForwarding:
+        case State::kIdle:
             if (m_application_state.demo_mode)
             {
                 m_state = State::kRequestRoute;
@@ -73,16 +73,35 @@ GpsSimulator::OnActivation()
 
                 printf("Request route from %d %d to %d %d\n", from.x, from.y, to.x, to.y);
                 m_route_service.RequestRoute(from, to);
-                m_state = State::kDemo;
+                m_state = State::kWaitForRoute;
             }
             break;
+
+        case State::kWaitForRoute:
+            if (m_application_state.demo_mode == false)
+            {
+                m_state = State::kIdle;
+                break;
+            }
+            if (m_route_iterator)
+            {
+                m_state = State::kDemo;
+                break;
+            }
+            return std::nullopt;
 
         case State::kDemo:
             if (m_application_state.demo_mode == false)
             {
-                m_state = State::kForwarding;
+                m_state = State::kIdle;
                 break;
             }
+            if (!m_route_iterator)
+            {
+                m_state = State::kRequestRoute;
+                break;
+            }
+
             RunDemo();
 
             return 82ms + milliseconds(m_speed);
