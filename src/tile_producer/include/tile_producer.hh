@@ -51,7 +51,7 @@ public:
     TileProducer(const MapMetadata& flash_tile_data);
 
     // Context: Another thread
-    std::unique_ptr<ITileHandle> LockTile(uint32_t x, uint32_t y);
+    std::unique_ptr<ITileHandle> LockTile(const Point& point);
 
 private:
     std::optional<milliseconds> OnActivation() final;
@@ -61,7 +61,7 @@ private:
     bool CacheTile(unsigned index);
 
     uint8_t EvictTile();
-    std::optional<unsigned> PointToTileIndex(uint32_t x, uint32_t y) const;
+    std::optional<unsigned> PointToTileIndex(const Point& point) const;
 
     const uint8_t* m_flash_start;
     const FlashTile* m_flash_tile_data;

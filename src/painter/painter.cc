@@ -166,7 +166,7 @@ DrawAlphaLine(uint16_t* frame_buffer,
               uint8_t alpha_byte)
 {
     // Only draws horizontal, vertical, or diagonal lines
-    auto direction = PointPairToDirection(from, to);
+    auto direction = PointPairToVector(from, to);
     auto perpendicular = direction.Perpendicular();
     auto next = from;
 

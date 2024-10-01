@@ -37,12 +37,14 @@ main(int argc, char* argv[])
         return 1;
     }
 
+    ApplicationState state;
+
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
 
-    auto gps_simulator = std::make_unique<GpsSimulator>();
-    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_simulator);
     auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto route_service = std::make_unique<RouteService>(*map_metadata);
+    auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
+    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_simulator);
 
     auto ui = std::make_unique<UserInterface>(*map_metadata,
                                               *producer,
@@ -58,7 +60,7 @@ main(int argc, char* argv[])
 
     window.show();
 
-    route_service->RequestRoute({678, 865}, {1844, 777});
+//    route_service->RequestRoute({1738, 1136}, {1782, 947});
 
     auto out = QApplication::exec();
 

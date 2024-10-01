@@ -2,10 +2,7 @@
 
 #include "route_utils.hh"
 
-RouteIterator::RouteIterator(std::span<const IndexType> route,
-                             IndexType top_left,
-                             IndexType bottom_right,
-                             const IndexType row_size)
+RouteIterator::RouteIterator(std::span<const IndexType> route, const IndexType row_size)
     : m_remaining_route(route)
     , m_row_size(row_size)
 {
@@ -15,7 +12,7 @@ RouteIterator::RouteIterator(std::span<const IndexType> route,
     }
 }
 
-std::optional<IndexType>
+std::optional<Point>
 RouteIterator::Next()
 {
     while (true)
@@ -39,7 +36,7 @@ RouteIterator::Next()
                 //m_state = State::kInRoute;
             }
 
-            return m_cur;
+            return LandIndexToPoint(m_cur, m_row_size);
 
         case State::kInRoute: {
             m_cur = m_cur + m_direction.dx + m_direction.dy * m_row_size;
@@ -50,7 +47,7 @@ RouteIterator::Next()
                 break;
             }
 
-            return m_cur;
+            return LandIndexToPoint(m_cur, m_row_size);
         }
 
         case State::kEnd:

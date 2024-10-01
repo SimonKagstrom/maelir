@@ -31,7 +31,7 @@ private:
     void DrawRoute();
     void DrawBoat();
 
-    PixelPosition PositionToMapCenter(const auto& pixel_position) const;
+    Point PositionToMapCenter(const auto& pixel_position) const;
 
 
     const uint32_t m_tile_rows;

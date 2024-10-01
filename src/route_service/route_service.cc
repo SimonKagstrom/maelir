@@ -2,6 +2,8 @@
 
 #include "route_utils.hh"
 
+#include <cstdlib>
+
 class RouteService::RouteListenerImpl : public IRouteListener
 {
 public:
@@ -41,11 +43,11 @@ RouteService::RouteService(const MapMetadata& metadata)
     : m_row_size(metadata.land_mask_row_size)
     , m_rows(metadata.land_mask_rows)
 {
-    const auto land_mask = reinterpret_cast<const uint32_t*>(
-        reinterpret_cast<const uint8_t*>(&metadata) + metadata.land_mask_data_offset);
+    m_land_mask = reinterpret_cast<const uint32_t*>(reinterpret_cast<const uint8_t*>(&metadata) +
+                                                    metadata.land_mask_data_offset);
 
     m_router = std::make_unique<Router<kTargetCacheSize>>(
-        std::span<const uint32_t> {land_mask,
+        std::span<const uint32_t> {m_land_mask,
                                    metadata.land_mask_row_size * metadata.land_mask_rows},
         metadata.land_mask_rows,
         metadata.land_mask_row_size);
@@ -94,4 +96,25 @@ RouteService::OnActivation()
     }
 
     return std::nullopt;
+}
+
+Point
+RouteService::RandomWaterPoint() const
+{
+    auto land_mask_span = std::span<const uint32_t> {m_land_mask, (m_rows * m_row_size) / 32};
+
+    Point p;
+    do
+    {
+        p = {static_cast<int32_t>((rand() % m_row_size) * kPathFinderTileSize),
+             static_cast<int32_t>((rand() % m_rows) * kPathFinderTileSize)};
+    } while (IsWater(land_mask_span, PointToLandIndex(p, m_row_size)) == false);
+
+    return p;
+}
+
+std::unique_ptr<RouteIterator>
+RouteService::CreateRouteIterator(std::span<const IndexType> route) const
+{
+    return std::make_unique<RouteIterator>(route, m_row_size);
 }

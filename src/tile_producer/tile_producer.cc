@@ -95,9 +95,9 @@ TileProducer::TileProducer(const MapMetadata& map_metadata)
 
 // Context: Another thread
 std::unique_ptr<ITileHandle>
-TileProducer::LockTile(uint32_t x, uint32_t y)
+TileProducer::LockTile(const Point& point)
 {
-    auto index = PointToTileIndex(x, y);
+    auto index = PointToTileIndex(point);
     if (index)
     {
         m_mutex.lock();
@@ -238,7 +238,7 @@ TileProducer::DecodeTile(unsigned index)
     png->close();
     if (rc != PNG_SUCCESS)
     {
-        printf("Argh tile %d @%p\n", index, flash_data);
+        //printf("Argh tile %d @%p\n", index, flash_data);
         return nullptr;
     }
 
@@ -247,19 +247,19 @@ TileProducer::DecodeTile(unsigned index)
 
 
 std::optional<unsigned>
-TileProducer::PointToTileIndex(uint32_t x, uint32_t y) const
+TileProducer::PointToTileIndex(const Point& point) const
 {
-    if (x >= kTileSize * m_tile_rows)
+    if (point.x >= kTileSize * m_tile_rows || point.x < 0)
     {
         return std::nullopt;
     }
 
-    if (y >= kTileSize * m_tile_columns)
+    if (point.y >= kTileSize * m_tile_columns || point.y < 0)
     {
         return std::nullopt;
     }
 
-    return (y / kTileSize) * m_tile_rows + x / kTileSize;
+    return (point.y / kTileSize) * m_tile_rows + point.x / kTileSize;
 }
 
 std::unique_ptr<Image>

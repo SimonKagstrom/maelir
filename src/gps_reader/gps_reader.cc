@@ -1,6 +1,6 @@
 #include "gps_reader.hh"
 
-#include "tile.hh"
+#include "gps_utils.hh"
 
 #include <cassert>
 #include <etl/queue_spsc_atomic.h>
@@ -58,13 +58,8 @@ private:
 
 
 GpsReader::GpsReader(const MapMetadata& metadata, hal::IGps& gps)
-    : m_gps(gps)
-    , m_corner_latitude(metadata.corner_latitude)
-    , m_corner_longitude(metadata.corner_longitude)
-    , m_latitude_pixel_size(metadata.pixel_latitude_size)
-    , m_longitude_pixel_size(metadata.pixel_longitude_size)
-    , m_tile_columns(metadata.tile_column_size)
-    , m_tile_rows(metadata.tile_row_size)
+    : m_map_metadata(metadata)
+    , m_gps(gps)
 {
 }
 
@@ -108,7 +103,7 @@ GpsReader::OnActivation()
     mangled.position = *m_position;
     mangled.heading = *m_heading;
     mangled.speed = *m_speed;
-    mangled.pixel_position = PositionToPoint(*m_position);
+    mangled.pixel_position = gps::PositionToPoint(m_map_metadata, *m_position);
 
     for (auto i = 0u; i < m_stale_listeners.size(); i++)
     {
@@ -129,14 +124,26 @@ GpsReader::OnActivation()
 }
 
 
-PixelPosition
-GpsReader::PositionToPoint(const GpsPosition& gps_data) const
+void
+GpsReader::Reset()
 {
-    auto longitude_offset = gps_data.longitude - m_corner_longitude;
-    auto latitude_offset = m_corner_latitude - gps_data.latitude;
+    m_position = std::nullopt;
+    m_speed = std::nullopt;
+    m_heading = std::nullopt;
+}
 
-    int32_t x = longitude_offset * m_longitude_pixel_size;
-    int32_t y = latitude_offset * m_latitude_pixel_size;
+
+namespace gps
+{
+
+Point
+PositionToPoint(const MapMetadata& metadata, const GpsPosition& gps_data)
+{
+    auto longitude_offset = gps_data.longitude - metadata.corner_longitude;
+    auto latitude_offset = metadata.corner_latitude - gps_data.latitude;
+
+    int32_t x = longitude_offset * metadata.pixel_longitude_size;
+    int32_t y = latitude_offset * metadata.pixel_latitude_size;
 
     if (longitude_offset < 0)
     {
@@ -147,21 +154,30 @@ GpsReader::PositionToPoint(const GpsPosition& gps_data) const
         y = 0;
     }
 
-    if (x > kTileSize * m_tile_rows)
+    if (x > kTileSize * metadata.tile_row_size)
     {
-        x = kTileSize * m_tile_rows;
+        x = kTileSize * metadata.tile_row_size;
     }
-    if (y > kTileSize * m_tile_columns)
+    if (y > kTileSize * metadata.tile_column_size)
     {
-        y = kTileSize * m_tile_columns;
+        y = kTileSize * metadata.tile_column_size;
     }
 
-    return PixelPosition {x, y};
+    return Point {x, y};
 }
 
-void GpsReader::Reset()
+GpsPosition
+PointToPosition(const MapMetadata& metadata, const Point& pixel_position)
 {
-    m_position = std::nullopt;
-    m_speed = std::nullopt;
-    m_heading = std::nullopt;
+    GpsPosition gps_position;
+
+    double longitude_offset = static_cast<double>(pixel_position.x) / metadata.pixel_longitude_size;
+    double latitude_offset = static_cast<double>(pixel_position.y) / metadata.pixel_latitude_size;
+
+    gps_position.longitude = metadata.corner_longitude + longitude_offset;
+    gps_position.latitude = metadata.corner_latitude - latitude_offset;
+
+    return gps_position;
 }
+
+} // namespace gps

@@ -34,5 +34,5 @@ IndexPairToDirection(IndexType from, IndexType to, unsigned row_size)
     int to_x = to % row_size;
     int to_y = to / row_size;
 
-    return PointPairToDirection({from_x, from_y}, {to_x, to_y});
+    return PointPairToVector({from_x, from_y}, {to_x, to_y});
 }

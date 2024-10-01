@@ -21,18 +21,12 @@ private:
 
     std::optional<milliseconds> OnActivation() final;
 
-    PixelPosition PositionToPoint(const GpsPosition& gps_data) const;
-
     void Reset();
 
     hal::IGps& m_gps;
-    // From the metadata
-    const double m_corner_latitude;
-    const double m_corner_longitude;
-    const uint32_t m_latitude_pixel_size;
-    const uint32_t m_longitude_pixel_size;
-    const uint32_t m_tile_columns;
-    const uint32_t m_tile_rows;
+
+    // A copy of the map metadata (to place in PSRAM)
+    const MapMetadata m_map_metadata;
 
     etl::vector<GpsPortImpl*, 8> m_listeners;
     std::array<std::atomic_bool, 8> m_stale_listeners;

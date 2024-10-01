@@ -10,7 +10,8 @@ PUBLIC
 target_link_libraries(gps_simulator
 PUBLIC
     maelir_interface
+    route_service
+    application_state
 PRIVATE
-    # tile_utils, tiles
-    tile_producer
+    gps_reader
 )

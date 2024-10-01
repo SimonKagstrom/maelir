@@ -61,6 +61,44 @@ struct Vector
         return Vector {static_cast<int8_t>(-dy), dx};
     }
 
+    int Angle() const
+    {
+        if (dx == 0 && dy == -1)
+        {
+            return 0;
+        }
+        if (dx == 1 && dy == -1)
+        {
+            return 45;
+        }
+        if (dx == 1 && dy == 0)
+        {
+            return 90;
+        }
+        if (dx == 1 && dy == 1)
+        {
+            return 135;
+        }
+        if (dx == 0 && dy == 1)
+        {
+            return 180;
+        }
+        if (dx == -1 && dy == 1)
+        {
+            return 225;
+        }
+        if (dx == -1 && dy == 0)
+        {
+            return 270;
+        }
+        if (dx == -1 && dy == -1)
+        {
+            return 315;
+        }
+
+        return 0;
+    }
+
     static consteval auto Standstill()
     {
         return Vector {0, 0};
@@ -108,7 +146,7 @@ struct Vector
 };
 
 inline auto
-PointPairToDirection(Point from, Point to)
+PointPairToVector(Point from, Point to)
 {
     int8_t dx = std::clamp(to.x - from.x, static_cast<int32_t>(-1), static_cast<int32_t>(1));
     int8_t dy = std::clamp(to.y - from.y, static_cast<int32_t>(-1), static_cast<int32_t>(1));

@@ -78,7 +78,7 @@ UserInterface::OnActivation()
     // Now invalid
     m_frame_buffer = nullptr;
 
-    return 20ms;
+    return std::nullopt;
 }
 
 void
@@ -89,17 +89,18 @@ UserInterface::RequestMapTiles()
     auto x_remainder = m_map_x % kTileSize;
     auto y_remainder = m_map_y % kTileSize;
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
-    auto num_tiles_y = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!y_remainder;
+    auto num_tiles_y = (hal::kDisplayHeight + kTileSize - 1) / kTileSize + !!y_remainder;
+
+    auto start_x = m_map_x - x_remainder;
+    auto start_y = m_map_y - y_remainder;
 
     // Blit all needed tiles
     for (auto y = 0; y < num_tiles_y; y++)
     {
         for (auto x = 0; x < num_tiles_x; x++)
         {
-            auto tile_x = (m_map_x / kTileSize + x) % m_tile_columns;
-            auto tile_y = (m_map_y / kTileSize + y) % m_tile_rows;
-
-            auto tile = m_tile_producer.LockTile(m_map_x + x * kTileSize, m_map_y + y * kTileSize);
+            auto tile =
+                m_tile_producer.LockTile({start_x + x * kTileSize, start_y + y * kTileSize});
             if (tile)
             {
                 m_tiles.push_back(
@@ -127,32 +128,20 @@ UserInterface::DrawRoute()
         return;
     }
 
-    auto route_iterator = RouteIterator(m_current_route,
-                                        PointToLandIndex({0, 0}, m_land_mask_rows),
-                                        PointToLandIndex({static_cast<int>(m_land_mask_row_size),
-                                                          static_cast<int>(m_land_mask_rows)},
-                                                         m_land_mask_row_size),
-                                        m_land_mask_rows);
+    auto route_iterator = RouteIterator(m_current_route, m_land_mask_row_size);
 
-    auto last = route_iterator.Next();
-    while (auto cur = route_iterator.Next())
+    auto last_point = route_iterator.Next();
+    while (auto cur_point = route_iterator.Next())
     {
-        auto index = *cur;
-
-        auto last_point = LandIndexToPoint(*last, m_land_mask_row_size);
-        auto cur_point = LandIndexToPoint(index, m_land_mask_row_size);
-
         painter::DrawAlphaLine(m_frame_buffer,
-                               {last_point.x + kPathFinderTileSize / 2 - m_map_x,
-                                last_point.y + kPathFinderTileSize / 2 - m_map_y},
-                               {cur_point.x + kPathFinderTileSize / 2 - m_map_x,
-                                cur_point.y + kPathFinderTileSize / 2 - m_map_y},
+                               {last_point->x - m_map_x, last_point->y - m_map_y},
+                               {cur_point->x - m_map_x, cur_point->y - m_map_y},
                                8,
                                // Green in RGB565
                                0x07E0,
                                128);
 
-        last = cur;
+        last_point = cur_point;
     }
 }
 
@@ -165,7 +154,7 @@ UserInterface::DrawBoat()
     painter::MaskBlit(m_frame_buffer, m_rotated_boat, {x, y});
 }
 
-PixelPosition
+Point
 UserInterface::PositionToMapCenter(const auto& pixel_position) const
 {
     auto x = pixel_position.x;

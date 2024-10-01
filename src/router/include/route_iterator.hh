@@ -7,12 +7,9 @@
 class RouteIterator
 {
 public:
-    RouteIterator(std::span<const IndexType> route,
-                  IndexType top_left,
-                  IndexType bottom_right,
-                  const IndexType row_size);
+    RouteIterator(std::span<const IndexType> route, const IndexType row_size);
 
-    std::optional<IndexType> Next();
+    std::optional<Point> Next();
 
 private:
     // See route_iterator_state_machine.pu

@@ -70,41 +70,24 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
     {
         const auto row_size = m_owner->m_map->width() / kPathFinderTileSize;
 
-        auto route_iterator =
-            RouteIterator(m_owner->m_current_route,
-                          PointToLandIndex({0, 0}, row_size),
-                          PointToLandIndex({m_owner->m_map->width() / kPathFinderTileSize,
-                                            m_owner->m_map->height() / kPathFinderTileSize},
-                                           row_size),
-                          row_size);
+        auto route_iterator = RouteIterator(m_owner->m_current_route, row_size);
 
         auto last = route_iterator.Next();
         while (auto cur = route_iterator.Next())
         {
-            auto index = *cur;
-            auto last_x = *last % row_size;
-            auto last_y = *last / row_size;
-            auto cur_x = index % row_size;
-            auto cur_y = index / row_size;
-
             QPen pen(Qt::yellow);
             pen.setWidth(3);
 
             painter->setPen(pen);
             // Will draw twice, but let's ignore that for now
-            painter->drawRect(last_x * kPathFinderTileSize,
-                              last_y * kPathFinderTileSize,
-                              kPathFinderTileSize,
-                              kPathFinderTileSize);
-            painter->drawRect(cur_x * kPathFinderTileSize,
-                              cur_y * kPathFinderTileSize,
-                              kPathFinderTileSize,
-                              kPathFinderTileSize);
+            painter->drawRect(last->x, last->y, kPathFinderTileSize, kPathFinderTileSize);
+            painter->drawRect(cur->x, cur->y, kPathFinderTileSize, kPathFinderTileSize);
+
             // And a line between them
-            painter->drawLine(last_x * kPathFinderTileSize + kPathFinderTileSize / 2,
-                              last_y * kPathFinderTileSize + kPathFinderTileSize / 2,
-                              cur_x * kPathFinderTileSize + kPathFinderTileSize / 2,
-                              cur_y * kPathFinderTileSize + kPathFinderTileSize / 2);
+            painter->drawLine(last->x + kPathFinderTileSize / 2,
+                              last->y + kPathFinderTileSize / 2,
+                              cur->x + kPathFinderTileSize / 2,
+                              cur->y + kPathFinderTileSize / 2);
 
             last = cur;
         }

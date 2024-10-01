@@ -33,15 +33,17 @@ app_main(void)
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(p);
 
+    ApplicationState state;
+
     auto display = std::make_unique<DisplayTarget>();
     //auto gps = std::make_unique<UartGps>(UART_NUM_1,
     //                                     17,  // RX -> A0
     //                                     16); // TX -> A1
-    auto gps = std::make_unique<GpsSimulator>();
 
-    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps);
     auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto route_service = std::make_unique<RouteService>(*map_metadata);
+    auto gps = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
+    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps);
     auto ui = std::make_unique<UserInterface>(*map_metadata,
                                               *producer,
                                               *display,

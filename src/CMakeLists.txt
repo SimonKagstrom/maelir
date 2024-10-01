@@ -1,5 +1,6 @@
 find_package(mp-units REQUIRED)
 
+add_subdirectory(application_state)
 add_subdirectory(gps_reader)
 add_subdirectory(gps_simulator)
 add_subdirectory(nmea_parser)

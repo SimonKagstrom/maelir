@@ -111,11 +111,11 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_dir: str):
     assert header_size == 60
 
     # Starts after the MapMetadata header and all FlashTile:s
-    land_only_offset = header_size + (len(tiles) + 1) * 8
+    land_only_offset = header_size + len(tiles) * 8
 
     data_size += len(bytes)
 
-    tile_metadata = [(land_only_size, land_only_offset)]
+    tile_metadata = []
     tile_data = bytes
 
     current_offset = land_only_offset + len(bytes)
@@ -151,7 +151,7 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_dir: str):
     tile_row_size = row_length
     tile_column_size = len(tiles) // row_length
     land_mask_row_size = path_finder_row_length
-    land_mask_rows = len(land_mask) // (path_finder_row_length // 32)
+    land_mask_rows = (len(land_mask)*32) // path_finder_row_length
     tile_data_offset = header_size  # After the header
     land_mask_data_offset = tile_data_offset + len(tile_metadata) * 8 + len(tile_data)
 
@@ -244,7 +244,6 @@ if __name__ == "__main__":
     tiles = create_tiles(yaml_data, img, to_ignore, tile_size=tile_size)
     # save_tiles(tiles, num_colors=256)
     tile_row_length = int(img.size[0] / tile_size)
-    path_finder_row_length = int((tile_row_length * tile_size) / path_finder_tile_size)
 
     data_size = create_binary(
         yaml_data,

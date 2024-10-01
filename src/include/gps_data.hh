@@ -1,7 +1,9 @@
 #pragma once
 
-#include <optional>
+#include "tile.hh"
+
 #include <cstdint>
+#include <optional>
 
 struct GpsPosition
 {
@@ -9,16 +11,10 @@ struct GpsPosition
     double longitude;
 };
 
-struct PixelPosition
-{
-    int32_t x;
-    int32_t y;
-};
-
 struct GpsData
 {
     GpsPosition position;
-    PixelPosition pixel_position;
+    Point pixel_position;
 
     float speed;
     float heading;

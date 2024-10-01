@@ -1,8 +1,9 @@
 #pragma once
 
-#include "tile.hh"
 #include "base_thread.hh"
 #include "i_route_listener.hh"
+#include "route_iterator.hh"
+#include "tile.hh"
 
 #include <etl/mutex.h>
 #include <etl/queue_spsc_atomic.h>
@@ -11,10 +12,21 @@
 class RouteService : public os::BaseThread
 {
 public:
-    RouteService(const MapMetadata &metadata);
+    RouteService(const MapMetadata& metadata);
 
     // Context: Another thread
     void RequestRoute(Point from, Point to);
+
+    // Helper to create a route iterator
+    std::unique_ptr<RouteIterator> CreateRouteIterator(std::span<const IndexType> route) const;
+
+    // Helper to get a random point for water (demo mode)
+    Point RandomWaterPoint() const;
+
+    uint32_t GetRowSize() const
+    {
+        return m_row_size;
+    }
 
     std::unique_ptr<IRouteListener> AttachListener();
 
@@ -26,6 +38,7 @@ private:
 
     const uint32_t m_row_size;
     const uint32_t m_rows;
+    const uint32_t* m_land_mask;
 
     etl::mutex m_lock;
     etl::queue_spsc_atomic<std::pair<IndexType, IndexType>, 8> m_requested_route;
