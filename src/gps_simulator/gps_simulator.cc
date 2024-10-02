@@ -83,7 +83,7 @@ GpsSimulator::OnActivation()
                 m_state = State::kIdle;
                 break;
             }
-            if (m_route_iterator)
+            if (m_route_iterator && m_next_position != std::nullopt)
             {
                 m_state = State::kDemo;
                 break;
@@ -96,7 +96,7 @@ GpsSimulator::OnActivation()
                 m_state = State::kIdle;
                 break;
             }
-            if (!m_route_iterator)
+            if (!m_route_iterator || m_next_position == std::nullopt)
             {
                 m_state = State::kRequestRoute;
                 break;
