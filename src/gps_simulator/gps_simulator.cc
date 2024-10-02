@@ -160,6 +160,10 @@ GpsSimulator::RunDemo()
             m_direction = PointPairToVector(m_position, *m_next_position);
             m_speed = 20 + rand() % 10;
         }
+        else
+        {
+            m_route_iterator = nullptr;
+        }
     }
 
     m_position = m_position + m_direction;
