@@ -151,7 +151,7 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_dir: str):
     tile_row_size = row_length
     tile_column_size = len(tiles) // row_length
     land_mask_row_size = path_finder_row_length
-    land_mask_rows = (len(land_mask)*32) // path_finder_row_length
+    land_mask_rows = (tile_column_size * tile_size) // path_finder_tile_size
     tile_data_offset = header_size  # After the header
     land_mask_data_offset = tile_data_offset + len(tile_metadata) * 8 + len(tile_data)
 
