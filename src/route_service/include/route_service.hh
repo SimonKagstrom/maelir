@@ -38,7 +38,7 @@ private:
 
     const uint32_t m_row_size;
     const uint32_t m_rows;
-    const uint32_t* m_land_mask;
+    std::vector<uint32_t> m_land_mask;
 
     os::binary_semaphore m_calculating_semaphore {1};
     etl::queue_spsc_atomic<std::pair<IndexType, IndexType>, 8> m_requested_route;
