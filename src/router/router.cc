@@ -111,10 +111,18 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
                 return Router::AstarResult::kMaxNodesReached;
             }
 
+            const auto direction = IndexPairToDirection(cur->index, neighbor_index, m_width);
+            const auto next_neighbor =
+                PointToLandIndex(LandIndexToPoint(neighbor_index, m_width) + direction, m_width);
             const auto is_diagonal = (neighbor_index % m_width != cur->index % m_width) &&
                                      (neighbor_index / m_width != cur->index / m_width);
             auto cost = is_diagonal ? 3 : 2;
 
+            // If there's land in this direction, add an extra cost to it to keep the path from land
+            if (!IsWater(m_land_mask, next_neighbor))
+            {
+                cost += 2;
+            }
             auto newg = cur->g + cost;
 
             if ((neighbor_node->IsOpen() || neighbor_node->IsClosed()) && neighbor_node->g <= newg)
