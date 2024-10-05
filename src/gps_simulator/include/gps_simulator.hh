@@ -35,7 +35,9 @@ private:
     std::unique_ptr<IRouteListener> m_route_listener;
 
     std::unique_ptr<RouteIterator> m_route_iterator;
+    bool m_route_pending {false};
     std::optional<Point> m_next_position;
+    std::vector<IndexType> m_route;
     Point m_position;
     Vector m_direction;
 

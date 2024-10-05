@@ -205,7 +205,7 @@ def save_tiles(tiles: list, num_colors):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 3:
         print("Usage: {} <input_yaml_file> <output_dir>".format(sys.argv[0]))
         sys.exit(1)
 

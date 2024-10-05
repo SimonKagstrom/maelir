@@ -53,15 +53,16 @@ UserInterface::OnActivation()
         m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
     }
 
-    if (auto route = m_route_listener->Poll())
+    while (auto route = m_route_listener->Poll())
     {
         if (route->type == IRouteListener::EventType::kReady)
         {
-            m_current_route = route->route;
+            m_route.clear();
+            std::ranges::copy(route->route, std::back_inserter(m_route));
         }
         else
         {
-            m_current_route = {};
+            m_route.clear();
         }
     }
 
@@ -123,12 +124,12 @@ UserInterface::DrawMap()
 void
 UserInterface::DrawRoute()
 {
-    if (m_current_route.empty())
+    if (m_route.empty())
     {
         return;
     }
 
-    auto route_iterator = RouteIterator(m_current_route, m_land_mask_row_size);
+    auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
 
     auto last_point = route_iterator.Next();
     while (auto cur_point = route_iterator.Next())

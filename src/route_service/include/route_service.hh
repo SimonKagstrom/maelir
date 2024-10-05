@@ -33,8 +33,8 @@ public:
 private:
     class RouteListenerImpl;
 
-
     std::optional<milliseconds> OnActivation() final;
+
 
     const uint32_t m_row_size;
     const uint32_t m_rows;

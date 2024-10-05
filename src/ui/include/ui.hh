@@ -52,7 +52,7 @@ private:
     // Global pixel position of the left corner of the map
     int32_t m_map_x {0};
     int32_t m_map_y {0};
-    std::span<const IndexType> m_current_route;
+    std::vector<IndexType> m_route;
 
     etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
 

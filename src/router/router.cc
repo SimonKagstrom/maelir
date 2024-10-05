@@ -260,6 +260,5 @@ Router<CACHE_SIZE>::GetStats() const
     return m_stats;
 }
 
-
 template class Router<kTargetCacheSize>;
 template class Router<kUnitTestCacheSize>;

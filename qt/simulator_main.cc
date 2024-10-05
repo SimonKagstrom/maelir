@@ -62,7 +62,7 @@ main(int argc, char* argv[])
 
     window.show();
 
-//    route_service->RequestRoute({1738, 1136}, {1782, 947});
+//    route_service->RequestRoute({2592, 7032}, {16008, 4728});
 
     auto out = QApplication::exec();
 

@@ -9,8 +9,6 @@ function(tilegen YAML_FILE)
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/tiler.py
             ${YAML_FILE}
             ${OUTPUT_DIR}
-            generated_tiles
-            generated_land_mask
 
         DEPENDS ${YAML_FILE}
         DEPENDS ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/tiler.py
