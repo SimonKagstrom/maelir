@@ -70,7 +70,7 @@ def create_tiles(yaml_data: dict, img: Image, to_ignore: dict, tile_size: int):
     return tiles
 
 
-def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_dir: str):
+def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_file: str):
     data_size = 0
 
     tile_size = 0
@@ -139,7 +139,7 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_dir: str):
 
     # Pack metadata and tile_data into the bin_file, little endian format
 
-    bin_file = open(os.path.join("{}/{}".format(dst_dir, "map_data.bin")), "wb")
+    bin_file = open(dst_file, "wb")
 
     # Example data for the header
     magic = 0x54494C5253574654
@@ -206,7 +206,7 @@ def save_tiles(tiles: list, num_colors):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: {} <input_yaml_file> <output_dir>".format(sys.argv[0]))
+        print("Usage: {} <input_yaml_file> <output_file>".format(sys.argv[0]))
         sys.exit(1)
 
     yaml_data = yaml.safe_load(open(sys.argv[1], "r"))
@@ -249,7 +249,7 @@ if __name__ == "__main__":
         yaml_data,
         tiles,
         row_length=tile_row_length,
-        dst_dir=sys.argv[2],
+        dst_file=sys.argv[2],
     )
 
     print(
