@@ -25,7 +25,7 @@ AsVector(auto span)
 }
 
 
-consteval auto
+consteval Point
 ToPoint(auto row_x, auto row_y)
 {
     return Point {row_x * kPathFinderTileSize, row_y * kPathFinderTileSize};
@@ -206,22 +206,22 @@ TEST_CASE_FIXTURE(Fixture, "Indices can be translated to directions")
 
 TEST_CASE_FIXTURE(Fixture, "the route iterator handles corner cases")
 {
-    auto empty_it = RouteIterator({}, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+    auto empty_it = RouteIterator({}, kRowSize);
     REQUIRE(empty_it.Next() == std::nullopt);
 
     auto single_node = std::array {ToIndex(0, 0)};
-    auto single_it = RouteIterator(single_node, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
-    REQUIRE(single_it.Next() == ToIndex(0, 0));
+    auto single_it = RouteIterator(single_node, kRowSize);
+    REQUIRE(single_it.Next() == ToPoint(0, 0));
     REQUIRE(single_it.Next() == std::nullopt);
 }
 
 TEST_CASE_FIXTURE(Fixture, "the route iterator handles regular iteration")
 {
     auto single_route = std::array {ToIndex(0, 0), ToIndex(0, 2)};
-    auto single_it = RouteIterator(single_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+    auto single_it = RouteIterator(single_route, kRowSize);
 
-    REQUIRE(single_it.Next() == ToIndex(0, 0));
-    REQUIRE(single_it.Next() == ToIndex(0, 2));
+    REQUIRE(single_it.Next() == ToPoint(0, 0));
+    REQUIRE(single_it.Next() == ToPoint(0, 2));
     REQUIRE(single_it.Next() == std::nullopt);
 }
 
@@ -229,21 +229,21 @@ TEST_CASE_FIXTURE(Fixture, "the route iterator handles turns")
 {
     // Right-down, down, right
     auto single_route = std::array {ToIndex(0, 0), ToIndex(1, 1), ToIndex(1, 3), ToIndex(2, 3)};
-    auto single_it = RouteIterator(single_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+    auto single_it = RouteIterator(single_route, kRowSize);
 
-    REQUIRE(*single_it.Next() == ToIndex(0, 0));
-    REQUIRE(*single_it.Next() == ToIndex(1, 1));
-    REQUIRE(*single_it.Next() == ToIndex(1, 3));
-    REQUIRE(*single_it.Next() == ToIndex(2, 3));
+    REQUIRE(*single_it.Next() == ToPoint(0, 0));
+    REQUIRE(*single_it.Next() == ToPoint(1, 1));
+    REQUIRE(*single_it.Next() == ToPoint(1, 3));
+    REQUIRE(*single_it.Next() == ToPoint(2, 3));
     REQUIRE(single_it.Next() == std::nullopt);
 
     // up, left, down
     auto next_route = std::array {ToIndex(8, 8), ToIndex(8, 5), ToIndex(6, 5), ToIndex(6, 4)};
-    auto next_it = RouteIterator(next_route, ToIndex(0, 0), ToIndex(15, 8), kRowSize);
+    auto next_it = RouteIterator(next_route, kRowSize);
 
-    REQUIRE(*next_it.Next() == ToIndex(8, 8));
-    REQUIRE(*next_it.Next() == ToIndex(8, 5));
-    REQUIRE(*next_it.Next() == ToIndex(6, 5));
-    REQUIRE(*next_it.Next() == ToIndex(6, 4));
+    REQUIRE(*next_it.Next() == ToPoint(8, 8));
+    REQUIRE(*next_it.Next() == ToPoint(8, 5));
+    REQUIRE(*next_it.Next() == ToPoint(6, 5));
+    REQUIRE(*next_it.Next() == ToPoint(6, 4));
     REQUIRE(next_it.Next() == std::nullopt);
 }
