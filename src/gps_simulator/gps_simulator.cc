@@ -12,6 +12,8 @@ GpsSimulator::GpsSimulator(const MapMetadata& metadata,
     , m_application_state(application_state)
     , m_route_service(route_service)
 {
+    m_application_state_listener = m_application_state.AttachListener(GetSemaphore());
+
     m_route_listener = m_route_service.AttachListener();
     m_route_listener->AwakeOn(GetSemaphore());
 }
@@ -51,6 +53,8 @@ GpsSimulator::OnActivation()
         }
     }
 
+    auto application_state = m_application_state.CheckoutReadonly();
+
     auto before = m_state;
     do
     {
@@ -58,7 +62,7 @@ GpsSimulator::OnActivation()
         switch (m_state)
         {
         case State::kIdle:
-            if (m_application_state.demo_mode)
+            if (application_state->demo_mode)
             {
                 m_state = State::kRequestRoute;
                 break;
@@ -85,7 +89,7 @@ GpsSimulator::OnActivation()
             break;
 
         case State::kWaitForRoute:
-            if (m_application_state.demo_mode == false)
+            if (application_state->demo_mode == false)
             {
                 m_state = State::kIdle;
                 break;
@@ -98,7 +102,7 @@ GpsSimulator::OnActivation()
             return std::nullopt;
 
         case State::kDemo:
-            if (m_application_state.demo_mode == false)
+            if (application_state->demo_mode == false)
             {
                 m_state = State::kIdle;
                 break;

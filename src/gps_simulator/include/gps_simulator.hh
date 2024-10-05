@@ -33,6 +33,7 @@ private:
     RouteService& m_route_service;
 
     std::unique_ptr<IRouteListener> m_route_listener;
+    std::unique_ptr<ApplicationState::IListener> m_application_state_listener;
 
     std::unique_ptr<RouteIterator> m_route_iterator;
     bool m_route_pending {false};

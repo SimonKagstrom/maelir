@@ -18,12 +18,15 @@ enable_testing()
 add_subdirectory(../.. maelir)
 
 add_executable(ut
+    os/semaphore_unittest.cc
     main.cc
+    test_application_state.cc
     test_nmea_parser.cc
     test_router.cc
 )
 
 target_link_libraries(ut
+    application_state
     nmea_parser
     router
     router_interface

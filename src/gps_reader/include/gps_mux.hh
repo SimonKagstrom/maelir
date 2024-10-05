@@ -15,7 +15,7 @@ public:
 
     hal::RawGpsData WaitForData(os::binary_semaphore& semaphore) final
     {
-        if (m_application_state.demo_mode)
+        if (m_application_state.CheckoutReadonly()->demo_mode)
         {
             return m_simulator.WaitForData(semaphore);
         }

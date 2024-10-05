@@ -1,0 +1,20 @@
+@startuml
+
+state kIdle #Orange : Drop route
+state kRequestRoute : router.RequstRoute()
+state kWaitingForRoute
+state kDemo #LightGreen : RunDemo()
+
+[*] --> kIdle
+
+kIdle --> kRequestRoute : demo mode
+
+kRequestRoute --> kWaitingForRoute : Route pending ||\nno route found
+
+kWaitingForRoute --> kDemo : Route ready
+kWaitingForRoute --> kIdle : demo mode off
+
+kDemo --> kRequestRoute : Route done
+kDemo --> kIdle : demo mode off
+
+@enduml

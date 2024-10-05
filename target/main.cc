@@ -38,7 +38,7 @@ app_main(void)
 
     ApplicationState state;
 
-    state.demo_mode = true;
+    state.Checkout()->demo_mode = true;
 
     auto display = std::make_unique<DisplayTarget>();
     auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,

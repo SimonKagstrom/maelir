@@ -39,7 +39,7 @@ main(int argc, char* argv[])
 
     ApplicationState state;
 
-    state.demo_mode = true;
+    state.Checkout()->demo_mode = true;
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
 
