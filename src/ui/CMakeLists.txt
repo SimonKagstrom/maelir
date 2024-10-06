@@ -1,4 +1,4 @@
-library_from_data(${CMAKE_CURRENT_LIST_DIR}/../../resources/boat.png boat)
+library_from_data(${RESOURCE_DIR}/boat.png boat)
 
 
 add_library(ui EXCLUDE_FROM_ALL

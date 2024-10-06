@@ -1,6 +1,6 @@
 function(library_from_data DATA_FILE BASE_NAME)
     set(DEST_LIBRARY ${BASE_NAME}_library)
-    set(OUTPUT_DIR ${CMAKE_BINARY_DIR}/${BASE_NAME}_generated/)
+    set(OUTPUT_DIR ${CMAKE_BINARY_DIR}/generated/${BASE_NAME}/)
     set(out_hh ${OUTPUT_DIR}/${BASE_NAME}.hh)
     set(out_cc ${OUTPUT_DIR}/${BASE_NAME}.cc)
 
