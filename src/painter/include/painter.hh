@@ -4,6 +4,7 @@
 #include "rect.hh"
 #include "tile.hh"
 
+#include <vector>
 #include <optional>
 
 namespace painter
@@ -33,5 +34,7 @@ void DrawAlphaLine(uint16_t* frame_buffer,
                    uint8_t alpha_byte);
 
 Image Rotate(const Image& src, std::span<uint16_t> dst, int angle);
+
+std::vector<uint16_t> AllocateRotationBuffer(const Image& src);
 
 } // namespace painter

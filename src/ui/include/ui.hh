@@ -58,8 +58,7 @@ private:
 
     uint16_t* m_frame_buffer {nullptr};
     std::unique_ptr<Image> m_boat;
-    std::unique_ptr<uint16_t[]> m_boat_rotation_buffer;
-    std::span<uint16_t> m_boat_rotation;
+    std::vector<uint16_t> m_boat_rotation;
 
     Image m_rotated_boat;
 };

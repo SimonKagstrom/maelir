@@ -21,15 +21,9 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
     , m_boat(DecodePng(boat_data))
+    , m_boat_rotation(painter::AllocateRotationBuffer(*m_boat))
     , m_rotated_boat(*m_boat)
 {
-    assert(m_boat);
-
-    // Data for the rotated boat
-    auto size = static_cast<size_t>(m_boat->width * 1.5f * m_boat->height * 1.5f);
-    m_boat_rotation_buffer = std::make_unique<uint16_t[]>(size);
-    memset(m_boat_rotation_buffer.get(), 0, size * sizeof(uint16_t));
-    m_boat_rotation = {m_boat_rotation_buffer.get(), size};
     m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, 0);
 
     m_gps_port->AwakeOn(GetSemaphore());

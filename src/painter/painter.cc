@@ -10,7 +10,7 @@ namespace
 {
 
 auto
-Prepare(const auto& image, auto &from, auto &to)
+Prepare(const auto& image, auto& from, auto& to)
 {
     auto height = from.has_value() ? from->height : image.height;
     auto width = from.has_value() ? from->width : image.width;
@@ -265,6 +265,15 @@ Rotate(const Image& image, std::span<uint16_t> new_image_data, int angle)
     }
 
     return Image(new_image_data, new_width, new_height);
+}
+
+std::vector<uint16_t>
+AllocateRotationBuffer(const Image& src)
+{
+    auto size = static_cast<size_t>(src.width * 1.5f * src.height * 1.5f);
+    auto out = std::vector<uint16_t>(size);
+
+    return out;
 }
 
 } // namespace painter
