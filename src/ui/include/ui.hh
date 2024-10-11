@@ -26,6 +26,7 @@ private:
     bool NeedsRedraw(int32_t x, int32_t y) const;
 
     void RequestMapTiles();
+    void CheckPassedRoute();
 
     void DrawMap();
     void DrawRoute();
@@ -53,6 +54,7 @@ private:
     int32_t m_map_x {0};
     int32_t m_map_y {0};
     std::vector<IndexType> m_route;
+    std::optional<unsigned> m_passed_route_index;
 
     etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
 

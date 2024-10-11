@@ -33,6 +33,20 @@ UserInterface::UserInterface(const MapMetadata& metadata,
 std::optional<milliseconds>
 UserInterface::OnActivation()
 {
+    while (auto route = m_route_listener->Poll())
+    {
+        if (route->type == IRouteListener::EventType::kReady)
+        {
+            m_route.clear();
+            std::ranges::copy(route->route, std::back_inserter(m_route));
+        }
+        else
+        {
+            m_route.clear();
+            m_passed_route_index = std::nullopt;
+        }
+    }
+
     if (auto position = m_gps_port->Poll())
     {
         auto [map_x, map_y] = PositionToMapCenter(position->pixel_position);
@@ -45,20 +59,10 @@ UserInterface::OnActivation()
         m_map_y = map_y;
 
         m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
+
+        CheckPassedRoute();
     }
 
-    while (auto route = m_route_listener->Poll())
-    {
-        if (route->type == IRouteListener::EventType::kReady)
-        {
-            m_route.clear();
-            std::ranges::copy(route->route, std::back_inserter(m_route));
-        }
-        else
-        {
-            m_route.clear();
-        }
-    }
 
     RequestMapTiles();
 
@@ -74,6 +78,31 @@ UserInterface::OnActivation()
     m_frame_buffer = nullptr;
 
     return std::nullopt;
+}
+
+
+void
+UserInterface::CheckPassedRoute()
+{
+    if (m_route.empty())
+    {
+        return;
+    }
+    constexpr auto kThreshold = 3 * kPathFinderTileSize;
+
+    auto index = 1;
+    auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
+
+    // Ignore the first (start) point
+    route_iterator.Next();
+    while (auto position = route_iterator.Next())
+    {
+        if (std::abs(m_x - position->x) < kThreshold && std::abs(m_y - position->y) < kThreshold)
+        {
+            m_passed_route_index = index;
+        }
+        index++;
+    }
 }
 
 void
@@ -123,20 +152,25 @@ UserInterface::DrawRoute()
         return;
     }
 
+    auto index = 0;
     auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
 
     auto last_point = route_iterator.Next();
     while (auto cur_point = route_iterator.Next())
     {
+        auto color = m_passed_route_index && index < *m_passed_route_index
+                         ? 0x7BEF
+                         : 0x07E0; // Green in RGB565
+
         painter::DrawAlphaLine(m_frame_buffer,
                                {last_point->x - m_map_x, last_point->y - m_map_y},
                                {cur_point->x - m_map_x, cur_point->y - m_map_y},
                                8,
-                               // Green in RGB565
-                               0x07E0,
+                               color,
                                128);
 
         last_point = cur_point;
+        index++;
     }
 }
 
