@@ -16,6 +16,16 @@ public:
                   std::unique_ptr<IRouteListener> route_listener);
 
 private:
+    enum class State
+    {
+        kMapSpeedometer,
+        kMap,
+        kZoomedOutMap,
+        kGlobalMap,
+
+        kValueCount,
+    };
+
     struct TileAndPosition
     {
         std::unique_ptr<ITileHandle> tile;
@@ -59,7 +69,10 @@ private:
 
     uint16_t* m_frame_buffer {nullptr};
     std::unique_ptr<Image> m_boat;
+    std::unique_ptr<Image> m_speedometer;
     std::vector<uint16_t> m_boat_rotation;
 
     Image m_rotated_boat;
+
+    State m_state {State::kMapSpeedometer};
 };

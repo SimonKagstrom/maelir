@@ -4,6 +4,7 @@
 #include "painter.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
+#include "speedometer.hh"
 #include "time.hh"
 
 
@@ -21,6 +22,7 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
     , m_boat(DecodePng(boat_data))
+    , m_speedometer(DecodePng(speedometer_data))
     , m_boat_rotation(painter::AllocateRotationBuffer(*m_boat))
     , m_rotated_boat(*m_boat)
 {
@@ -70,6 +72,12 @@ UserInterface::OnActivation()
     DrawMap();
     DrawRoute();
     DrawBoat();
+
+    // Temporary hack
+    if (m_state == State::kMapSpeedometer)
+    {
+        painter::MaskBlit(m_frame_buffer, *m_speedometer, {0, 0});
+    }
 
     m_display.Flip();
     // Now invalid

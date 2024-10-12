@@ -1,4 +1,5 @@
 library_from_data(${RESOURCE_DIR}/boat.png boat)
+library_from_data(${RESOURCE_DIR}/speedometer.png speedometer)
 
 
 add_library(ui EXCLUDE_FROM_ALL
@@ -19,4 +20,5 @@ PUBLIC
 PRIVATE
     painter
     boat_library
+    speedometer_library
 )
