@@ -26,7 +26,6 @@ private:
     bool NeedsRedraw(int32_t x, int32_t y) const;
 
     void RequestMapTiles();
-    void CheckPassedRoute();
 
     void DrawMap();
     void DrawRoute();

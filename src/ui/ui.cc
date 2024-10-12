@@ -59,8 +59,6 @@ UserInterface::OnActivation()
         m_map_y = map_y;
 
         m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
-
-        CheckPassedRoute();
     }
 
 
@@ -80,30 +78,6 @@ UserInterface::OnActivation()
     return std::nullopt;
 }
 
-
-void
-UserInterface::CheckPassedRoute()
-{
-    if (m_route.empty())
-    {
-        return;
-    }
-    constexpr auto kThreshold = 3 * kPathFinderTileSize;
-
-    auto index = 1;
-    auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
-
-    // Ignore the first (start) point
-    route_iterator.Next();
-    while (auto position = route_iterator.Next())
-    {
-        if (std::abs(m_x - position->x) < kThreshold && std::abs(m_y - position->y) < kThreshold)
-        {
-            m_passed_route_index = index;
-        }
-        index++;
-    }
-}
 
 void
 UserInterface::RequestMapTiles()
@@ -158,6 +132,17 @@ UserInterface::DrawRoute()
     auto last_point = route_iterator.Next();
     while (auto cur_point = route_iterator.Next())
     {
+        constexpr auto kThreshold = 3 * kPathFinderTileSize;
+
+        // Mark the route as passed if the boat is close enough
+        if (std::abs(m_x - cur_point->x) < kThreshold && std::abs(m_y - cur_point->y) < kThreshold)
+        {
+            if (!m_passed_route_index || *m_passed_route_index < index)
+            {
+                m_passed_route_index = index;
+            }
+        }
+
         auto color = m_passed_route_index && index < *m_passed_route_index
                          ? 0x7BEF
                          : 0x07E0; // Green in RGB565
