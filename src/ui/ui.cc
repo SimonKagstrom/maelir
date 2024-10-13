@@ -54,16 +54,11 @@ UserInterface::OnActivation()
 
     if (auto position = m_gps_port->Poll())
     {
-        auto [map_x, map_y] = PositionToMapCenter(position->pixel_position);
-
         // Update the boat position in global pixel coordinates
-        m_x = position->pixel_position.x;
-        m_y = position->pixel_position.y;
+        m_position = position->pixel_position;
+        m_map_position = PositionToMapCenter(m_position);
 
         m_speed = position->speed;
-
-        m_map_x = map_x;
-        m_map_y = map_y;
 
         m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
     }
@@ -97,13 +92,13 @@ UserInterface::RequestMapTiles()
 {
     m_tiles.clear();
 
-    auto x_remainder = m_map_x % kTileSize;
-    auto y_remainder = m_map_y % kTileSize;
+    auto x_remainder = m_map_position.x % kTileSize;
+    auto y_remainder = m_map_position.y % kTileSize;
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
     auto num_tiles_y = (hal::kDisplayHeight + kTileSize - 1) / kTileSize + !!y_remainder;
 
-    auto start_x = m_map_x - x_remainder;
-    auto start_y = m_map_y - y_remainder;
+    auto start_x = m_map_position.x - x_remainder;
+    auto start_y = m_map_position.y - y_remainder;
 
     // Blit all needed tiles
     for (auto y = 0; y < num_tiles_y; y++)
@@ -148,7 +143,8 @@ UserInterface::DrawRoute()
         constexpr auto kThreshold = 3 * kPathFinderTileSize;
 
         // Mark the route as passed if the boat is close enough
-        if (std::abs(m_x - cur_point->x) < kThreshold && std::abs(m_y - cur_point->y) < kThreshold)
+        if (std::abs(m_position.x - cur_point->x) < kThreshold &&
+            std::abs(m_position.y - cur_point->y) < kThreshold)
         {
             if (!m_passed_route_index || *m_passed_route_index < index)
             {
@@ -161,8 +157,8 @@ UserInterface::DrawRoute()
                          : 0x07E0; // Green in RGB565
 
         painter::DrawAlphaLine(m_frame_buffer,
-                               {last_point->x - m_map_x, last_point->y - m_map_y},
-                               {cur_point->x - m_map_x, cur_point->y - m_map_y},
+                               {last_point->x - m_map_position.x, last_point->y - m_map_position.y},
+                               {cur_point->x - m_map_position.x, cur_point->y - m_map_position.y},
                                8,
                                color,
                                128);
@@ -175,8 +171,8 @@ UserInterface::DrawRoute()
 void
 UserInterface::DrawBoat()
 {
-    auto x = m_x - m_map_x - m_rotated_boat.width / 2;
-    auto y = m_y - m_map_y - m_rotated_boat.height / 2;
+    auto x = m_position.x - m_map_position.x - m_rotated_boat.width / 2;
+    auto y = m_position.y - m_map_position.y - m_rotated_boat.height / 2;
 
     painter::MaskBlit(m_frame_buffer, m_rotated_boat, {x, y});
 }

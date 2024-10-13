@@ -57,12 +57,10 @@ private:
     std::unique_ptr<IRouteListener> m_route_listener;
 
     // Global pixel position of the boat
-    int32_t m_x {0};
-    int32_t m_y {0};
+    Point m_position {0, 0};
 
     // Global pixel position of the left corner of the map
-    int32_t m_map_x {0};
-    int32_t m_map_y {0};
+    Point m_map_position {0, 0};
 
     // Current speed in knots
     float m_speed {0};
