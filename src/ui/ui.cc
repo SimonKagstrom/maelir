@@ -8,6 +8,7 @@
 #include "speedometer.hh"
 #include "time.hh"
 
+#include <numbers>
 
 UserInterface::UserInterface(const MapMetadata& metadata,
                              TileProducer& tile_producer,
@@ -183,8 +184,8 @@ UserInterface::DrawBoat()
 void
 UserInterface::DrawSpeedometer()
 {
-    constexpr auto kAngle0Knots = 130 * M_PI / 180;
-    constexpr auto kAngle35Knots = 310 * M_PI / 180;
+    constexpr float kAngle0Knots = 130 * std::numbers::pi_v<float> / 180;
+    constexpr float kAngle35Knots = 310 * std::numbers::pi_v<float> / 180;
     constexpr auto kCircleWidth = 536;
     constexpr auto kCentre = Point {hal::kDisplayWidth / 2, hal::kDisplayHeight / 2};
 
