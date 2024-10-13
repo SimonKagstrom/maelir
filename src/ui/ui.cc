@@ -57,6 +57,8 @@ UserInterface::OnActivation()
         m_x = position->pixel_position.x;
         m_y = position->pixel_position.y;
 
+        m_speed = position->speed;
+
         m_map_x = map_x;
         m_map_y = map_y;
 
@@ -76,7 +78,7 @@ UserInterface::OnActivation()
     // Temporary hack
     if (m_state == State::kMapSpeedometer)
     {
-        painter::MaskBlit(m_frame_buffer, *m_speedometer, {0, 0});
+        DrawSpeedometer();
     }
 
     m_display.Flip();
@@ -174,6 +176,23 @@ UserInterface::DrawBoat()
     auto y = m_y - m_map_y - m_rotated_boat.height / 2;
 
     painter::MaskBlit(m_frame_buffer, m_rotated_boat, {x, y});
+}
+
+void
+UserInterface::DrawSpeedometer()
+{
+    constexpr auto kAngle0Knots = 130;
+    constexpr auto kAngle35Knots = 310;
+    constexpr auto kCircleWidth = 536;
+    constexpr auto kCentre = Point{hal::kDisplayWidth / 2, hal::kDisplayHeight / 2};
+
+    painter::MaskBlit(m_frame_buffer, *m_speedometer, {0, 0});
+
+    auto angle = kAngle0Knots + (kAngle35Knots - kAngle0Knots) * m_speed / 35;
+    int32_t x = kCentre.x + kCircleWidth * std::cos(angle * 3.14159265 / 180) / 2;
+    int32_t y = kCentre.y + kCircleWidth * std::sin(angle * 3.14159265 / 180) / 2;
+
+    painter::MaskBlit(m_frame_buffer, *m_boat, Rect{x - m_boat->width / 2, y - m_boat->height / 2});
 }
 
 Point

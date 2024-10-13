@@ -40,6 +40,7 @@ private:
     void DrawMap();
     void DrawRoute();
     void DrawBoat();
+    void DrawSpeedometer();
 
     Point PositionToMapCenter(const auto& pixel_position) const;
 
@@ -62,6 +63,10 @@ private:
     // Global pixel position of the left corner of the map
     int32_t m_map_x {0};
     int32_t m_map_y {0};
+
+    // Current speed in knots
+    float m_speed {0};
+
     std::vector<IndexType> m_route;
     std::optional<unsigned> m_passed_route_index;
 

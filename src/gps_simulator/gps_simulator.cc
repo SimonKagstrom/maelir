@@ -115,7 +115,7 @@ GpsSimulator::OnActivation()
 
             RunDemo();
 
-            return 82ms + milliseconds(m_speed);
+            return 82ms + milliseconds(static_cast<int32_t>(m_speed));
 
         case State::kValueCount:
             break;
@@ -166,13 +166,26 @@ GpsSimulator::RunDemo()
         m_angle += step;
     }
 
+    if (m_speed != m_target_speed)
+    {
+        auto diff = m_target_speed - m_speed;
+        auto step = std::min(0.5f, std::abs(diff));
+        if (diff < 0)
+        {
+            step = -step;
+        }
+
+        m_speed += step;
+    }
+
     if (m_position == m_next_position)
     {
         m_next_position = m_route_iterator->Next();
         if (m_next_position)
         {
             m_direction = PointPairToVector(m_position, *m_next_position);
-            m_speed = 20 + rand() % 10;
+            m_target_speed = 0 + rand() % 35;
+            printf("Target speed now %.0f\n", m_target_speed);
         }
         else
         {
