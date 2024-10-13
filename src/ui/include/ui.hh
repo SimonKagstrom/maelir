@@ -74,6 +74,7 @@ private:
 
     uint16_t* m_frame_buffer {nullptr};
     std::unique_ptr<Image> m_boat;
+    std::unique_ptr<Image> m_speed_dial;
     std::unique_ptr<Image> m_speedometer;
     std::vector<uint16_t> m_boat_rotation;
 

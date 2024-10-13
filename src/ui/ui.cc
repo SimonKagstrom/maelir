@@ -4,6 +4,7 @@
 #include "painter.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
+#include "speed_dial.hh"
 #include "speedometer.hh"
 #include "time.hh"
 
@@ -22,6 +23,7 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
     , m_boat(DecodePng(boat_data))
+    , m_speed_dial(DecodePng(speed_dial_data))
     , m_speedometer(DecodePng(speedometer_data))
     , m_boat_rotation(painter::AllocateRotationBuffer(*m_boat))
     , m_rotated_boat(*m_boat)
@@ -189,11 +191,12 @@ UserInterface::DrawSpeedometer()
     painter::MaskBlit(m_frame_buffer, *m_speedometer, {0, 0});
 
     float angle = kAngle0Knots + (kAngle35Knots - kAngle0Knots) * m_speed / 35;
-    int32_t x = kCentre.x + kCircleWidth * std::cosf(angle) / 2;
-    int32_t y = kCentre.y + kCircleWidth * std::sinf(angle) / 2;
+    int32_t x = kCentre.x + (kCircleWidth + m_speed_dial->width) * std::cosf(angle) / 2;
+    int32_t y = kCentre.y + (kCircleWidth + m_speed_dial->height) * std::sinf(angle) / 2;
 
-    painter::MaskBlit(
-        m_frame_buffer, *m_boat, Rect {x - m_boat->width / 2, y - m_boat->height / 2});
+    painter::MaskBlit(m_frame_buffer,
+                      *m_speed_dial,
+                      Rect {x - m_speed_dial->width / 2, y - m_speed_dial->height / 2});
 }
 
 Point
