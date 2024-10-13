@@ -181,18 +181,19 @@ UserInterface::DrawBoat()
 void
 UserInterface::DrawSpeedometer()
 {
-    constexpr auto kAngle0Knots = 130;
-    constexpr auto kAngle35Knots = 310;
+    constexpr auto kAngle0Knots = 130 * M_PI / 180;
+    constexpr auto kAngle35Knots = 310 * M_PI / 180;
     constexpr auto kCircleWidth = 536;
-    constexpr auto kCentre = Point{hal::kDisplayWidth / 2, hal::kDisplayHeight / 2};
+    constexpr auto kCentre = Point {hal::kDisplayWidth / 2, hal::kDisplayHeight / 2};
 
     painter::MaskBlit(m_frame_buffer, *m_speedometer, {0, 0});
 
-    auto angle = kAngle0Knots + (kAngle35Knots - kAngle0Knots) * m_speed / 35;
-    int32_t x = kCentre.x + kCircleWidth * std::cos(angle * 3.14159265 / 180) / 2;
-    int32_t y = kCentre.y + kCircleWidth * std::sin(angle * 3.14159265 / 180) / 2;
+    float angle = kAngle0Knots + (kAngle35Knots - kAngle0Knots) * m_speed / 35;
+    int32_t x = kCentre.x + kCircleWidth * std::cosf(angle) / 2;
+    int32_t y = kCentre.y + kCircleWidth * std::sinf(angle) / 2;
 
-    painter::MaskBlit(m_frame_buffer, *m_boat, Rect{x - m_boat->width / 2, y - m_boat->height / 2});
+    painter::MaskBlit(
+        m_frame_buffer, *m_boat, Rect {x - m_boat->width / 2, y - m_boat->height / 2});
 }
 
 Point

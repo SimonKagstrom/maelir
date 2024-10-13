@@ -115,7 +115,7 @@ GpsSimulator::OnActivation()
 
             RunDemo();
 
-            return 82ms + milliseconds(static_cast<int32_t>(m_speed));
+            return 82ms;
 
         case State::kValueCount:
             break;
