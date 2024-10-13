@@ -8,6 +8,7 @@
 #include "speedometer.hh"
 #include "time.hh"
 
+#include <cmath>
 #include <numbers>
 
 UserInterface::UserInterface(const MapMetadata& metadata,
@@ -188,8 +189,8 @@ UserInterface::DrawSpeedometer()
     painter::MaskBlit(m_frame_buffer, *m_speedometer, {0, 0});
 
     float angle = kAngle0Knots + (kAngle35Knots - kAngle0Knots) * m_speed / 35;
-    int32_t x = kCentre.x + (kCircleWidth + m_speed_dial->width) * std::cosf(angle) / 2;
-    int32_t y = kCentre.y + (kCircleWidth + m_speed_dial->height) * std::sinf(angle) / 2;
+    int32_t x = kCentre.x + (kCircleWidth + m_speed_dial->width) * cosf(angle) / 2;
+    int32_t y = kCentre.y + (kCircleWidth + m_speed_dial->height) * sinf(angle) / 2;
 
     painter::MaskBlit(m_frame_buffer,
                       *m_speed_dial,
