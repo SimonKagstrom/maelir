@@ -1,0 +1,4 @@
+pillow/10.4.0
+pyqt6/6.7.1
+haralyzer/2.4.0
+sweden_crs_transformations/1.0.0
