@@ -14,6 +14,7 @@
 UserInterface::UserInterface(const MapMetadata& metadata,
                              TileProducer& tile_producer,
                              hal::IDisplay& display,
+                             hal::IInput& input,
                              std::unique_ptr<IGpsPort> gps_port,
                              std::unique_ptr<IRouteListener> route_listener)
     : m_tile_rows(metadata.tile_row_size)
@@ -32,6 +33,7 @@ UserInterface::UserInterface(const MapMetadata& metadata,
 {
     m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, 0);
 
+    input.AttachListener(this);
     m_gps_port->AwakeOn(GetSemaphore());
     m_route_listener->AwakeOn(GetSemaphore());
 }
@@ -64,6 +66,26 @@ UserInterface::OnActivation()
         m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
     }
 
+    // Handle input
+    hal::IInput::Event event;
+    while (m_input_queue.pop(event))
+    {
+        auto state = std::to_underlying(m_state);
+
+        switch (event.type)
+        {
+        case hal::IInput::EventType::kLeft:
+            state--;
+            break;
+        case hal::IInput::EventType::kRight:
+            state++;
+            break;
+        default:
+            break;
+        }
+        m_state = static_cast<State>(state % std::to_underlying(State::kValueCount));
+    }
+
 
     RequestMapTiles();
 
@@ -87,6 +109,13 @@ UserInterface::OnActivation()
     return std::nullopt;
 }
 
+
+void
+UserInterface::OnInput(const hal::IInput::Event& event)
+{
+    m_input_queue.push(event);
+    Awake();
+}
 
 void
 UserInterface::RequestMapTiles()

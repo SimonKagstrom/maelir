@@ -99,7 +99,7 @@ idf_build_process(esp32s3
     BUILD_DIR ${CMAKE_BINARY_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 find_package(etl REQUIRED)
 find_package(mp-units REQUIRED)
@@ -107,6 +107,7 @@ find_package(mp-units REQUIRED)
 add_subdirectory(.. maelir)
 add_subdirectory(target_display)
 add_subdirectory(target_gps)
+add_subdirectory(target_input)
 
 
 set(elf_file ${CMAKE_PROJECT_NAME}.elf)
@@ -121,6 +122,7 @@ target_link_libraries(${elf_file}
     idf::freertos
     idf::spi_flash
     idf::esp_partition
+    encoder_input
     tile_producer
     gps_simulator
     ui

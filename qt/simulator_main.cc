@@ -52,6 +52,7 @@ main(int argc, char* argv[])
     auto ui = std::make_unique<UserInterface>(*map_metadata,
                                               *producer,
                                               window.GetDisplay(),
+                                              window,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 

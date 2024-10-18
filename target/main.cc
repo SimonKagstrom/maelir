@@ -1,3 +1,4 @@
+#include "encoder_input.hh"
 #include "gps_mux.hh"
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
@@ -40,6 +41,9 @@ app_main(void)
 
     state.Checkout()->demo_mode = true;
 
+    auto encoder_input = std::make_unique<EncoderInput>(6,  // Pin A -> 6 (MOSI/MISO)
+                                                        7,  // Pin B -> 7 (MOSI/MISO)
+                                                        0); // No button
     auto display = std::make_unique<DisplayTarget>();
     auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,
                                               17,  // RX -> A0
@@ -56,6 +60,7 @@ app_main(void)
     auto ui = std::make_unique<UserInterface>(*map_metadata,
                                               *producer,
                                               *display,
+                                              *encoder_input,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
@@ -64,6 +69,7 @@ app_main(void)
     producer->Start(0);
     route_service->Start(1);
     ui->Start(0, os::ThreadPriority::kHigh);
+
 
     while (true)
     {

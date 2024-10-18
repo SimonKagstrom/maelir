@@ -30,6 +30,54 @@
      <enum>Qt::ScrollBarAlwaysOff</enum>
     </property>
    </widget>
+   <widget class="QPushButton" name="leftButton">
+    <property name="geometry">
+     <rect>
+      <x>750</x>
+      <y>180</y>
+      <width>100</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Left</string>
+    </property>
+    <property name="shortcut">
+     <string>Left</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="centerButton">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>180</y>
+      <width>100</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Button</string>
+    </property>
+    <property name="shortcut">
+     <string>Space</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="rightButton">
+    <property name="geometry">
+     <rect>
+      <x>970</x>
+      <y>180</y>
+      <width>100</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Right</string>
+    </property>
+    <property name="shortcut">
+     <string>Right</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

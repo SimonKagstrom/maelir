@@ -3,15 +3,18 @@
 #include "base_thread.hh"
 #include "gps_port.hh"
 #include "hal/i_display.hh"
+#include "hal/i_input.hh"
+#include <etl/queue_spsc_atomic.h>
 #include "route_service.hh"
 #include "tile_producer.hh"
 
-class UserInterface : public os::BaseThread
+class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
 public:
     UserInterface(const MapMetadata& metadata,
                   TileProducer& tile_producer,
                   hal::IDisplay& display,
+                  hal::IInput& input,
                   std::unique_ptr<IGpsPort> gps_port,
                   std::unique_ptr<IRouteListener> route_listener);
 
@@ -32,6 +35,8 @@ private:
         Point position;
     };
     std::optional<milliseconds> OnActivation() final;
+
+    void OnInput(const hal::IInput::Event& event) final;
 
     bool NeedsRedraw(int32_t x, int32_t y) const;
 
@@ -67,6 +72,8 @@ private:
 
     std::vector<IndexType> m_route;
     std::optional<unsigned> m_passed_route_index;
+
+    etl::queue_spsc_atomic<hal::IInput::Event, 4> m_input_queue;
 
     etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
 
