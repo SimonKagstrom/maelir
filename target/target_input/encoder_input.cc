@@ -30,7 +30,8 @@ DummyListener g_dummy_listener;
 
 
 EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button)
-    : m_listener(&g_dummy_listener)
+    : m_pin_button(static_cast<gpio_num_t>(pin_button))
+    , m_listener(&g_dummy_listener)
 {
     ESP_ERROR_CHECK(pcnt_new_unit(&kPcntUnitConfig, &m_pcnt_unit));
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(m_pcnt_unit, &kFilterConfig));
@@ -70,6 +71,20 @@ EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button)
     ESP_ERROR_CHECK(pcnt_unit_enable(m_pcnt_unit));
     ESP_ERROR_CHECK(pcnt_unit_clear_count(m_pcnt_unit));
     ESP_ERROR_CHECK(pcnt_unit_start(m_pcnt_unit));
+
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_ANYEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = 1 << m_pin_button;
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+
+    //configure GPIO with the given settings
+    gpio_config(&io_conf);
+    gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
+
+    gpio_isr_handler_add(m_pin_button, EncoderInput::StaticButtonIsr, static_cast<void*>(this));
 }
 
 void
@@ -107,4 +122,23 @@ EncoderInput::StaticPcntOnReach(pcnt_unit_handle_t unit,
     p_this->PcntOnReach(unit, edata);
 
     return false;
+}
+
+void
+EncoderInput::ButtonIsr()
+{
+    IInput::Event event = {
+        .button = 0,
+        .type = gpio_get_level(m_pin_button) ? IInput::EventType::kButtonDown
+                                             : IInput::EventType::kButtonUp,
+    };
+
+    m_listener->OnInput(event);
+}
+
+void
+EncoderInput::StaticButtonIsr(void* arg)
+{
+    auto p_this = static_cast<EncoderInput*>(arg);
+    p_this->ButtonIsr();
 }

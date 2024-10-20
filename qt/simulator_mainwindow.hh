@@ -29,6 +29,7 @@ private slots:
 private:
     void AttachListener(hal::IInput::IListener* listener) final;
 
+    void ButtonEvent(hal::IInput::EventType type);
 
     Ui::MainWindow* m_ui {nullptr};
 

@@ -4,9 +4,10 @@
 #include "gps_port.hh"
 #include "hal/i_display.hh"
 #include "hal/i_input.hh"
-#include <etl/queue_spsc_atomic.h>
 #include "route_service.hh"
 #include "tile_producer.hh"
+
+#include <etl/queue_spsc_atomic.h>
 
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
@@ -21,7 +22,6 @@ public:
 private:
     enum class State
     {
-        kMapSpeedometer,
         kMap,
         kZoomedOutMap,
         kGlobalMap,
@@ -85,5 +85,6 @@ private:
 
     Image m_rotated_boat;
 
-    State m_state {State::kMapSpeedometer};
+    State m_state {State::kMap};
+    bool m_show_speedometer {true};
 };

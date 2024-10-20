@@ -2,6 +2,7 @@
 
 #include "hal/i_input.hh"
 
+#include <driver/gpio.h>
 #include <driver/pulse_cnt.h>
 
 class EncoderInput : public hal::IInput
@@ -17,7 +18,11 @@ private:
                                   const pcnt_watch_event_data_t* edata,
                                   void* user_ctx);
 
+    void ButtonIsr();
+    static void StaticButtonIsr(void* arg);
 
+
+    const gpio_num_t m_pin_button;
     hal::IInput::IListener* m_listener;
     pcnt_unit_handle_t m_pcnt_unit;
 };

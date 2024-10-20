@@ -13,19 +13,13 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->displayGraphicsView->setScene(m_scene.get());
 
 
-    connect(m_ui->leftButton, &QPushButton::clicked, [this]() {
-        Event event;
-        event.button = 0;
-        event.type = EventType::kLeft;
-
-        m_input_listener->OnInput(event);
+    connect(m_ui->leftButton, &QPushButton::clicked, [this]() { ButtonEvent(EventType::kLeft); });
+    connect(m_ui->rightButton, &QPushButton::clicked, [this]() { ButtonEvent(EventType::kRight); });
+    connect(m_ui->centerButton, &QPushButton::pressed, [this]() {
+        ButtonEvent(EventType::kButtonDown);
     });
-    connect(m_ui->rightButton, &QPushButton::clicked, [this]() {
-        Event event;
-        event.button = 0;
-        event.type = EventType::kRight;
-
-        m_input_listener->OnInput(event);
+    connect(m_ui->centerButton, &QPushButton::released, [this]() {
+        ButtonEvent(EventType::kButtonUp);
     });
 }
 
@@ -44,4 +38,15 @@ void
 MainWindow::AttachListener(hal::IInput::IListener* listener)
 {
     m_input_listener = listener;
+}
+
+void
+MainWindow::ButtonEvent(hal::IInput::EventType type)
+{
+    Event event;
+    event.button = 0;
+    event.type = type;
+
+    assert(m_input_listener);
+    m_input_listener->OnInput(event);
 }

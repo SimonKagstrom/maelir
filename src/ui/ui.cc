@@ -74,6 +74,11 @@ UserInterface::OnActivation()
 
         switch (event.type)
         {
+        case hal::IInput::EventType::kButtonDown:
+            break;
+        case hal::IInput::EventType::kButtonUp:
+            m_show_speedometer = !m_show_speedometer;
+            break;
         case hal::IInput::EventType::kLeft:
             state--;
             break;
@@ -96,8 +101,7 @@ UserInterface::OnActivation()
     DrawRoute();
     DrawBoat();
 
-    // Temporary hack
-    if (m_state == State::kMapSpeedometer)
+    if (m_show_speedometer)
     {
         DrawSpeedometer();
     }

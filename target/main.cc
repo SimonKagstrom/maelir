@@ -43,7 +43,7 @@ app_main(void)
 
     auto encoder_input = std::make_unique<EncoderInput>(6,  // Pin A -> 6 (MOSI/MISO)
                                                         7,  // Pin B -> 7 (MOSI/MISO)
-                                                        0); // No button
+                                                        5); // Button -> 5 (SCK)
     auto display = std::make_unique<DisplayTarget>();
     auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,
                                               17,  // RX -> A0
