@@ -24,7 +24,7 @@ private:
     {
         kMap,
         kZoom2,
-        kZoom3,
+        kZoom4,
         kGlobalMap,
 
         kValueCount,

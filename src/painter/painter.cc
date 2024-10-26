@@ -71,7 +71,7 @@ ZoomedBlit(
 {
     auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);
 
-    for (int y = 0; y < height; y += factor)
+    for (auto y = 0; y < height; y += factor)
     {
         auto dst_y = to.y + y / factor;
 
@@ -80,7 +80,7 @@ ZoomedBlit(
             continue;
         }
 
-        for (auto x = 0; x < row_length; x += factor)
+        for (auto x = 0; x < row_length * factor; x += factor)
         {
             auto dst_x = to.x + x / factor;
             auto src_x = from_x + x;

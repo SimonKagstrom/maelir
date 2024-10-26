@@ -167,8 +167,8 @@ UserInterface::PrepareInitialZoomedOutMap()
         m_static_map_buffer.get(), 0, hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
 
     // Align with the nearest tile
-    auto aligned = Point {m_map_position.x - m_map_position.x % kTileSize,
-                          m_map_position.y - m_map_position.y % kTileSize};
+    auto aligned =
+        Point {m_position.x - m_position.x % kTileSize, m_position.y - m_position.y % kTileSize};
 
     auto offset_x =
         std::max(static_cast<int32_t>(0), aligned.x - (m_zoom_level * hal::kDisplayWidth) / 2);
@@ -200,20 +200,6 @@ UserInterface::PrepareInitialZoomedOutMap()
                                 {dst.x / m_zoom_level, dst.y / m_zoom_level});
         }
     }
-
-    return;
-    RequestMapTiles(aligned);
-    for (const auto& [tile, position] : m_tiles)
-    {
-        auto& image = static_cast<const ImageImpl&>(tile->GetImage());
-
-        auto dst = Point {position.x - offset_x, position.y - offset_y};
-        painter::ZoomedBlit(m_static_map_buffer.get(),
-                            tile->GetImage(),
-                            m_zoom_level,
-                            {dst.x / m_zoom_level + hal::kDisplayWidth / 2,
-                             dst.y / m_zoom_level + hal::kDisplayWidth / 2});
-    }
 }
 
 void
@@ -222,8 +208,8 @@ UserInterface::RunStateMachine()
     auto before = m_state;
 
     auto zoom_mismatch = [this]() {
-        return m_zoom_level == 2 && m_mode == Mode::kZoom3 ||
-               m_zoom_level == 3 && m_mode == Mode::kZoom2;
+        return m_zoom_level == 2 && m_mode == Mode::kZoom4 ||
+               m_zoom_level == 4 && m_mode == Mode::kZoom2;
     };
 
     do
@@ -241,7 +227,7 @@ UserInterface::RunStateMachine()
             }
             break;
         case State::kInitialOverviewMap:
-            m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 3;
+            m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 4;
             PrepareInitialZoomedOutMap();
 
             m_state = State::kFillOverviewMapTiles;
@@ -303,7 +289,9 @@ UserInterface::DrawMap()
     }
     else
     {
-        painter::Blit(m_frame_buffer, *m_static_map_image, {0, 0});
+        memcpy(m_frame_buffer,
+               m_static_map_buffer.get(),
+               hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
     }
 }
 
@@ -337,12 +325,29 @@ UserInterface::DrawRoute()
                          ? 0x7BEF
                          : 0x07E0; // Green in RGB565
 
-        painter::DrawAlphaLine(m_frame_buffer,
-                               {last_point->x - m_map_position.x, last_point->y - m_map_position.y},
-                               {cur_point->x - m_map_position.x, cur_point->y - m_map_position.y},
-                               8,
-                               color,
-                               128);
+        if (m_state == State::kMap)
+        {
+            painter::DrawAlphaLine(
+                m_frame_buffer,
+                {last_point->x - m_map_position.x, last_point->y - m_map_position.y},
+                {cur_point->x - m_map_position.x, cur_point->y - m_map_position.y},
+                8,
+                color,
+                128);
+        }
+        else
+        {
+            painter::DrawAlphaLine(m_frame_buffer,
+                                   Point {last_point->x - m_map_position_zoomed_out.x,
+                                          last_point->y - m_map_position_zoomed_out.y} /
+                                       m_zoom_level,
+                                   Point {cur_point->x - m_map_position_zoomed_out.x,
+                                          cur_point->y - m_map_position_zoomed_out.y} /
+                                       m_zoom_level,
+                                   8,
+                                   color,
+                                   128);
+        }
 
         last_point = cur_point;
         index++;
@@ -352,8 +357,19 @@ UserInterface::DrawRoute()
 void
 UserInterface::DrawBoat()
 {
-    auto x = m_position.x - m_map_position.x - m_rotated_boat.width / 2;
-    auto y = m_position.y - m_map_position.y - m_rotated_boat.height / 2;
+    int32_t x;
+    int32_t y;
+
+    if (m_state == State::kMap)
+    {
+        x = m_position.x - m_map_position.x - m_rotated_boat.width / 2;
+        y = m_position.y - m_map_position.y - m_rotated_boat.height / 2;
+    }
+    else
+    {
+        x = (m_position.x - m_map_position_zoomed_out.x) / m_zoom_level - m_rotated_boat.width / 2;
+        y = (m_position.y - m_map_position_zoomed_out.y) / m_zoom_level - m_rotated_boat.height / 2;
+    }
 
     painter::MaskBlit(m_frame_buffer, m_rotated_boat, {x, y});
 }
