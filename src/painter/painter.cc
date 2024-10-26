@@ -66,6 +66,38 @@ Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> fr
 }
 
 void
+ZoomedBlit(
+    uint16_t* frame_buffer, const Image& image, unsigned factor, Rect to, std::optional<Rect> from)
+{
+    auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);
+
+    for (int y = 0; y < height; y += factor)
+    {
+        auto dst_y = to.y + y / factor;
+
+        if (dst_y < 0 || dst_y >= hal::kDisplayHeight)
+        {
+            continue;
+        }
+
+        for (auto x = 0; x < row_length; x += factor)
+        {
+            auto dst_x = to.x + x / factor;
+            auto src_x = from_x + x;
+            auto src_y = from_y + y;
+
+            if (dst_x < 0 || dst_x >= hal::kDisplayWidth)
+            {
+                continue;
+            }
+
+            auto src_color = image.data[src_y * image.width + src_x];
+            frame_buffer[dst_y * hal::kDisplayWidth + dst_x] = src_color;
+        }
+    }
+}
+
+void
 MaskBlit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> from)
 {
     auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);

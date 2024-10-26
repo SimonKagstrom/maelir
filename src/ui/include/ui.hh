@@ -20,10 +20,22 @@ public:
                   std::unique_ptr<IRouteListener> route_listener);
 
 private:
+    enum class Mode
+    {
+        kMap,
+        kZoom2,
+        kZoom3,
+        kGlobalMap,
+
+        kValueCount,
+    };
+
     enum class State
     {
         kMap,
-        kZoomedOutMap,
+        kInitialOverviewMap,
+        kFillOverviewMapTiles,
+        kOverviewMap,
         kGlobalMap,
 
         kValueCount,
@@ -40,8 +52,13 @@ private:
 
     bool NeedsRedraw(int32_t x, int32_t y) const;
 
-    void RequestMapTiles();
+    void RunStateMachine();
 
+    void RequestMapTiles(const Point& position);
+    void PrepareInitialZoomedOutMap();
+
+
+    void DrawZoomedOutMap();
     void DrawMap();
     void DrawRoute();
     void DrawBoat();
@@ -66,6 +83,7 @@ private:
 
     // Global pixel position of the left corner of the map
     Point m_map_position {0, 0};
+    Point m_map_position_zoomed_out {0, 0};
 
     // Current speed in knots
     float m_speed {0};
@@ -78,13 +96,22 @@ private:
     etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
 
     uint16_t* m_frame_buffer {nullptr};
+    std::unique_ptr<uint16_t[]> m_static_map_buffer;
+    std::unique_ptr<Image> m_static_map_image;
+
     std::unique_ptr<Image> m_boat;
     std::unique_ptr<Image> m_speed_dial;
     std::unique_ptr<Image> m_speedometer;
     std::vector<uint16_t> m_boat_rotation;
 
+    // TODO: Replace with an etl::vector
+    std::vector<Point> m_zoomed_out_map_tiles;
+
     Image m_rotated_boat;
 
+    int32_t m_zoom_level {1};
+    Mode m_mode {Mode::kMap};
     State m_state {State::kMap};
-    bool m_show_speedometer {true};
+    //    bool m_show_speedometer {true};
+    bool m_show_speedometer {false};
 };

@@ -31,6 +31,12 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_boat_rotation(painter::AllocateRotationBuffer(*m_boat))
     , m_rotated_boat(*m_boat)
 {
+    m_static_map_buffer = std::make_unique<uint16_t[]>(hal::kDisplayWidth * hal::kDisplayHeight);
+    m_static_map_image = std::make_unique<Image>(
+        std::span<const uint16_t> {m_static_map_buffer.get(),
+                                   hal::kDisplayWidth * hal::kDisplayHeight},
+        hal::kDisplayWidth,
+        hal::kDisplayHeight);
     m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, 0);
 
     input.AttachListener(this);
@@ -41,6 +47,33 @@ UserInterface::UserInterface(const MapMetadata& metadata,
 std::optional<milliseconds>
 UserInterface::OnActivation()
 {
+
+    // Handle input
+    hal::IInput::Event event;
+    while (m_input_queue.pop(event))
+    {
+        auto mode = std::to_underlying(m_mode);
+
+        switch (event.type)
+        {
+        case hal::IInput::EventType::kButtonDown:
+            break;
+        case hal::IInput::EventType::kButtonUp:
+            m_show_speedometer = !m_show_speedometer;
+            break;
+        case hal::IInput::EventType::kLeft:
+            mode--;
+            break;
+        case hal::IInput::EventType::kRight:
+            mode++;
+            break;
+        default:
+            break;
+        }
+        printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
+        m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
+    }
+
     while (auto route = m_route_listener->Poll())
     {
         if (route->type == IRouteListener::EventType::kReady)
@@ -66,33 +99,7 @@ UserInterface::OnActivation()
         m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
     }
 
-    // Handle input
-    hal::IInput::Event event;
-    while (m_input_queue.pop(event))
-    {
-        auto state = std::to_underlying(m_state);
-
-        switch (event.type)
-        {
-        case hal::IInput::EventType::kButtonDown:
-            break;
-        case hal::IInput::EventType::kButtonUp:
-            m_show_speedometer = !m_show_speedometer;
-            break;
-        case hal::IInput::EventType::kLeft:
-            state--;
-            break;
-        case hal::IInput::EventType::kRight:
-            state++;
-            break;
-        default:
-            break;
-        }
-        m_state = static_cast<State>(state % std::to_underlying(State::kValueCount));
-    }
-
-
-    RequestMapTiles();
+    RunStateMachine();
 
     // Can potentially have to wait
     m_frame_buffer = m_display.GetFrameBuffer();
@@ -122,17 +129,17 @@ UserInterface::OnInput(const hal::IInput::Event& event)
 }
 
 void
-UserInterface::RequestMapTiles()
+UserInterface::RequestMapTiles(const Point& position)
 {
     m_tiles.clear();
 
-    auto x_remainder = m_map_position.x % kTileSize;
-    auto y_remainder = m_map_position.y % kTileSize;
+    auto x_remainder = position.x % kTileSize;
+    auto y_remainder = position.y % kTileSize;
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
     auto num_tiles_y = (hal::kDisplayHeight + kTileSize - 1) / kTileSize + !!y_remainder;
 
-    auto start_x = m_map_position.x - x_remainder;
-    auto start_y = m_map_position.y - y_remainder;
+    auto start_x = position.x - x_remainder;
+    auto start_y = position.y - y_remainder;
 
     // Blit all needed tiles
     for (auto y = 0; y < num_tiles_y; y++)
@@ -151,12 +158,152 @@ UserInterface::RequestMapTiles()
 }
 
 void
-UserInterface::DrawMap()
+UserInterface::PrepareInitialZoomedOutMap()
 {
+    // Free old tiles and fill with black
+    m_tiles.clear();
+    m_zoomed_out_map_tiles.clear();
+    memset(
+        m_static_map_buffer.get(), 0, hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
+
+    // Align with the nearest tile
+    auto aligned = Point {m_map_position.x - m_map_position.x % kTileSize,
+                          m_map_position.y - m_map_position.y % kTileSize};
+
+    auto offset_x =
+        std::max(static_cast<int32_t>(0), aligned.x - (m_zoom_level * hal::kDisplayWidth) / 2);
+    auto offset_y =
+        std::max(static_cast<int32_t>(0), aligned.y - (m_zoom_level * hal::kDisplayHeight) / 2);
+    m_map_position_zoomed_out = Point {offset_x, offset_y};
+
+    auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
+    auto num_tiles_y = hal::kDisplayHeight / (kTileSize / m_zoom_level);
+
+    for (auto y = 0; y < num_tiles_y; y++)
+    {
+        for (auto x = 0; x < num_tiles_x; x++)
+        {
+            m_zoomed_out_map_tiles.push_back({offset_x + x * kTileSize, offset_y + y * kTileSize});
+        }
+    }
+
+    for (const auto& position : m_zoomed_out_map_tiles)
+    {
+        auto tile = m_tile_producer.LockTile(position);
+        if (tile)
+        {
+            auto dst = Point {position.x - m_map_position_zoomed_out.x,
+                              position.y - m_map_position_zoomed_out.y};
+            painter::ZoomedBlit(m_static_map_buffer.get(),
+                                tile->GetImage(),
+                                m_zoom_level,
+                                {dst.x / m_zoom_level, dst.y / m_zoom_level});
+        }
+    }
+
+    return;
+    RequestMapTiles(aligned);
     for (const auto& [tile, position] : m_tiles)
     {
         auto& image = static_cast<const ImageImpl&>(tile->GetImage());
-        painter::Blit(m_frame_buffer, tile->GetImage(), {position.x, position.y});
+
+        auto dst = Point {position.x - offset_x, position.y - offset_y};
+        painter::ZoomedBlit(m_static_map_buffer.get(),
+                            tile->GetImage(),
+                            m_zoom_level,
+                            {dst.x / m_zoom_level + hal::kDisplayWidth / 2,
+                             dst.y / m_zoom_level + hal::kDisplayWidth / 2});
+    }
+}
+
+void
+UserInterface::RunStateMachine()
+{
+    auto before = m_state;
+
+    auto zoom_mismatch = [this]() {
+        return m_zoom_level == 2 && m_mode == Mode::kZoom3 ||
+               m_zoom_level == 3 && m_mode == Mode::kZoom2;
+    };
+
+    do
+    {
+        switch (m_state)
+        {
+        case State::kMap:
+            m_zoom_level = 1;
+            RequestMapTiles(m_map_position);
+
+            if (m_mode != Mode::kMap)
+            {
+                // Always go through this
+                m_state = State::kInitialOverviewMap;
+            }
+            break;
+        case State::kInitialOverviewMap:
+            m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 3;
+            PrepareInitialZoomedOutMap();
+
+            m_state = State::kFillOverviewMapTiles;
+
+            break;
+        case State::kFillOverviewMapTiles:
+            if (m_mode == Mode::kMap)
+            {
+                m_state = State::kMap;
+            }
+            else if (m_mode == Mode::kGlobalMap)
+            {
+                m_state = State::kGlobalMap;
+            }
+            else if (zoom_mismatch())
+            {
+                m_state = State::kInitialOverviewMap;
+            }
+            break;
+        case State::kOverviewMap:
+            if (m_mode == Mode::kMap)
+            {
+                m_state = State::kMap;
+            }
+            else if (m_mode == Mode::kGlobalMap)
+            {
+                m_state = State::kGlobalMap;
+            }
+            if (zoom_mismatch())
+            {
+                m_state = State::kInitialOverviewMap;
+            }
+            break;
+        case State::kGlobalMap:
+            if (m_mode != Mode::kGlobalMap)
+            {
+                // Always go via the map
+                m_state = State::kMap;
+            }
+            break;
+        case State::kValueCount:
+            break;
+        }
+
+        before = m_state;
+    } while (m_state != before);
+}
+
+void
+UserInterface::DrawMap()
+{
+    if (m_state == State::kMap)
+    {
+        for (const auto& [tile, position] : m_tiles)
+        {
+            auto& image = static_cast<const ImageImpl&>(tile->GetImage());
+            painter::Blit(m_frame_buffer, tile->GetImage(), {position.x, position.y});
+        }
+    }
+    else
+    {
+        painter::Blit(m_frame_buffer, *m_static_map_image, {0, 0});
     }
 }
 

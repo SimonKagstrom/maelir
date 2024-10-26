@@ -4,14 +4,20 @@
 #include "rect.hh"
 #include "tile.hh"
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 namespace painter
 {
 
 void
 Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> from = std::nullopt);
+
+void ZoomedBlit(uint16_t* frame_buffer,
+                const Image& image,
+                unsigned factor,
+                Rect to,
+                std::optional<Rect> from = std::nullopt);
 
 // Blit, ignoring black pixels
 void MaskBlit(uint16_t* frame_buffer,

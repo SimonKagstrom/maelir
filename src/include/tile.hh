@@ -161,6 +161,12 @@ operator==(const Point& lhs, const Point& rhs)
 }
 
 inline auto
+operator/(const Point& lhs, auto rhs)
+{
+    return Point {lhs.x / rhs, lhs.y / rhs};
+}
+
+inline auto
 operator==(const Vector& lhs, const Vector& rhs)
 {
     return lhs.dx == rhs.dx && lhs.dy == rhs.dy;
