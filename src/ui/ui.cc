@@ -161,7 +161,6 @@ void
 UserInterface::PrepareInitialZoomedOutMap()
 {
     // Free old tiles and fill with black
-    m_tiles.clear();
     m_zoomed_out_map_tiles.clear();
     memset(
         m_static_map_buffer.get(), 0, hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
@@ -179,15 +178,33 @@ UserInterface::PrepareInitialZoomedOutMap()
     auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
     auto num_tiles_y = hal::kDisplayHeight / (kTileSize / m_zoom_level);
 
+    constexpr auto kVisibleTiles = hal::kDisplayWidth / kTileSize;
+    etl::vector<Point, kVisibleTiles * kVisibleTiles> cached_tiles;
+
     for (auto y = 0; y < num_tiles_y; y++)
     {
         for (auto x = 0; x < num_tiles_x; x++)
         {
-            m_zoomed_out_map_tiles.push_back({offset_x + x * kTileSize, offset_y + y * kTileSize});
+            auto at = Point {offset_x + x * kTileSize, offset_y + y * kTileSize};
+
+            if (m_tile_producer.IsCached(at) && cached_tiles.full() == false)
+            {
+                cached_tiles.push_back(at);
+            }
+            else
+            {
+                m_zoomed_out_map_tiles.push_back(at);
+            }
         }
     }
 
-    FillZoomedOutMap();
+    for (const auto& position : cached_tiles)
+    {
+        DrawZoomedTile(position);
+    }
+
+    m_tiles.clear();
+    Awake();
 }
 
 void
@@ -208,16 +225,17 @@ UserInterface::DrawZoomedTile(const Point& position)
 void
 UserInterface::FillZoomedOutMap()
 {
-    for (auto i = 0; i < 4; i++)
+    const auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
+    for (auto i = 0; i < num_tiles_x; i++)
     {
         if (m_zoomed_out_map_tiles.empty())
         {
             break;
         }
 
-        auto position = m_zoomed_out_map_tiles.front();
+        auto position = m_zoomed_out_map_tiles.back();
         DrawZoomedTile(position);
-        m_zoomed_out_map_tiles.pop_front();
+        m_zoomed_out_map_tiles.pop_back();
     }
 
     Awake();

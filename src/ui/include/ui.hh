@@ -9,7 +9,6 @@
 
 #include <etl/queue_spsc_atomic.h>
 #include <etl/vector.h>
-#include <etl/deque.h>
 
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
@@ -106,7 +105,7 @@ private:
     std::unique_ptr<Image> m_speedometer;
     std::vector<uint16_t> m_boat_rotation;
 
-    etl::deque<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
+    etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
         m_zoomed_out_map_tiles;
 
     Image m_rotated_boat;
@@ -114,5 +113,5 @@ private:
     int32_t m_zoom_level {1};
     Mode m_mode {Mode::kMap};
     State m_state {State::kMap};
-    bool m_show_speedometer {false};
+    bool m_show_speedometer {true};
 };

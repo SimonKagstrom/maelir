@@ -90,6 +90,10 @@ ZoomedBlit(
             {
                 continue;
             }
+            if (src_x < 0 || src_x >= image.width || src_y < 0 || src_y >= image.height)
+            {
+                continue;
+            }
 
             auto src_color = image.data[src_y * image.width + src_x];
             frame_buffer[dst_y * hal::kDisplayWidth + dst_x] = src_color;
