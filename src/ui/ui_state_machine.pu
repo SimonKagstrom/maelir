@@ -4,7 +4,6 @@ state kMap : zoom=1
 state kInitialOverviewMap : all tiles unknown,\ndraw present tiles
 state kFillOverviewMapTiles
 state kOverviewMap
-state kGlobalMap
 
 [*] --> kMap
 kMap --> kInitialOverviewMap : turn
@@ -12,11 +11,8 @@ kMap --> kInitialOverviewMap : turn
 kInitialOverviewMap --> kFillOverviewMapTiles
 kFillOverviewMapTiles --> kOverviewMap : all tiles drawn
 kFillOverviewMapTiles --> kInitialOverviewMap : turn, zoom < 3
-kFillOverviewMapTiles --> kGlobalMap : turn
 
-kOverviewMap --> kGlobalMap : turn
+kOverviewMap --> kMap : turn, zoom > 3
 kOverviewMap --> kInitialOverviewMap : turn, zoom < 3
-kGlobalMap --> kMap : turn
-
 
 @enduml

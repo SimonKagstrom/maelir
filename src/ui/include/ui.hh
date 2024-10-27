@@ -8,6 +8,8 @@
 #include "tile_producer.hh"
 
 #include <etl/queue_spsc_atomic.h>
+#include <etl/vector.h>
+#include <etl/deque.h>
 
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
@@ -25,7 +27,6 @@ private:
         kMap,
         kZoom2,
         kZoom4,
-        kGlobalMap,
 
         kValueCount,
     };
@@ -36,7 +37,6 @@ private:
         kInitialOverviewMap,
         kFillOverviewMapTiles,
         kOverviewMap,
-        kGlobalMap,
 
         kValueCount,
     };
@@ -55,7 +55,9 @@ private:
     void RunStateMachine();
 
     void RequestMapTiles(const Point& position);
+    void DrawZoomedTile(const Point& position);
     void PrepareInitialZoomedOutMap();
+    void FillZoomedOutMap();
 
 
     void DrawZoomedOutMap();
@@ -104,14 +106,13 @@ private:
     std::unique_ptr<Image> m_speedometer;
     std::vector<uint16_t> m_boat_rotation;
 
-    // TODO: Replace with an etl::vector
-    std::vector<Point> m_zoomed_out_map_tiles;
+    etl::deque<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
+        m_zoomed_out_map_tiles;
 
     Image m_rotated_boat;
 
     int32_t m_zoom_level {1};
     Mode m_mode {Mode::kMap};
     State m_state {State::kMap};
-    //    bool m_show_speedometer {true};
     bool m_show_speedometer {false};
 };

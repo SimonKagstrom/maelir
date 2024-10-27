@@ -170,9 +170,9 @@ UserInterface::PrepareInitialZoomedOutMap()
     auto aligned =
         Point {m_position.x - m_position.x % kTileSize, m_position.y - m_position.y % kTileSize};
 
-    auto offset_x =
+    const auto offset_x =
         std::max(static_cast<int32_t>(0), aligned.x - (m_zoom_level * hal::kDisplayWidth) / 2);
-    auto offset_y =
+    const auto offset_y =
         std::max(static_cast<int32_t>(0), aligned.y - (m_zoom_level * hal::kDisplayHeight) / 2);
     m_map_position_zoomed_out = Point {offset_x, offset_y};
 
@@ -187,20 +187,42 @@ UserInterface::PrepareInitialZoomedOutMap()
         }
     }
 
-    for (const auto& position : m_zoomed_out_map_tiles)
+    FillZoomedOutMap();
+}
+
+void
+UserInterface::DrawZoomedTile(const Point& position)
+{
+    auto tile = m_tile_producer.LockTile(position);
+    if (tile)
     {
-        auto tile = m_tile_producer.LockTile(position);
-        if (tile)
-        {
-            auto dst = Point {position.x - m_map_position_zoomed_out.x,
-                              position.y - m_map_position_zoomed_out.y};
-            painter::ZoomedBlit(m_static_map_buffer.get(),
-                                tile->GetImage(),
-                                m_zoom_level,
-                                {dst.x / m_zoom_level, dst.y / m_zoom_level});
-        }
+        auto dst = Point {position.x - m_map_position_zoomed_out.x,
+                          position.y - m_map_position_zoomed_out.y};
+        painter::ZoomedBlit(m_static_map_buffer.get(),
+                            tile->GetImage(),
+                            m_zoom_level,
+                            {dst.x / m_zoom_level, dst.y / m_zoom_level});
     }
 }
+
+void
+UserInterface::FillZoomedOutMap()
+{
+    for (auto i = 0; i < 4; i++)
+    {
+        if (m_zoomed_out_map_tiles.empty())
+        {
+            break;
+        }
+
+        auto position = m_zoomed_out_map_tiles.front();
+        DrawZoomedTile(position);
+        m_zoomed_out_map_tiles.pop_front();
+    }
+
+    Awake();
+}
+
 
 void
 UserInterface::RunStateMachine()
@@ -226,6 +248,7 @@ UserInterface::RunStateMachine()
                 m_state = State::kInitialOverviewMap;
             }
             break;
+
         case State::kInitialOverviewMap:
             m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 4;
             PrepareInitialZoomedOutMap();
@@ -234,40 +257,33 @@ UserInterface::RunStateMachine()
 
             break;
         case State::kFillOverviewMapTiles:
-            if (m_mode == Mode::kMap)
+            FillZoomedOutMap();
+
+            if (m_zoomed_out_map_tiles.empty())
+            {
+                m_state = State::kOverviewMap;
+            }
+            else if (m_mode == Mode::kMap)
             {
                 m_state = State::kMap;
-            }
-            else if (m_mode == Mode::kGlobalMap)
-            {
-                m_state = State::kGlobalMap;
             }
             else if (zoom_mismatch())
             {
                 m_state = State::kInitialOverviewMap;
             }
             break;
+
         case State::kOverviewMap:
             if (m_mode == Mode::kMap)
             {
                 m_state = State::kMap;
-            }
-            else if (m_mode == Mode::kGlobalMap)
-            {
-                m_state = State::kGlobalMap;
             }
             if (zoom_mismatch())
             {
                 m_state = State::kInitialOverviewMap;
             }
             break;
-        case State::kGlobalMap:
-            if (m_mode != Mode::kGlobalMap)
-            {
-                // Always go via the map
-                m_state = State::kMap;
-            }
-            break;
+
         case State::kValueCount:
             break;
         }
