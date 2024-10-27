@@ -294,8 +294,18 @@ UserInterface::RunStateMachine()
             {
                 m_state = State::kMap;
             }
-            if (zoom_mismatch())
+            else if (zoom_mismatch())
             {
+                m_state = State::kInitialOverviewMap;
+            }
+            else if (m_position.x < m_map_position_zoomed_out.x + 30 ||
+                     m_position.y < m_map_position_zoomed_out.y + 30 ||
+                     m_position.x >
+                         m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - 30 ||
+                     m_position.y >
+                         m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - 30)
+            {
+                // Boat outside the visible area
                 m_state = State::kInitialOverviewMap;
             }
             break;

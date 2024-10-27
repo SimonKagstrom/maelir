@@ -14,5 +14,6 @@ kFillOverviewMapTiles --> kInitialOverviewMap : turn, zoom < 3
 
 kOverviewMap --> kMap : turn, zoom > 3
 kOverviewMap --> kInitialOverviewMap : turn, zoom < 3
+kOverviewMap --> kInitialOverviewMap : boat close\nto the border
 
 @enduml
