@@ -5,6 +5,7 @@
 #include "tile.hh"
 
 #include <optional>
+#include <string_view>
 #include <vector>
 
 namespace painter
@@ -38,6 +39,8 @@ void DrawAlphaLine(uint16_t* frame_buffer,
                    uint8_t width,
                    uint16_t rgb565,
                    uint8_t alpha_byte);
+
+void DrawNumbers(uint16_t* frame_buffer, const Image& image, Point to, std::string_view string);
 
 Image Rotate(const Image& src, std::span<uint16_t> dst, int angle);
 

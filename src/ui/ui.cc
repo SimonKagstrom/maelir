@@ -1,11 +1,10 @@
 #include "ui.hh"
 
 #include "boat.hh"
+#include "numbers.hh"
 #include "painter.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
-#include "speed_dial.hh"
-#include "speedometer.hh"
 #include "time.hh"
 
 #include <cmath>
@@ -26,8 +25,7 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
     , m_boat(DecodePng(boat_data))
-    , m_speed_dial(DecodePng(speed_dial_data))
-    , m_speedometer(DecodePng(speedometer_data))
+    , m_numbers(DecodePng(numbers_data))
     , m_boat_rotation(painter::AllocateRotationBuffer(*m_boat))
     , m_rotated_boat(*m_boat)
 {
@@ -411,20 +409,15 @@ UserInterface::DrawBoat()
 void
 UserInterface::DrawSpeedometer()
 {
-    constexpr float kAngle0Knots = 130 * std::numbers::pi_v<float> / 180;
-    constexpr float kAngle35Knots = 310 * std::numbers::pi_v<float> / 180;
-    constexpr auto kCircleWidth = 536;
-    constexpr auto kCentre = Point {hal::kDisplayWidth / 2, hal::kDisplayHeight / 2};
+    char speed_str[3] {};
 
-    painter::MaskBlit(m_frame_buffer, *m_speedometer, {0, 0});
+    speed_str[0] = '0' + static_cast<int>(m_speed) / 10 % 10;
+    speed_str[1] = '0' + static_cast<int>(m_speed) % 10;
 
-    float angle = kAngle0Knots + (kAngle35Knots - kAngle0Knots) * m_speed / 35;
-    int32_t x = kCentre.x + (kCircleWidth + m_speed_dial->width) * cosf(angle) / 2;
-    int32_t y = kCentre.y + (kCircleWidth + m_speed_dial->height) * sinf(angle) / 2;
+    const auto x = hal::kDisplayWidth / 2 - m_numbers->width / 10;
+    const auto y = 20;
 
-    painter::MaskBlit(m_frame_buffer,
-                      *m_speed_dial,
-                      Rect {x - m_speed_dial->width / 2, y - m_speed_dial->height / 2});
+    painter::DrawNumbers(m_frame_buffer, *m_numbers, {x, y}, speed_str);
 }
 
 Point

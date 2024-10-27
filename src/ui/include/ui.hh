@@ -101,8 +101,7 @@ private:
     std::unique_ptr<Image> m_static_map_image;
 
     std::unique_ptr<Image> m_boat;
-    std::unique_ptr<Image> m_speed_dial;
-    std::unique_ptr<Image> m_speedometer;
+    std::unique_ptr<Image> m_numbers;
     std::vector<uint16_t> m_boat_rotation;
 
     etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>

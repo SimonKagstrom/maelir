@@ -1,7 +1,5 @@
 library_from_data(${RESOURCE_DIR}/boat.png boat)
-library_from_data(${RESOURCE_DIR}/speed_dial.png speed_dial)
-library_from_data(${RESOURCE_DIR}/speedometer.png speedometer)
-
+library_from_data(${RESOURCE_DIR}/numbers.png numbers)
 
 add_library(ui EXCLUDE_FROM_ALL
     ui.cc
@@ -21,6 +19,5 @@ PUBLIC
 PRIVATE
     painter
     boat_library
-    speed_dial_library
-    speedometer_library
+    numbers_library
 )

@@ -36,6 +36,10 @@ Prepare(const auto& image, auto& from, auto& to)
     {
         row_length = hal::kDisplayWidth - to.x;
     }
+    if (row_length > width)
+    {
+        row_length = width;
+    }
 
     return std::array {height, width, from_y, from_x, row_length};
 }
@@ -248,6 +252,22 @@ DrawAlphaLine(uint16_t* frame_buffer,
         }
 
         next = next + direction;
+    }
+}
+
+void
+DrawNumbers(uint16_t* frame_buffer, const Image& image, Point to, std::string_view string)
+{
+    auto number_width = image.width / 10;
+
+    for (auto c : string)
+    {
+        auto number = c - '0';
+        auto from = Rect {number * number_width, 0, number_width, image.height};
+        auto to_rect = Rect {to.x, to.y, number_width, image.height};
+
+        MaskBlit(frame_buffer, image, to_rect, from);
+        to.x += number_width;
     }
 }
 
