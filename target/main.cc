@@ -39,7 +39,7 @@ app_main(void)
 
     ApplicationState state;
 
-    state.Checkout()->demo_mode = true;
+    state.Checkout()->demo_mode = false;
 
     auto encoder_input = std::make_unique<EncoderInput>(6,  // Pin A -> 6 (MOSI/MISO)
                                                         7,  // Pin B -> 7 (MOSI/MISO)
@@ -57,7 +57,8 @@ app_main(void)
     auto gps_mux = std::make_unique<GpsMux>(state, *gps_uart, *gps_simulator);
 
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_mux);
-    auto ui = std::make_unique<UserInterface>(*map_metadata,
+    auto ui = std::make_unique<UserInterface>(state,
+                                              *map_metadata,
                                               *producer,
                                               *display,
                                               *encoder_input,

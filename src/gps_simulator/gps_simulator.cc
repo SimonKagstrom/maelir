@@ -91,7 +91,7 @@ GpsSimulator::OnActivation()
         case State::kWaitForRoute:
             if (application_state->demo_mode == false)
             {
-                m_state = State::kIdle;
+                m_state = State::kExitDemo;
                 break;
             }
             if (!m_route_pending && m_route_iterator)
@@ -104,7 +104,7 @@ GpsSimulator::OnActivation()
         case State::kDemo:
             if (application_state->demo_mode == false)
             {
-                m_state = State::kIdle;
+                m_state = State::kExitDemo;
                 break;
             }
             if (!m_route_iterator || m_next_position == std::nullopt)
@@ -117,13 +117,14 @@ GpsSimulator::OnActivation()
 
             return 82ms;
 
+        case State::kExitDemo:
+            m_has_data_semaphore.release();
+            m_state = State::kIdle;
+            break;
+
         case State::kValueCount:
             break;
         }
-
-        //    if (before != m_state)
-        //    printf("ST now %d\n", before);
-
     } while (m_state != before);
 
     return std::nullopt;

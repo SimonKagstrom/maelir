@@ -1,5 +1,6 @@
 #pragma once
 
+#include "application_state.hh"
 #include "base_thread.hh"
 #include "gps_port.hh"
 #include "hal/i_display.hh"
@@ -13,7 +14,8 @@
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
 public:
-    UserInterface(const MapMetadata& metadata,
+    UserInterface(ApplicationState& application_state,
+                  const MapMetadata& metadata,
                   TileProducer& tile_producer,
                   hal::IDisplay& display,
                   hal::IInput& input,
@@ -73,6 +75,7 @@ private:
     const uint32_t m_land_mask_rows;
     const uint32_t m_land_mask_row_size;
 
+    ApplicationState& m_application_state;
     TileProducer& m_tile_producer;
 
     hal::IDisplay& m_display;
@@ -113,4 +116,6 @@ private:
     Mode m_mode {Mode::kMap};
     State m_state {State::kMap};
     bool m_show_speedometer {true};
+
+    std::optional<milliseconds> m_button_down_timestamp;
 };

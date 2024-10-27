@@ -12,6 +12,7 @@ PUBLIC
 
 target_link_libraries(ui
 PUBLIC
+    application_state
     maelir_interface
     tile_producer
     gps_reader

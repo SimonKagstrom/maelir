@@ -10,7 +10,8 @@
 #include <cmath>
 #include <numbers>
 
-UserInterface::UserInterface(const MapMetadata& metadata,
+UserInterface::UserInterface(ApplicationState& application_state,
+                             const MapMetadata& metadata,
                              TileProducer& tile_producer,
                              hal::IDisplay& display,
                              hal::IInput& input,
@@ -20,6 +21,7 @@ UserInterface::UserInterface(const MapMetadata& metadata,
     , m_tile_columns(metadata.tile_column_size)
     , m_land_mask_rows(metadata.land_mask_rows)
     , m_land_mask_row_size(metadata.land_mask_row_size)
+    , m_application_state(application_state)
     , m_tile_producer(tile_producer)
     , m_display(display)
     , m_gps_port(std::move(gps_port))
@@ -45,7 +47,6 @@ UserInterface::UserInterface(const MapMetadata& metadata,
 std::optional<milliseconds>
 UserInterface::OnActivation()
 {
-
     // Handle input
     hal::IInput::Event event;
     while (m_input_queue.pop(event))
@@ -55,8 +56,10 @@ UserInterface::OnActivation()
         switch (event.type)
         {
         case hal::IInput::EventType::kButtonDown:
+            m_button_down_timestamp.emplace(os::GetTimeStamp());
             break;
         case hal::IInput::EventType::kButtonUp:
+            m_button_down_timestamp = std::nullopt;
             m_show_speedometer = !m_show_speedometer;
             break;
         case hal::IInput::EventType::kLeft:
@@ -70,6 +73,14 @@ UserInterface::OnActivation()
         }
         printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
         m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
+    }
+
+    if (m_button_down_timestamp && os::GetTimeStamp() - *m_button_down_timestamp > 5s)
+    {
+        auto state = m_application_state.Checkout();
+
+        state->demo_mode = !state->demo_mode;
+        m_button_down_timestamp.emplace(os::GetTimeStamp());
     }
 
     while (auto route = m_route_listener->Poll())

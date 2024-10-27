@@ -49,7 +49,8 @@ main(int argc, char* argv[])
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_simulator);
 
-    auto ui = std::make_unique<UserInterface>(*map_metadata,
+    auto ui = std::make_unique<UserInterface>(state,
+                                              *map_metadata,
                                               *producer,
                                               window.GetDisplay(),
                                               window,
@@ -64,7 +65,7 @@ main(int argc, char* argv[])
 
     window.show();
 
-//    route_service->RequestRoute({2592, 7032}, {16008, 4728});
+    //    route_service->RequestRoute({2592, 7032}, {16008, 4728});
 
     auto out = QApplication::exec();
 

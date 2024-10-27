@@ -20,6 +20,7 @@ private:
         kRequestRoute,
         kWaitForRoute,
         kDemo,
+        kExitDemo,
         kValueCount,
     };
 
