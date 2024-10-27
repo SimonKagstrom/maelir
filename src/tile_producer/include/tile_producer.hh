@@ -53,6 +53,8 @@ public:
     // Context: Another thread
     std::unique_ptr<ITileHandle> LockTile(const Point& point);
 
+    bool IsCached(const Point& point) const;
+
 private:
     std::optional<milliseconds> OnActivation() final;
 
@@ -77,7 +79,7 @@ private:
     etl::queue_spsc_atomic<uint32_t, kTileCacheSize> m_tile_requests;
     os::binary_semaphore m_tile_request_semaphore {0};
 
-    etl::mutex m_mutex;
+    mutable etl::mutex m_mutex;
 };
 
 std::unique_ptr<Image> DecodePng(std::span<const uint8_t> data);

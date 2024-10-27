@@ -130,6 +130,20 @@ TileProducer::LockTile(const Point& point)
     return nullptr;
 }
 
+bool
+TileProducer::IsCached(const Point& point) const
+{
+    auto index = PointToTileIndex(point);
+    if (!index)
+    {
+        return false;
+    }
+
+    std::scoped_lock lock(m_mutex);
+    return m_tile_index_to_cache[*index] != kInvalidTileIndex;
+}
+
+
 std::optional<milliseconds>
 TileProducer::OnActivation()
 {
