@@ -566,8 +566,11 @@ DisplayTarget::DisplayTarget()
      * Ref https://github.com/espressif/esp-idf/[...]/i80_controller_example_main.c
      *
      *   "PCLK frequency can't go too high as the limitation of PSRAM bandwidth"
+     *
+     * However, with the fill callback it can go up to high frequencies. For some
+     * reason, this also affect backlight flickering.
      */
-    panel_config.timings.pclk_hz = 16 * 1000 * 1000;
+    panel_config.timings.pclk_hz = 17 * 1000 * 1000;
     panel_config.timings.h_res = kWidth;
     panel_config.timings.v_res = kHeight;
     panel_config.timings.hsync_back_porch = 44;
