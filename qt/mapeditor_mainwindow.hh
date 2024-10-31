@@ -102,6 +102,7 @@ private:
 
     etl::list<GpsToPixel, 2> m_positions;
     std::optional<MapPositionData> m_map_position_data;
+    std::optional<Point> m_home_position;
 
     // Colors for land (for route planning)
     std::unordered_set<QColor> m_land_colors;

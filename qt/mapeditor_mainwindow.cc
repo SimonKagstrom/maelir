@@ -163,6 +163,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     contextMenu.addSeparator();
     auto action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
     auto action_add_land_color = contextMenu.addAction("Add land color for this point");
+    auto action_home_position = contextMenu.addAction("Set home position at this point");
     auto action_calculate_land = contextMenu.addAction("Calculate land tiles");
 
     auto selectedAction = contextMenu.exec(mouse_position);
@@ -279,6 +280,12 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             }
         }
     }
+    else if (selectedAction == action_home_position)
+    {
+        m_home_position = Point {x, y};
+    }
+
+
     update();
     m_ui->displayGraphicsView->repaint();
 }
@@ -398,6 +405,16 @@ MapEditorMainWindow::LoadYaml(const char* filename)
                 auto index = (pos["y_pixel"].as<int>() / kTileSize) * m_map->width() / kTileSize +
                              pos["x_pixel"].as<int>() / kTileSize;
                 m_all_land_tiles[index] = true;
+            }
+        }
+
+        if (node["home_position"])
+        {
+            auto home_pos = node["home_position"];
+            if (home_pos["x_pixel"] && home_pos["y_pixel"])
+            {
+                m_home_position =
+                    Point {home_pos["x_pixel"].as<int>(), home_pos["y_pixel"].as<int>()};
             }
         }
 
@@ -521,6 +538,16 @@ MapEditorMainWindow::SaveYaml()
         }
 
         node["skip_tiles"] = skip_tiles;
+    }
+
+    if (m_home_position)
+    {
+        YAML::Node home_position;
+
+        home_position["x_pixel"] = m_home_position->x;
+        home_position["y_pixel"] = m_home_position->y;
+
+        node["home_position"] = home_position;
     }
 
     YAML::Node all_land_tiles;

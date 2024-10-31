@@ -21,6 +21,10 @@ corner_position:
   latitude_pixel_size: 16485
   longitude_pixel_size: 8766
 
+home_position:
+  - x_pixel: 55
+    y_pixel: 190
+
 land_pixel_colors:
   - r: 254
     g: 242
