@@ -25,7 +25,7 @@ private:
     };
 
     std::optional<milliseconds> OnActivation() final;
-    hal::RawGpsData WaitForData(os::binary_semaphore& semaphore) final;
+    std::optional<hal::RawGpsData> WaitForData(os::binary_semaphore& semaphore) final;
 
     void RunDemo();
 

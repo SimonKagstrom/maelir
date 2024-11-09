@@ -13,7 +13,7 @@ public:
     UartGps(uart_port_t port_number, uint8_t rx_pin, uint8_t tx_pin);
 
 private:
-    hal::RawGpsData WaitForData(os::binary_semaphore& semaphore) final;
+    std::optional<hal::RawGpsData> WaitForData(os::binary_semaphore& semaphore) final;
 
     void OnLine(std::string_view line);
 

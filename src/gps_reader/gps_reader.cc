@@ -79,17 +79,17 @@ GpsReader::OnActivation()
 {
     auto data = m_gps.WaitForData(GetSemaphore());
 
-    if (data.position)
+    if (data->position)
     {
-        m_position = data.position;
+        m_position = data->position;
     }
-    if (data.speed)
+    if (data->speed)
     {
-        m_speed = data.speed;
+        m_speed = data->speed;
     }
-    if (data.heading)
+    if (data->heading)
     {
-        m_heading = data.heading;
+        m_heading = data->heading;
     }
 
     if (!m_position || !m_speed || !m_heading)

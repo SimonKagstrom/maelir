@@ -13,7 +13,7 @@ public:
     {
     }
 
-    hal::RawGpsData WaitForData(os::binary_semaphore& semaphore) final
+    std::optional<hal::RawGpsData> WaitForData(os::binary_semaphore& semaphore) final
     {
         if (m_application_state.CheckoutReadonly()->demo_mode)
         {

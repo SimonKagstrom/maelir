@@ -130,7 +130,7 @@ GpsSimulator::OnActivation()
     return std::nullopt;
 }
 
-hal::RawGpsData
+std::optional<hal::RawGpsData>
 GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
 {
     m_has_data_semaphore.acquire();
@@ -139,7 +139,7 @@ GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
 
     semaphore.release();
 
-    return {position, m_angle, m_speed};
+    return hal::RawGpsData {position, m_angle, m_speed};
 }
 
 void

@@ -126,6 +126,12 @@ UserInterface::OnActivation()
     // Now invalid
     m_frame_buffer = nullptr;
 
+    if (m_button_down_timestamp)
+    {
+        // Handle the long presses
+        return 100ms;
+    }
+
     return std::nullopt;
 }
 
