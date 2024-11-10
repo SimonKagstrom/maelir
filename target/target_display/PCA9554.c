@@ -138,8 +138,21 @@ void my_PCA9554_batch(MY_PCA9554_HANDLE *handle, const uint8_t *operations, uint
                 my_PCA9554_write_command(handle, operations[++i], 0);
                 my_PCA9554_write_command(handle, operations[++i], 1);
                 break;
+            case WRITE_C8_D16:
+                my_PCA9554_write_command(handle, operations[++i], 0);
+                my_PCA9554_write_command(handle, operations[++i], 0);
+                my_PCA9554_write_command(handle, operations[++i], 1);
+                break;
             case WRITE_COMMAND_8:
                 my_PCA9554_write_command(handle, operations[++i], 0);
+                break;
+            case WRITE_BYTES:
+                {
+                    uint8_t count = operations[++i];
+                    for (uint8_t j = 0; j < count; ++j) {
+                        my_PCA9554_write_command(handle, operations[++i], j == count - 1);
+                    }
+                }
                 break;
             case END_WRITE:
                 my_PCA9554_end_write_command(handle);

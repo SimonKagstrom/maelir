@@ -9,8 +9,8 @@
 namespace hal
 {
 
-constexpr auto kDisplayWidth = 720;
-constexpr auto kDisplayHeight = 720;
+constexpr auto kDisplayWidth = 480;
+constexpr auto kDisplayHeight = 480;
 
 class IDisplay
 {

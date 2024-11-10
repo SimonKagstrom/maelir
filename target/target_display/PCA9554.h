@@ -21,6 +21,8 @@ typedef enum
   BEGIN_WRITE,
   WRITE_COMMAND_8,
   WRITE_C8_D8,
+  WRITE_C8_D16,
+  WRITE_BYTES,
   END_WRITE,
   DELAY,
 } spi_operation_type_t;

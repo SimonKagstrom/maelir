@@ -132,7 +132,7 @@ UserInterface::OnActivation()
         return 100ms;
     }
 
-    return std::nullopt;
+    return 500ms;//std::nullopt;
 }
 
 
