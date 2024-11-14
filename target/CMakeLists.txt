@@ -1,12 +1,10 @@
 cmake_minimum_required (VERSION 3.21)
 
 # Include for ESP-IDF build system functions
-# include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+#include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 
 project (maelir_esp32s3 LANGUAGES CXX C ASM)
-
-set(TARGET_TYPE "esp32" CACHE STRING "Target type")
 
 # Create idf::{target} and idf::freertos static libraries
 idf_build_process(esp32s3
@@ -95,6 +93,8 @@ idf_build_process(esp32s3
         vfs
         wear_levelling
         xtensa
+
+        esp_io_expander_tca9554
     SDKCONFIG ${CMAKE_CURRENT_LIST_DIR}/sdkconfig
     BUILD_DIR ${CMAKE_BINARY_DIR})
 
@@ -110,28 +110,28 @@ add_subdirectory(target_gps)
 add_subdirectory(target_input)
 
 
-set(elf_file ${CMAKE_PROJECT_NAME}.elf)
-add_executable(${elf_file}
-    main.cc
-
-    os/base_thread_freertos.cc
-    os/semaphore_freertos.cc
-)
-
-target_link_libraries(${elf_file}
-    idf::freertos
-    idf::spi_flash
-    idf::esp_partition
-    encoder_input
-    tile_producer
-    gps_simulator
-    ui
-    gps_reader
-    target_display
-    uart_gps
-    mp-units::mp-units
-)
+#set(elf_file ${CMAKE_PROJECT_NAME}.elf)
+#add_executable(${elf_file}
+#    main.cc
+#
+#    os/base_thread_freertos.cc
+#    os/semaphore_freertos.cc
+#)
+#
+#target_link_libraries(${elf_file}
+#    idf::freertos
+#    idf::spi_flash
+#    idf::esp_partition
+#    encoder_input
+#    tile_producer
+#    gps_simulator
+#    ui
+#    gps_reader
+#    target_display
+#    uart_gps
+#    mp-units::mp-units
+#)
 
 # Attach additional targets to the executable file for flashing,
 # linker script generation, partition_table generation, etc.
-idf_build_executable(${elf_file})
+#idf_build_executable(${elf_file})

@@ -41,8 +41,12 @@ extern "C" {
 
 constexpr auto init_operations =
     hal::kDisplayWidth == 480 ? TL028WVC01_init_operations : hd40015c40_init_operations;
-constexpr auto init_operations_size =
-    hal::kDisplayWidth == 480 ? sizeof(TL028WVC01_init_operations) : sizeof(hd40015c40_init_operations);
+constexpr auto init_operations_size = hal::kDisplayWidth == 480
+                                          ? sizeof(TL028WVC01_init_operations)
+                                          : sizeof(hd40015c40_init_operations);
+
+bool
+OnVsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t* edata, void* user_ctx);
 
 DisplayTarget::DisplayTarget()
 {
@@ -102,6 +106,7 @@ DisplayTarget::DisplayTarget()
     panel_config.timings.vsync_pulse_width = 2;
     panel_config.timings.flags.pclk_active_neg = 0;
 
+    panel_config.timings.flags.hsync_idle_low = 1;
     panel_config.timings.flags.vsync_idle_low = 1;
 
     // Bounce buffer
@@ -117,14 +122,15 @@ DisplayTarget::DisplayTarget()
     assert(m_frame_buffers[0]);
     assert(m_frame_buffers[1]);
 
-    memset(m_frame_buffers[0], 0, hal::kDisplayWidth * hal::kDisplayHeight * 2);
-    memset(m_frame_buffers[1], 0, hal::kDisplayWidth * hal::kDisplayHeight * 2);
+    memset(m_frame_buffers[0], 0xff, hal::kDisplayWidth * hal::kDisplayHeight * 2);
+    memset(m_frame_buffers[1], 0xff, hal::kDisplayWidth * hal::kDisplayHeight * 2);
 
     ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(&panel_config, &m_panel_handle));
 
     esp_lcd_rgb_panel_event_callbacks_t callbacks = {};
-//    callbacks.on_bounce_empty = DisplayTarget::OnBounceBufferFillStatic;
-//    callbacks.on_bounce_frame_finish = DisplayTarget::OnBounceBufferFinishStatic;
+    callbacks.on_bounce_empty = DisplayTarget::OnBounceBufferFillStatic;
+    callbacks.on_vsync = OnVsync;
+    callbacks.on_bounce_frame_finish = DisplayTarget::OnBounceBufferFinishStatic;
 
     ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(m_panel_handle, &callbacks, this));
 
@@ -143,14 +149,22 @@ DisplayTarget::GetFrameBuffer()
 
 static std::atomic<int> fill_cnt = 0;
 static std::atomic<int> finish_cnt = 0;
+static std::atomic<int> vsync_cnt = 0;
 void IRAM_ATTR
 DisplayTarget::Flip()
 {
-    printf("FL:I! %d, %d\n", fill_cnt.load(), finish_cnt.load());
+    printf("FLIP! %d, %d. Vsync %d\n", fill_cnt.load(), finish_cnt.load(), vsync_cnt.load());
     m_flip_requested = true;
     m_bounce_copy_end.acquire();
 }
 
+
+bool IRAM_ATTR
+OnVsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t* edata, void* user_ctx)
+{
+    vsync_cnt++;
+    return false;
+}
 
 void IRAM_ATTR
 DisplayTarget::OnBounceBufferFill(void* bounce_buf, int pos_px, int len_bytes)

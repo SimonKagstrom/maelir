@@ -6,7 +6,6 @@ extern "C" {
 }
 
 // TL028WVC01 2.8" round display
-// TL028WVC01 2.8" round display
 static const uint8_t TL028WVC01_init_operations[] = {
     BEGIN_WRITE,
 
@@ -99,6 +98,7 @@ static const uint8_t TL028WVC01_init_operations[] = {
     WRITE_BYTES, 5,
     0x77, 0x01, 0x00, 0x00, 0x00,
 
+    WRITE_COMMAND_8, 0x23,
     WRITE_COMMAND_8, 0x11,
 
     END_WRITE,
