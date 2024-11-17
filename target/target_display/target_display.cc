@@ -57,8 +57,8 @@ bool
 OnVsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t* edata, void* user_ctx);
 
 
-// Define the TL028WVC01_init_operations list
-const st7701_lcd_init_cmd_t xTL028WVC01_init_operations[] = {
+// Define the TL028WVC01_init_operations list (from Arduino, mapped to st7701_lcd_init_cmd_t)
+const st7701_lcd_init_cmd_t TL028WVC01_init_operations[] = {
     {0x01, NULL, 0, 120}, // Reset
     {0xFF, (uint8_t[]) {0x77, 0x01, 0x00, 0x00, 0x13}, 5, 0},
     {0xEF, (uint8_t[]) {0x08}, 1, 0},
@@ -69,44 +69,6 @@ const st7701_lcd_init_cmd_t xTL028WVC01_init_operations[] = {
     {0xC7, (uint8_t[]) {0x00}, 1, 0},
     {0xCC, (uint8_t[]) {0x10}, 1, 0},
     {0xCD, (uint8_t[]) {0x08}, 1, 0},
-    {0xB0,
-     (uint8_t[]) {0x05,
-                  0x12,
-                  0x98,
-                  0x0E,
-                  0x0F,
-                  0x07,
-                  0x07,
-                  0x09,
-                  0x09,
-                  0x23,
-                  0x05,
-                  0x52,
-                  0x0F,
-                  0x67,
-                  0x2C,
-                  0x11},
-     16,
-     0},
-    {0xB1,
-     (uint8_t[]) {0x0B,
-                  0x11,
-                  0x97,
-                  0x0C,
-                  0x12,
-                  0x06,
-                  0x06,
-                  0x08,
-                  0x08,
-                  0x22,
-                  0x03,
-                  0x51,
-                  0x11,
-                  0x66,
-                  0x2B,
-                  0x0F},
-     16,
-     0},
     {0xFF, (uint8_t[]) {0x77, 0x01, 0x00, 0x00, 0x11}, 5, 0},
     {0xB0, (uint8_t[]) {0x5D}, 1, 0},
     {0xB1, (uint8_t[]) {0x2D}, 1, 0},
@@ -189,15 +151,11 @@ const st7701_lcd_init_cmd_t xTL028WVC01_init_operations[] = {
      0},
     {0xEF, (uint8_t[]) {0x08, 0x08, 0x08, 0x45, 0x3F, 0x54}, 6, 0},
     {0xFF, (uint8_t[]) {0x77, 0x01, 0x00, 0x00, 0x00}, 5, 0},
-    {0x11, NULL, 0, 120},
-    {0x3A, (uint8_t[]) {0x60}, 1, 0},
-    {0x36, (uint8_t[]) {0x00}, 1, 0},
+    {0x3A, (uint8_t[]) {0x60}, 1, 0}, // COLMOD
+                                      //    {0x36, (uint8_t[]) {0x00}, 1, 0},
+    {0x11, NULL, 0, 10},
     {0x20, NULL, 0, 0},
-    {0x29, NULL, 0, 50},
-
-    // {0xFF, (uint8_t []){0x77, 0x01, 0x00, 0x00, 0x12}, 5, 0}, /* This part of the parameters can be used for screen self-test */
-    //{0xD1, (uint8_t []){0x81}, 1, 0},
-    //{0xD2, (uint8_t []){0x08}, 1, 0},
+    {0x29, NULL, 0, 0},
 };
 
 DisplayTarget::DisplayTarget()
@@ -233,11 +191,6 @@ DisplayTarget::DisplayTarget()
 
     esp_io_expander_set_dir(expander_handle, kExpanderTftReset, IO_EXPANDER_OUTPUT);
 
-    esp_io_expander_set_level(expander_handle, kExpanderTftReset, 0);
-    os::Sleep(10ms);
-    esp_io_expander_set_level(expander_handle, kExpanderTftReset, 1);
-    os::Sleep(100ms);
-
     esp_io_expander_set_dir(expander_handle, kExpanderTftCs, IO_EXPANDER_OUTPUT);
     esp_io_expander_set_dir(expander_handle, kExpanderTftSck, IO_EXPANDER_OUTPUT);
     esp_io_expander_set_dir(expander_handle, kExpanderTftMosi, IO_EXPANDER_OUTPUT);
@@ -259,7 +212,7 @@ DisplayTarget::DisplayTarget()
     };
     esp_lcd_panel_io_3wire_spi_config_t io_config = {
         .line_config = line_config,
-        .expect_clk_speed = 100 * 1000U,
+        .expect_clk_speed = 500 * 1000U,
         .spi_mode = 0,
         .lcd_cmd_bytes = 1,
         .lcd_param_bytes = 1,
@@ -331,8 +284,8 @@ DisplayTarget::DisplayTarget()
         },
     };
     st7701_vendor_config_t vendor_config = {
-        .init_cmds = xTL028WVC01_init_operations,
-        .init_cmds_size = sizeof(xTL028WVC01_init_operations) / sizeof(st7701_lcd_init_cmd_t),
+        .init_cmds = TL028WVC01_init_operations,
+        .init_cmds_size = sizeof(TL028WVC01_init_operations) / sizeof(st7701_lcd_init_cmd_t),
         .rgb_config = &rgb_config,
         .flags {.enable_io_multiplex = 0},
     };
@@ -341,7 +294,7 @@ DisplayTarget::DisplayTarget()
         .reset_gpio_num = GPIO_NUM_NC,
         .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
         .data_endian = LCD_RGB_DATA_ENDIAN_LITTLE,
-        .bits_per_pixel = 16,
+        .bits_per_pixel = 18,
         .vendor_config = &vendor_config,
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7701(panel_io, &panel_config, &m_panel_handle));
@@ -355,10 +308,14 @@ DisplayTarget::DisplayTarget()
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(m_panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(m_panel_handle));
-
+    ESP_LOGI(kTag, "Display init done");
 
     // Turn on the backlight
     esp_io_expander_set_level(expander_handle, kExpanderTftBacklight, 1);
+
+    // For now, maybe keep it in the future
+    esp_io_expander_del(expander_handle);
+    i2c_del_master_bus(bus_handle);
 }
 
 uint16_t*
