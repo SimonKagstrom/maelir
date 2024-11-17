@@ -113,7 +113,6 @@ UserInterface::OnActivation()
     // Can potentially have to wait
     m_frame_buffer = m_display.GetFrameBuffer();
 
-    memset(m_frame_buffer, 0xff, hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
     DrawMap();
     DrawRoute();
     DrawBoat();

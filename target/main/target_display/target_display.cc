@@ -202,11 +202,10 @@ const st7701_lcd_init_cmd_t xTL028WVC01_init_operations[] = {
      0},
     {0xEF, (uint8_t[]) {0x08, 0x08, 0x08, 0x45, 0x3F, 0x54}, 6, 0},
     {0xFF, (uint8_t[]) {0x77, 0x01, 0x00, 0x00, 0x00}, 5, 0},
-    //{0x23, NULL, 0, 0},
     {0x11, NULL, 0, 120},
-    //    {0x3A, (uint8_t[]){0x66}, 1, 0},
-    //    {0x36, (uint8_t[]){0x00}, 1, 0},
-    //    {0x35, (uint8_t[]){0x00}, 1, 0},
+    {0x3A, (uint8_t[]) {0x60}, 1, 0},
+    {0x36, (uint8_t[]) {0x00}, 1, 0},
+    {0x20, NULL, 0, 0},
     {0x29, NULL, 0, 50},
 
     // {0xFF, (uint8_t []){0x77, 0x01, 0x00, 0x00, 0x12}, 5, 0}, /* This part of the parameters can be used for screen self-test */
@@ -296,25 +295,26 @@ DisplayTarget::DisplayTarget()
     esp_lcd_rgb_panel_config_t rgb_config = {
         .clk_src = LCD_CLK_SRC_DEFAULT,
         .timings =
-        {
-            .pclk_hz = 17 * 1000 * 1000,
-            .h_res = hal::kDisplayWidth,
-            .v_res = hal::kDisplayHeight,
-            .hsync_pulse_width = 2,
-            .hsync_back_porch = 44,
-            .hsync_front_porch = 50,
-            .vsync_pulse_width = 2,
-            .vsync_back_porch = 18,
-            .vsync_front_porch = 50,
-            .flags {
-                .hsync_idle_low = false,
-                .vsync_idle_low = false,
-                .de_idle_high = false,
-                .pclk_active_neg = false,
-                .pclk_idle_high = false,
+            {
+                .pclk_hz = 17 * 1000 * 1000,
+                .h_res = hal::kDisplayWidth,
+                .v_res = hal::kDisplayHeight,
+                .hsync_pulse_width = 2,
+                .hsync_back_porch = 44,
+                .hsync_front_porch = 50,
+                .vsync_pulse_width = 2,
+                .vsync_back_porch = 18,
+                .vsync_front_porch = 50,
+                .flags {
+                    .hsync_idle_low = false,
+                    .vsync_idle_low = false,
+                    .de_idle_high = false,
+                    .pclk_active_neg = false,
+                    .pclk_idle_high = false,
+                },
             },
-        },
         .data_width = 16,
+        .bits_per_pixel = 16,
         .bounce_buffer_size_px = hal::kDisplayWidth * 8,
         .psram_trans_align = 64,
         .hsync_gpio_num = TFT_HSYNC,
@@ -355,7 +355,7 @@ DisplayTarget::DisplayTarget()
 
     const esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = GPIO_NUM_NC,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR,
+        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
         .data_endian = LCD_RGB_DATA_ENDIAN_LITTLE,
         .bits_per_pixel = 16,
         .vendor_config = &vendor_config,
