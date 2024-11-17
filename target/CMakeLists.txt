@@ -17,30 +17,3 @@ add_subdirectory(main/target_display)
 add_subdirectory(main/target_gps)
 add_subdirectory(main/target_input)
 add_subdirectory(os)
-
-
-#set(elf_file ${CMAKE_PROJECT_NAME}.elf)
-#add_executable(${elf_file}
-#    main.cc
-#
-#    os/base_thread_freertos.cc
-#    os/semaphore_freertos.cc
-#)
-#
-#target_link_libraries(${elf_file}
-#    idf::freertos
-#    idf::spi_flash
-#    idf::esp_partition
-#    encoder_input
-#    tile_producer
-#    gps_simulator
-#    ui
-#    gps_reader
-#    target_display
-#    uart_gps
-#    mp-units::mp-units
-#)
-
-# Attach additional targets to the executable file for flashing,
-# linker script generation, partition_table generation, etc.
-#idf_build_executable(${elf_file})
