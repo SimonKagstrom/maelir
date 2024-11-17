@@ -39,7 +39,8 @@ app_main(void)
 
     ApplicationState state;
 
-    state.Checkout()->demo_mode = false;
+    //state.Checkout()->demo_mode = false;
+    state.Checkout()->demo_mode = true;
 
     auto encoder_input = std::make_unique<EncoderInput>(6,  // Pin A -> 6 (MOSI/MISO)
                                                         7,  // Pin B -> 7 (MOSI/MISO)

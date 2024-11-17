@@ -8,6 +8,9 @@ cmake -B maelir -GNinja -DCMAKE_PREFIX_PATH="`pwd`/maelir/build/Debug/generators
 Target:
 
 ```
+cd <src>/target
+idf.py update-dependencies
+
 conan install -of ~/projects/build/maelir_esp32s3/ -pr ~/projects/maelir/target/conanprofile.txt --build=missing -s build_type=Release ~/projects/maelir/conanfile-target.txt
 
 cmake -GNinja -B maelir_esp32s3/ -DCMAKE_PREFIX_PATH="`pwd`/maelir_esp32s3/build/Release/generators/" -DCMAKE_BUILD_TYPE=Release ~/projects/maelir/target/
