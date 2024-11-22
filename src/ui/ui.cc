@@ -59,7 +59,7 @@ UserInterface::OnActivation()
             m_button_timer = StartTimer(5s);
             break;
         case hal::IInput::EventType::kButtonUp:
-            if (!m_button_timer || (m_button_timer->TimeLeft() > 4700ms))
+            if (m_button_timer && (m_button_timer->TimeLeft() > 4500ms))
             {
                 m_show_speedometer = !m_show_speedometer;
             }
