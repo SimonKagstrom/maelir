@@ -7,4 +7,5 @@ target_link_libraries(target_os
 PUBLIC
     idf::freertos
     maelir_interface
+    timer_manager
 )

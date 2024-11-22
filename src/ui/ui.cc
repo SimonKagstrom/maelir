@@ -56,11 +56,14 @@ UserInterface::OnActivation()
         switch (event.type)
         {
         case hal::IInput::EventType::kButtonDown:
-            m_button_down_timestamp.emplace(os::GetTimeStamp());
+            m_button_timer = StartTimer(5s);
             break;
         case hal::IInput::EventType::kButtonUp:
-            m_button_down_timestamp = std::nullopt;
-            m_show_speedometer = !m_show_speedometer;
+            if (!m_button_timer || (m_button_timer->TimeLeft() > 4700ms))
+            {
+                m_show_speedometer = !m_show_speedometer;
+            }
+            m_button_timer = nullptr;
             break;
         case hal::IInput::EventType::kLeft:
             mode--;
@@ -75,12 +78,12 @@ UserInterface::OnActivation()
         m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
     }
 
-    if (m_button_down_timestamp && os::GetTimeStamp() - *m_button_down_timestamp > 5s)
+    if (m_button_timer && m_button_timer->IsExpired())
     {
         auto state = m_application_state.Checkout();
 
         state->demo_mode = !state->demo_mode;
-        m_button_down_timestamp.emplace(os::GetTimeStamp());
+        m_button_timer = nullptr;
     }
 
     while (auto route = m_route_listener->Poll())
@@ -125,12 +128,6 @@ UserInterface::OnActivation()
     m_display.Flip();
     // Now invalid
     m_frame_buffer = nullptr;
-
-    if (m_button_down_timestamp)
-    {
-        // Handle the long presses
-        return 100ms;
-    }
 
     return std::nullopt;
 }

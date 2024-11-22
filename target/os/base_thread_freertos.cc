@@ -13,6 +13,7 @@ struct BaseThread::Impl
 };
 
 BaseThread::BaseThread()
+    : m_timer_manager(m_semaphore)
 {
     m_impl = new Impl;
     m_impl->m_task = nullptr;

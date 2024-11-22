@@ -117,5 +117,5 @@ private:
     State m_state {State::kMap};
     bool m_show_speedometer {true};
 
-    std::optional<milliseconds> m_button_down_timestamp;
+    std::unique_ptr<os::ITimer> m_button_timer;
 };

@@ -2,6 +2,7 @@
 
 #include "semaphore.hh"
 #include "time.hh"
+#include "timer_manager.hh"
 
 #include <atomic>
 #include <optional>
@@ -40,6 +41,14 @@ protected:
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
 
+    std::unique_ptr<ITimer> StartTimer(
+        milliseconds timeout, std::function<std::optional<milliseconds>()> on_timeout = []() {
+            return std::optional<milliseconds>();
+        })
+    {
+        return m_timer_manager.StartTimer(timeout, on_timeout);
+    }
+
     os::binary_semaphore& GetSemaphore()
     {
         return m_semaphore;
@@ -48,14 +57,36 @@ protected:
 private:
     struct Impl;
 
+    milliseconds Min(auto a, auto b) const
+    {
+        if (a && b)
+        {
+            return std::min(*a, *b);
+        }
+        else if (a)
+        {
+            return *a;
+        }
+        else if (b)
+        {
+            return *b;
+        }
+
+        // Unreachable
+        return 0ms;
+    }
+
     void ThreadLoop()
     {
         while (m_running)
         {
-            auto time = OnActivation();
-            if (time)
+            auto thread_wakeup = OnActivation();
+            auto timer_expiery = m_timer_manager.Expire();
+
+            if (thread_wakeup || timer_expiery)
             {
-                m_semaphore.try_acquire_for(*time);
+                auto time = Min(thread_wakeup, timer_expiery);
+                m_semaphore.try_acquire_for(time);
             }
             else
             {
@@ -67,6 +98,7 @@ private:
     std::atomic_bool m_running {true};
     binary_semaphore m_semaphore {0};
     Impl* m_impl {nullptr}; // Raw pointer to allow forward declaration
+    TimerManager m_timer_manager;
 };
 
 } // namespace os

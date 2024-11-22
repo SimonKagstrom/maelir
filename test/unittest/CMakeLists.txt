@@ -23,6 +23,7 @@ add_executable(ut
     test_application_state.cc
     test_nmea_parser.cc
     test_router.cc
+    test_timer_manager.cc
 )
 
 target_link_libraries(ut
@@ -30,6 +31,7 @@ target_link_libraries(ut
     nmea_parser
     router
     router_interface
+    timer_manager
     doctest::doctest
     trompeloeil::trompeloeil
 )

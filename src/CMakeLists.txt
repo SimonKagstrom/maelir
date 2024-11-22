@@ -10,6 +10,7 @@ add_subdirectory(painter)
 add_subdirectory(route_service)
 add_subdirectory(router)
 add_subdirectory(tile_producer)
+add_subdirectory(timer_manager)
 add_subdirectory(ui)
 
 

@@ -42,6 +42,7 @@ target_link_libraries(os_qt
 PUBLIC
     Qt6::Widgets
     fmt::fmt
+    timer_manager
     maelir_interface
 )
 

@@ -10,6 +10,7 @@ struct BaseThread::Impl
 };
 
 BaseThread::BaseThread()
+    : m_timer_manager(m_semaphore)
 {
     m_impl = new Impl;
     m_impl->m_thread = QThread::create([this]() { ThreadLoop(); });
@@ -35,12 +36,10 @@ BaseThread::Start(uint8_t, ThreadPriority)
 milliseconds
 os::GetTimeStamp()
 {
-    static auto at_start = std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(
-        std::chrono::system_clock::now().time_since_epoch());
+    static auto at_start = std::chrono::high_resolution_clock::now();
 
-    auto now = std::chrono::system_clock::now().time_since_epoch() - at_start;
-
-    return milliseconds(now.count());
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - at_start);
 }
 
 void
