@@ -86,7 +86,7 @@ TimerManager::StartTimer(milliseconds timeout,
     {
         return nullptr;
     }
-    // Run old timers before
+    // Run old timers before (also to update the last expiery)
     Expire();
 
     return std::unique_ptr<ITimer>(new TimerImpl(this, timeout, on_timeout));

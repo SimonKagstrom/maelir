@@ -57,7 +57,7 @@ protected:
 private:
     struct Impl;
 
-    milliseconds Min(auto a, auto b) const
+    std::optional<milliseconds> SelectWakeup(auto a, auto b) const
     {
         if (a && b)
         {
@@ -73,7 +73,7 @@ private:
         }
 
         // Unreachable
-        return 0ms;
+        return std::nullopt;
     }
 
     void ThreadLoop()
@@ -83,10 +83,9 @@ private:
             auto thread_wakeup = OnActivation();
             auto timer_expiery = m_timer_manager.Expire();
 
-            if (thread_wakeup || timer_expiery)
+            if (auto time = SelectWakeup(thread_wakeup, timer_expiery); time)
             {
-                auto time = Min(thread_wakeup, timer_expiery);
-                m_semaphore.try_acquire_for(time);
+                m_semaphore.try_acquire_for(*time);
             }
             else
             {
