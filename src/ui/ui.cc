@@ -56,7 +56,14 @@ UserInterface::OnActivation()
         switch (event.type)
         {
         case hal::IInput::EventType::kButtonDown:
-            m_button_timer = StartTimer(5s);
+            m_button_timer = nullptr;
+            m_button_timer = StartTimer(5s, [this]() {
+                auto state = m_application_state.Checkout();
+
+                state->demo_mode = !state->demo_mode;
+
+                return std::nullopt;
+            });
             break;
         case hal::IInput::EventType::kButtonUp:
             if (m_button_timer && (m_button_timer->TimeLeft() > 4500ms))
@@ -78,13 +85,6 @@ UserInterface::OnActivation()
         m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
     }
 
-    if (m_button_timer && m_button_timer->IsExpired())
-    {
-        auto state = m_application_state.Checkout();
-
-        state->demo_mode = !state->demo_mode;
-        m_button_timer = nullptr;
-    }
 
     while (auto route = m_route_listener->Poll())
     {
