@@ -17,8 +17,8 @@ UserInterface::UserInterface(ApplicationState& application_state,
                              hal::IInput& input,
                              std::unique_ptr<IGpsPort> gps_port,
                              std::unique_ptr<IRouteListener> route_listener)
-    : m_tile_rows(metadata.tile_row_size)
-    , m_tile_columns(metadata.tile_column_size)
+    : m_tile_rows(metadata.tile_rows)
+    , m_tile_row_size(metadata.tile_row_size)
     , m_land_mask_rows(metadata.land_mask_rows)
     , m_land_mask_row_size(metadata.land_mask_row_size)
     , m_application_state(application_state)
@@ -455,7 +455,7 @@ UserInterface::PositionToMapCenter(const auto& pixel_position) const
                    static_cast<int>(m_tile_rows) * kTileSize - hal::kDisplayWidth);
     y = std::clamp(static_cast<int>(y - hal::kDisplayHeight / 2),
                    0,
-                   static_cast<int>(m_tile_columns) * kTileSize - hal::kDisplayHeight);
+                   static_cast<int>(m_tile_rows) * kTileSize - hal::kDisplayHeight);
 
     return {x, y};
 }

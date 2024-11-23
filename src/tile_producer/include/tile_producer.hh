@@ -16,8 +16,6 @@
 // Cache all visible tiles, plus a few for good measure
 constexpr auto kTileCacheSize =
     2 + ((hal::kDisplayWidth / kTileSize) + 1) * ((hal::kDisplayHeight / kTileSize) + 1);
-static_assert(hal::kDisplayWidth % kTileSize == 0);
-static_assert(hal::kDisplayHeight % kTileSize == 0);
 static_assert(kTileCacheSize <= 32); // For the uint32_t atomic
 
 class ITileHandle
@@ -68,8 +66,8 @@ private:
     const uint8_t* m_flash_start;
     const FlashTile* m_flash_tile_data;
     const uint32_t m_tile_count;
+    const uint32_t m_tile_row_size;
     const uint32_t m_tile_rows;
-    const uint32_t m_tile_columns;
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     etl::list<uint32_t, kTileCacheSize> m_tile_request_order;

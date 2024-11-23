@@ -18,10 +18,10 @@ cmake -GNinja -B maelir_esp32s3/ -DCMAKE_PREFIX_PATH="`pwd`/maelir_esp32s3/build
 
 Create the map data:
 ```
-ulimit -n 65535
+ulimit -n 65536
 tools/image_save.py image_cache out_dir <path-to-saved-har-json-file>
-<qt-build>/map_editor out_dir/test.png map.yaml
-tools/tiler.py map.yaml map.bin
+<qt-build>/map_editor out_dir/test.png maelir_metadata.yaml
+tools/tiler.py maelir_metadata.yaml map.bin
 ```
 
 Flash the map:

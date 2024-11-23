@@ -5,6 +5,8 @@
 
 #include <cstddef>
 
+constexpr auto kGpsPositionSize = 256;
+
 constexpr auto kTileSize = 240;
 constexpr auto kPathFinderTileSize = kTileSize / 10;
 
@@ -18,27 +20,42 @@ struct FlashTile
 };
 static_assert(sizeof(FlashTile) == 8);
 
+struct MapGpsRasterTile
+{
+    float latitude;
+    float longitude;
+
+    float latitude_offset;
+    float longitude_offset;
+};
+
 struct MapMetadata
 {
     uint64_t magic;
-    double corner_latitude;
-    double corner_longitude;
+
+    float lowest_longitude;
+    float lowest_latitude;
+    float highest_longitude;
+    float highest_latitude;
 
     uint32_t tile_count;
-    uint32_t pixel_longitude_size;
-    uint32_t pixel_latitude_size;
     uint32_t tile_row_size;
-    uint32_t tile_column_size;
+    uint32_t tile_rows;
 
     uint32_t land_mask_row_size;
     uint32_t land_mask_rows;
 
+    uint32_t gps_data_row_size;
+    uint32_t gps_data_rows;
+
     // Offset from the start of the metadata
     uint32_t tile_data_offset;
     uint32_t land_mask_data_offset;
+    uint32_t gps_position_offset;
 };
 static_assert(offsetof(MapMetadata, tile_count) == 24);
 static_assert(offsetof(MapMetadata, land_mask_data_offset) == 56);
+static_assert(sizeof(MapMetadata) == 64);
 
 struct Point
 {

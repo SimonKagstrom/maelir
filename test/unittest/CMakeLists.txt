@@ -18,9 +18,11 @@ enable_testing()
 add_subdirectory(../.. maelir)
 
 add_executable(ut
+    os/base_thread_unittest.cc
     os/semaphore_unittest.cc
     main.cc
     test_application_state.cc
+    test_gps_reader.cc
     test_nmea_parser.cc
     test_router.cc
     test_timer_manager.cc
@@ -32,6 +34,7 @@ target_link_libraries(ut
     router
     router_interface
     timer_manager
+    gps_reader
     doctest::doctest
     trompeloeil::trompeloeil
 )

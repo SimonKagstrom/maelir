@@ -12,6 +12,7 @@ from PIL import Image
 # Allow huge images
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
+kGpsTileSize = 256
 
 def get_tile_positions_to_ignore(yaml_data: dict, img: Image, tile_size: int):
     out = {}
@@ -70,7 +71,7 @@ def create_tiles(yaml_data: dict, img: Image, to_ignore: dict, tile_size: int):
     return tiles
 
 
-def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_file: str):
+def create_binary(yaml_data: dict, tiles: list, row_length: int, gps_row_length : int, gps_rows : int, dst_file: str):
     data_size = 0
 
     tile_size = 0
@@ -89,7 +90,6 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_file: str):
     for i in range(0, len(land_mask_yaml_data)):
         land_mask += struct.pack("<I", land_mask_yaml_data[i])
 
-
     land_only_tile = Image.new("P", (tile_size, tile_size), 0)
     r = yaml_data["land_pixel_colors"][0]["r"]
     g = yaml_data["land_pixel_colors"][0]["g"]
@@ -106,9 +106,9 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_file: str):
 
     land_only_size = len(bytes)
 
-    header_format = "<QddIIIIIIIII"
+    header_format = "<QffffIIIIIIIIII"
     header_size = struct.calcsize(header_format)
-    assert header_size == 60
+    assert header_size == 64
 
     # Starts after the MapMetadata header and all FlashTile:s
     land_only_offset = header_size + len(tiles) * 8
@@ -143,15 +143,11 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_file: str):
 
     # Example data for the header
     magic = 0x54494C5253574654
-    corner_latitude = yaml_data["corner_position"]["latitude"]
-    corner_longitude = yaml_data["corner_position"]["longitude"]
-    pixel_latitude_size = yaml_data["corner_position"]["latitude_pixel_size"]
-    pixel_longitude_size = yaml_data["corner_position"]["longitude_pixel_size"]
     tile_count = len(tiles) + 1
     tile_row_size = row_length
-    tile_column_size = len(tiles) // row_length
+    tile_rows = len(tiles) // row_length
     land_mask_row_size = path_finder_row_length
-    land_mask_rows = (tile_column_size * tile_size) // path_finder_tile_size
+    land_mask_rows = (tile_rows * tile_size) // path_finder_tile_size
     tile_data_offset = header_size  # After the header
     land_mask_data_offset = tile_data_offset + len(tile_metadata) * 8 + len(tile_data)
 
@@ -159,21 +155,48 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_file: str):
     if land_mask_data_offset % 4 != 0:
         land_mask_data_offset += 4 - (land_mask_data_offset % 4)
 
+    gps_data_offset = land_mask_data_offset + len(land_mask)
+
+    lowest_latitude = -200
+    highest_latitude = 200
+    lowest_longitude = -200
+    highest_longitude = 200
+    for entry in yaml_data["point_to_gps_position"]:
+        if entry["latitude"] == 0 or entry["longitude"] == 0:
+            continue
+
+        if entry["latitude"] < lowest_latitude:
+            lowest_latitude = entry["latitude"]
+        if entry["latitude"] > highest_latitude:
+            highest_latitude = entry["latitude"]
+        if entry["longitude"] < lowest_longitude:
+            lowest_longitude = entry["longitude"]
+        if entry["longitude"] > highest_longitude:
+            highest_longitude = entry["longitude"]
+
     # Pack the data into binary format
     header_data = struct.pack(
         header_format,
         magic,
-        corner_latitude,
-        corner_longitude,
+
+        lowest_longitude,
+        lowest_latitude,
+        highest_longitude,
+        highest_latitude,
+
         tile_count,
-        pixel_longitude_size,
-        pixel_latitude_size,
         tile_row_size,
-        tile_column_size,
+        tile_rows,
+
         land_mask_row_size,
         land_mask_rows,
+
+        gps_row_length,
+        gps_rows,
+
         tile_data_offset,
         land_mask_data_offset,
+        gps_data_offset,
     )
 
     offset = bin_file.write(header_data)
@@ -192,6 +215,22 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, dst_file: str):
     assert(offset == land_mask_data_offset)
 
     bin_file.write(land_mask)
+
+    # Create the GPS data (make sure it's filled with zeroes, and of the right size)
+    gps_data = []
+    for i in range(0, tile_count):
+        gps_data.append([0.0, 0.0])
+
+    for entry in yaml_data["point_to_gps_position"]:
+        x = entry["x_pixel"] // kGpsTileSize
+        y = entry["y_pixel"] // kGpsTileSize
+        index = y * gps_row_length + x
+
+        assert index < len(gps_data)
+        gps_data[index] = [entry["latitude"], entry["longitude"]]
+
+    for latitude, longitude in gps_data:
+        bin_file.write(struct.pack("<ffff", latitude, longitude))
 
     return data_size
 
@@ -217,17 +256,9 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    if "corner_position" not in yaml_data:
+    if "point_to_gps_position" not in yaml_data:
         print(
-            "Error: corner_position not found in input yaml file. See mapeditor_metadata.yaml for an example"
-        )
-        sys.exit(1)
-
-    if ["latitude", "longitude", "latitude_pixel_size", "longitude_pixel_size"] != list(
-        yaml_data["corner_position"].keys()
-    ):
-        print(
-            "Error: corner_position should have latitude, longitude, latitude_pixel_size, longitude_pixel_size keys"
+            "Error: corner_popoint_to_gps_position not found in input yaml file. See mapeditor_metadata.yaml for an example"
         )
         sys.exit(1)
 
@@ -244,11 +275,15 @@ if __name__ == "__main__":
     tiles = create_tiles(yaml_data, img, to_ignore, tile_size=tile_size)
     # save_tiles(tiles, num_colors=256)
     tile_row_length = int(img.size[0] / tile_size)
+    gps_row_length = int(img.size[0] / kGpsTileSize)
+    gps_rows = int(img.size[1] / kGpsTileSize)
 
     data_size = create_binary(
         yaml_data,
         tiles,
         row_length=tile_row_length,
+        gps_row_length=gps_row_length,
+        gps_rows = gps_rows,
         dst_file=sys.argv[2],
     )
 

@@ -7,9 +7,10 @@
 
 struct GpsPosition
 {
-    double latitude;
-    double longitude;
+    float latitude;
+    float longitude;
 };
+static_assert(sizeof(GpsPosition) == 8);
 
 struct GpsData
 {
