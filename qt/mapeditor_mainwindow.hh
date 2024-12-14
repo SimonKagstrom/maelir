@@ -82,6 +82,9 @@ private:
     const QString m_out_yaml;
     QGraphicsPixmapItem* m_pixmap;
 
+    uint32_t m_gps_map_width {0};
+    uint32_t m_gps_map_height {0};
+
     std::optional<Point> m_home_position;
 
     // Colors for land (for route planning)

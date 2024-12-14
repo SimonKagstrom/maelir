@@ -282,9 +282,8 @@ PointToPosition(const MapMetadata& metadata, const Point& pixel_position)
     }
     if (index >= positions.size())
     {
-        // Should never happen
-        return GpsPosition {.latitude = positions[bottom_right_index].latitude,
-                            .longitude = positions[bottom_right_index].longitude};
+        return GpsPosition {.latitude = positions[index].latitude,
+                            .longitude = positions[index].longitude};
     }
 
     auto longitude_difference =

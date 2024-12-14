@@ -318,8 +318,11 @@ if __name__ == "__main__":
             cur["latitude"] = entry.top_left.latitude
             cur["longitude"] = entry.top_left.longitude
             cur["latitude_offset"] = entry.top_left.latitude - entry.bottom_right.latitude
-            cur["longitude_offset"] = entry.top_left.longitude - entry.bottom_right.longitude
+            cur["longitude_offset"] = entry.bottom_right.longitude - entry.top_left.longitude
 
+            if cur["x_pixel"] == 9490 - 9490 % kGpsTileSize and cur["y_pixel"] == 6187 - 6187 % kGpsTileSize:
+                print(cur, cur["latitude"] + cur["latitude_offset"], cur["longitude"] + cur["longitude_offset"])
+                print("Index should be" , cur["x_pixel"] / kGpsTileSize, cur["y_pixel"] / kGpsTileSize)
             yaml_data["point_to_gps_position"].append(cur)
 
     with open(yaml_file, "w") as f:

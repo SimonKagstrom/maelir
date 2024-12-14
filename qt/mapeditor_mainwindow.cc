@@ -16,31 +16,20 @@ namespace
 GpsPosition
 InterpolateGpsPosition(std::span<const MapGpsRasterTile> positions, auto map_width, auto x, auto y)
 {
-    auto index = y / kTileSize * map_width / kTileSize + x / kTileSize;
-    auto bottom_right_index = index + 1 - map_width / kTileSize;
+    auto index = (y / kGpsPositionSize - 1) * (map_width / kGpsPositionSize) + x / kGpsPositionSize;
 
-    if (bottom_right_index >= positions.size() || bottom_right_index < 0)
-    {
-        return GpsPosition {.latitude = positions[index].latitude,
-                            .longitude = positions[index].longitude};
-    }
     if (index >= positions.size())
     {
         // Should never happen
-        return GpsPosition {.latitude = positions[index].latitude,
-                            .longitude = positions[index].longitude};
+        return GpsPosition {.latitude = 0, .longitude = 0};
     }
+    const auto& pos = positions[index];
 
-    auto longitude_difference =
-        positions[bottom_right_index].longitude - positions[index].longitude;
-    auto latitude_difference = positions[bottom_right_index].latitude - positions[index].latitude;
+    float x_offset = x % kGpsPositionSize;
+    float y_offset = y % kGpsPositionSize;
 
-    auto x_offset = x % kTileSize;
-    auto y_offset = y % kTileSize;
-
-    auto longitude = positions[index].longitude + longitude_difference / kTileSize * x_offset;
-    auto latitude =
-        positions[bottom_right_index].latitude - latitude_difference / kTileSize * y_offset;
+    auto longitude = pos.longitude + (pos.longitude_offset * x_offset) / kGpsPositionSize;
+    auto latitude = pos.latitude + (pos.latitude_offset * y_offset) / kGpsPositionSize;
 
     return GpsPosition {.latitude = latitude, .longitude = longitude};
 }
@@ -66,6 +55,11 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
         exit(1);
     }
 
+    m_gps_map_width = m_map->width();
+    m_gps_map_height = m_map->height();
+    assert(m_gps_map_width % kGpsPositionSize == 0);
+    assert(m_gps_map_height % kGpsPositionSize == 0);
+
     auto cropped_height = m_map->height() - m_map->height() % kTileSize;
     auto cropped_width = m_map->width() - m_map->width() % kTileSize;
 
@@ -78,8 +72,8 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
         (cropped_height / kPathFinderTileSize) * (cropped_width / kPathFinderTileSize), false);
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
 
-    m_gps_positions.resize((cropped_height / kGpsPositionSize) *
-                           (cropped_width / kGpsPositionSize));
+    m_gps_positions.resize((m_gps_map_width / kGpsPositionSize) *
+                           (m_gps_map_height / kGpsPositionSize));
 
     m_ui->setupUi(this);
     m_ui->displayGraphicsView->SetOwner(this);
@@ -146,7 +140,7 @@ MapEditorMainWindow::FilterMouse(QObject* obj, QEvent* event)
     {
         auto [x, y] = GetMapCoordinates(mouse_event->pos());
         QString gps_text = "";
-        auto position = InterpolateGpsPosition(m_gps_positions, m_map->width(), x, y);
+        auto position = InterpolateGpsPosition(m_gps_positions, m_gps_map_width, x, y);
         gps_text = QString(", position: %1, %2").arg(position.latitude).arg(position.longitude);
 
         m_ui->coordinateLabel->setText(QString("x: %1, y: %2%3").arg(x).arg(y).arg(gps_text));
@@ -334,20 +328,23 @@ MapEditorMainWindow::LoadYaml(const char* filename)
 
         for (const auto& pos : node["point_to_gps_position"])
         {
-            if (pos["x_pixel"] && pos["y_pixel"] && pos["longitude"] && pos["latitude"])
+            if (pos["x_pixel"] && pos["y_pixel"] && pos["longitude"] && pos["latitude"] &&
+                pos["longitude_offset"] && pos["latitude_offset"] && pos["longitude_offset"])
             {
                 auto x = pos["x_pixel"].as<int>();
                 auto y = pos["y_pixel"].as<int>();
 
-                if (x >= m_map->width() || y >= m_map->height())
+                if (x >= m_gps_map_width || y >= m_gps_map_height)
                 {
                     continue;
                 }
 
-                auto index = (y / kGpsPositionSize) * (m_map->width() / kGpsPositionSize) +
+                auto index = (y / kGpsPositionSize) * (m_gps_map_width / kGpsPositionSize) +
                              x / kGpsPositionSize;
                 m_gps_positions[index] = {.latitude = pos["latitude"].as<float>(),
-                                          .longitude = pos["longitude"].as<float>()};
+                                          .longitude = pos["longitude"].as<float>(),
+                                          .latitude_offset = pos["latitude_offset"].as<float>(),
+                                          .longitude_offset = pos["longitude_offset"].as<float>()};
             }
         }
 
@@ -472,13 +469,13 @@ MapEditorMainWindow::SaveYaml()
     YAML::Node gps_positions;
     for (auto i = 0; i < m_gps_positions.size(); ++i)
     {
-        auto y = i / (m_map->width() / kTileSize);
-        auto x = i % (m_map->width() / kTileSize);
+        auto y = i / (m_gps_map_width / kGpsPositionSize);
+        auto x = i % (m_gps_map_width / kGpsPositionSize);
 
         YAML::Node pos_node;
 
-        pos_node["x_pixel"] = x * kTileSize;
-        pos_node["y_pixel"] = y * kTileSize;
+        pos_node["x_pixel"] = x * kGpsPositionSize;
+        pos_node["y_pixel"] = y * kGpsPositionSize;
         pos_node["longitude"] = m_gps_positions[i].longitude;
         pos_node["latitude"] = m_gps_positions[i].latitude;
         pos_node["longitude_offset"] = m_gps_positions[i].longitude_offset;

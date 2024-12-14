@@ -17,6 +17,8 @@ public:
 
 protected:
     void drawForeground(QPainter* painter, const QRectF& rect) override;
+    void drawTileRects(QPainter* painter, const QRectF& rect);
+    void drawGpsTileRects(QPainter* painter, const QRectF& rect);
 
 private:
     MapEditorMainWindow* m_owner {nullptr};
