@@ -158,13 +158,19 @@ MapEditorGraphicsView::drawGpsTileRects(QPainter* painter, const QRectF& visible
                              x / kGpsPositionSize;
                 const auto& position = m_owner->m_gps_positions[index];
 
-                auto s = fmt::format("{:.4f}, {:.4f} -> {:.4f}, {:.4f}",
-                                     position.latitude,
-                                     position.longitude,
-                                     position.latitude + position.latitude_offset,
-                                     position.longitude + position.longitude_offset);
+                auto l1 = fmt::format("{:.4f}, {:.4f} -> {:.4f}, {:.4f}\nx,y: {},{}",
+                                      position.latitude,
+                                      position.longitude,
+                                      position.latitude + position.latitude_offset,
+                                      position.longitude + position.longitude_offset,
+                                      x,
+                                      y);
 
-                painter->drawText(x + 2, y + 16, QString("%1").arg(s.c_str()));
+                QString text = QString("%1").arg(l1.c_str());
+                painter->drawText(QRectF(x + 2, y + 2, kGpsPositionSize, kGpsPositionSize),
+                                  QTextOption::WordWrap,
+                                  text);
+
 
                 // Set brush to NoBrush to make the rectangles hollow
                 painter->setBrush(Qt::NoBrush);

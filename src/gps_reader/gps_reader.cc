@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <etl/queue_spsc_atomic.h>
+#include <fmt/format.h>
 #include <span>
 
 class GpsReader::GpsPortImpl : public IGpsPort
@@ -169,32 +170,34 @@ PositionIsInTile(const MapMetadata& metadata,
                  int32_t y,
                  const GpsPosition& gps_data)
 {
-    uint32_t cur = y * metadata.gps_data_row_size + x;
+    uint32_t cur_index = y * metadata.gps_data_row_size + x;
 
-    if (cur >= positions.size())
+    if (cur_index >= positions.size())
     {
         return std::nullopt;
     }
 
-    if (gps_data.longitude >= positions[cur].longitude &&
-        gps_data.longitude <= positions[cur].longitude + positions[cur].longitude_offset &&
-        gps_data.latitude <= positions[cur].latitude &&
-        gps_data.latitude >= positions[cur].latitude - positions[cur].latitude_offset)
+    // Make a copy to get it out of flash
+    auto cur = positions[cur_index];
+
+    if (gps_data.longitude >= cur.longitude &&
+        gps_data.longitude <= cur.longitude + cur.longitude_offset &&
+        gps_data.latitude <= cur.latitude &&
+        gps_data.latitude >= cur.latitude + cur.latitude_offset)
     {
-        float diff_longitude = positions[cur].longitude_offset;
-        float diff_latitude = positions[cur].latitude_offset;
+        float diff_longitude = cur.longitude_offset;
+        float diff_latitude = cur.latitude_offset;
 
-        auto out =
-            Point {x * kGpsPositionSize +
-                       static_cast<int32_t>(
-                           ((gps_data.longitude - positions[cur].longitude) / diff_longitude) *
-                           kGpsPositionSize),
-                   y * kGpsPositionSize +
-                       static_cast<int32_t>(
-                           ((positions[cur].latitude - gps_data.latitude) / diff_latitude) *
-                           kGpsPositionSize)};
+        auto out = Point {
+            x * kGpsPositionSize +
+                static_cast<int32_t>(((gps_data.longitude - cur.longitude) / diff_longitude) *
+                                     kGpsPositionSize),
+            y * kGpsPositionSize +
+                static_cast<int32_t>(
+                    ((gps_data.latitude - cur.latitude + cur.latitude_offset) / diff_latitude) *
+                    kGpsPositionSize)};
 
-        printf("Found in tile %d,%d -> %d,%d\n", x, y, out.x, out.y);
+//        fmt::print("Found in tile {} ({},{}) -> {},{}\n", cur_index, x, y, out.x, out.y);
 
         return out;
     }
@@ -221,39 +224,23 @@ PositionToPoint(const MapMetadata& metadata, const GpsPosition& gps_data)
 
     auto positions = PositionSpanFromMetadata(metadata);
 
-    float diff_longitude = metadata.highest_latitude - metadata.lowest_latitude;
-    float diff_latitude = metadata.highest_longitude - metadata.lowest_longitude;
+    float diff_latitude = metadata.highest_latitude - metadata.lowest_latitude;
+    float diff_longitude = metadata.highest_longitude - metadata.lowest_longitude;
 
-    int tile_x = (gps_data.longitude - metadata.lowest_longitude) / diff_longitude *
+    int tile_x = ((gps_data.longitude - metadata.lowest_longitude) / diff_longitude) *
                  metadata.gps_data_row_size;
     int tile_y =
-        (metadata.highest_latitude - gps_data.latitude) / diff_latitude * metadata.gps_data_rows;
+        ((metadata.highest_latitude - gps_data.latitude) / diff_latitude) * metadata.gps_data_rows;
 
-    printf("Tile: %d, %d -> %f,%f\n",
-           tile_x,
-           tile_y,
-           positions[tile_y * metadata.gps_data_row_size + tile_x].latitude,
-           positions[tile_y * metadata.gps_data_row_size + tile_x].longitude);
+    auto idx = tile_y * metadata.gps_data_row_size + tile_x;
 
-    constexpr auto kScanDistance = 4;
-    for (auto dx = 0; dx < kScanDistance; dx++)
+    constexpr auto kScanDistance = 3;
+    for (auto dx = -kScanDistance; dx < kScanDistance; dx++)
     {
-        for (auto dy = 0; dy < kScanDistance; dy++)
+        for (auto dy = -kScanDistance; dy < kScanDistance; dy++)
         {
-            if (auto point = PositionIsInTile(metadata,
-                                              positions,
-                                              (tile_x + dx) % metadata.gps_data_row_size,
-                                              (tile_y + dy) / metadata.gps_data_row_size,
-                                              gps_data);
-                point)
-            {
-                return *point;
-            }
-            if (auto point = PositionIsInTile(metadata,
-                                              positions,
-                                              (tile_x - dx) % metadata.gps_data_row_size,
-                                              (tile_y - dy) / metadata.gps_data_row_size,
-                                              gps_data);
+            if (auto point =
+                    PositionIsInTile(metadata, positions, tile_x + dx, tile_y + dy, gps_data);
                 point)
             {
                 return *point;
@@ -269,35 +256,36 @@ PointToPosition(const MapMetadata& metadata, const Point& pixel_position)
 {
     auto x = pixel_position.x;
     auto y = pixel_position.y;
-    auto index =
-        y / kGpsPositionSize * metadata.gps_data_row_size / kGpsPositionSize + x / kGpsPositionSize;
-    auto bottom_right_index = index + 1 - metadata.gps_data_row_size / kGpsPositionSize;
 
     auto positions = PositionSpanFromMetadata(metadata);
+    auto index = (y / kGpsPositionSize - 1) * metadata.gps_data_row_size + x / kGpsPositionSize;
 
-    if (bottom_right_index >= positions.size() || bottom_right_index < 0)
-    {
-        return GpsPosition {.latitude = positions[index].latitude,
-                            .longitude = positions[index].longitude};
-    }
     if (index >= positions.size())
     {
-        return GpsPosition {.latitude = positions[index].latitude,
-                            .longitude = positions[index].longitude};
+        fmt::print("BUt why?? {} vs {}\n", index, positions.size());
+        // Should never happen
+        return GpsPosition {.latitude = 0, .longitude = 0};
     }
+    const auto& pos = positions[index];
 
-    auto longitude_difference =
-        positions[bottom_right_index].longitude - positions[index].longitude;
-    auto latitude_difference = positions[bottom_right_index].latitude - positions[index].latitude;
+    float x_offset = x % kGpsPositionSize;
+    float y_offset = y % kGpsPositionSize;
 
-    auto x_offset = x % kGpsPositionSize;
-    auto y_offset = y % kGpsPositionSize;
+    auto longitude = pos.longitude + (pos.longitude_offset * x_offset) / kGpsPositionSize;
+    auto latitude = pos.latitude + (pos.latitude_offset * y_offset) / kGpsPositionSize;
 
-    auto longitude =
-        positions[index].longitude + longitude_difference / kGpsPositionSize * x_offset;
-    auto latitude =
-        positions[bottom_right_index].latitude - latitude_difference / kGpsPositionSize * y_offset;
-
+//    fmt::print("PTP: idx {} ({}x{}), which is {},{}..{},{}. {},{} -> {},{}\n",
+//               index,
+//               index % metadata.gps_data_row_size,
+//               index / metadata.gps_data_row_size,
+//               pos.latitude,
+//               pos.longitude,
+//               pos.latitude + pos.latitude_offset,
+//               pos.longitude + pos.longitude_offset,
+//               x,
+//               y,
+//               longitude,
+//               latitude);
     return GpsPosition {.latitude = latitude, .longitude = longitude};
 }
 

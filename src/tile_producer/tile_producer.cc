@@ -87,7 +87,9 @@ TileProducer::TileProducer(const MapMetadata& map_metadata)
     , m_tile_row_size(map_metadata.tile_row_size)
     , m_tile_rows(map_metadata.tile_rows)
 {
-    m_tile_index_to_cache.resize(map_metadata.tile_row_size * map_metadata.tile_rows);
+    assert(m_tile_count == m_tile_row_size * m_tile_rows);
+
+    m_tile_index_to_cache.resize(m_tile_count);
 
     std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
 }
@@ -272,17 +274,13 @@ TileProducer::DecodeTile(unsigned index)
 std::optional<unsigned>
 TileProducer::PointToTileIndex(const Point& point) const
 {
-    if (point.x >= kTileSize * m_tile_rows || point.x < 0)
+    auto index = (point.y / kTileSize) * m_tile_row_size + point.x / kTileSize;
+    if (index >= m_tile_count)
     {
         return std::nullopt;
     }
 
-    if (point.y >= kTileSize * m_tile_rows || point.y < 0)
-    {
-        return std::nullopt;
-    }
-
-    return (point.y / kTileSize) * m_tile_rows + point.x / kTileSize;
+    return index;
 }
 
 std::unique_ptr<Image>

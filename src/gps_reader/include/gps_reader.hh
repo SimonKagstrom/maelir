@@ -26,7 +26,7 @@ private:
     hal::IGps& m_gps;
 
     // A copy of the map metadata (to place in PSRAM)
-    const MapMetadata m_map_metadata;
+    const MapMetadata &m_map_metadata;
 
     etl::vector<GpsPortImpl*, 8> m_listeners;
     std::array<std::atomic_bool, 8> m_stale_listeners;

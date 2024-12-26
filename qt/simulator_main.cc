@@ -3,6 +3,7 @@
 #include "route_service.hh"
 #include "simulator_mainwindow.hh"
 #include "tile_producer.hh"
+#include "time.hh"
 #include "ui.hh"
 
 #include <QApplication>
@@ -44,6 +45,26 @@ main(int argc, char* argv[])
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
 
+    fmt::print("Metadata @ {}..{}:\n  {}x{} tiles\n  {}x{} land mask\n  {}x{} GPS data\n  0x{:x} "
+               "tile_data_offset\n  0x{:x}  land_mask_data_offset\n  0x{:x} "
+               "gps_position_offset\n  latitude between {}..{}\n  longitude between {}..{}\n",
+               (const void*)map_metadata,
+               (const void*)((const uint8_t*)map_metadata + bin_file.size()),
+               map_metadata->tile_row_size,
+               map_metadata->tile_rows,
+               map_metadata->land_mask_row_size,
+               map_metadata->land_mask_rows,
+               map_metadata->gps_data_row_size,
+               map_metadata->gps_data_rows,
+               map_metadata->tile_data_offset,
+               map_metadata->land_mask_data_offset,
+               map_metadata->gps_position_offset,
+
+               map_metadata->lowest_latitude,
+               map_metadata->highest_latitude,
+               map_metadata->lowest_longitude,
+               map_metadata->highest_longitude);
+
     auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto route_service = std::make_unique<RouteService>(*map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
@@ -57,6 +78,7 @@ main(int argc, char* argv[])
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
+
     gps_simulator->Start();
     gps_reader->Start();
     producer->Start();
@@ -66,7 +88,6 @@ main(int argc, char* argv[])
     window.show();
 
     //    route_service->RequestRoute({2592, 7032}, {16008, 4728});
-
     auto out = QApplication::exec();
 
     // Stop to avoid the destructor accessing the thread

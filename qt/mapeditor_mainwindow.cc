@@ -85,6 +85,11 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
     m_ui->displayGraphicsView->viewport()->installEventFilter(this);
 
     LoadYaml(m_out_yaml.toStdString().c_str());
+
+    auto stugan = InterpolateGpsPosition(m_gps_positions, m_gps_map_width, 9490, 6187);
+    fmt::print("Stugan position: {}, {}. Should be 59.5141, 17.04114\n",
+               stugan.latitude,
+               stugan.longitude);
 }
 
 MapEditorMainWindow::~MapEditorMainWindow()

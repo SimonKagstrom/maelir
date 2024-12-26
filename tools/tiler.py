@@ -14,6 +14,7 @@ PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
 kGpsTileSize = 256
 
+
 def get_tile_positions_to_ignore(yaml_data: dict, img: Image, tile_size: int):
     out = {}
     cropped_width = img.size[0] - img.size[0] % tile_size
@@ -71,7 +72,14 @@ def create_tiles(yaml_data: dict, img: Image, to_ignore: dict, tile_size: int):
     return tiles
 
 
-def create_binary(yaml_data: dict, tiles: list, row_length: int, gps_row_length : int, gps_rows : int, dst_file: str):
+def create_binary(
+    yaml_data: dict,
+    tiles: list,
+    row_length: int,
+    gps_row_length: int,
+    gps_rows: int,
+    dst_file: str,
+):
     data_size = 0
 
     tile_size = 0
@@ -85,7 +93,7 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, gps_row_length 
     path_finder_tile_size = yaml_data["path_finder_tile_size"]
     path_finder_row_length = int((row_length * tile_size) / path_finder_tile_size)
 
-    land_mask = b''
+    land_mask = b""
     land_mask_yaml_data = yaml_data["land_mask"]
     for i in range(0, len(land_mask_yaml_data)):
         land_mask += struct.pack("<I", land_mask_yaml_data[i])
@@ -157,10 +165,10 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, gps_row_length 
 
     gps_data_offset = land_mask_data_offset + len(land_mask)
 
-    lowest_latitude = -200
-    highest_latitude = 200
-    lowest_longitude = -200
-    highest_longitude = 200
+    lowest_latitude = 200
+    highest_latitude = -200
+    lowest_longitude = 200
+    highest_longitude = -200
     for entry in yaml_data["point_to_gps_position"]:
         if entry["latitude"] == 0 or entry["longitude"] == 0:
             continue
@@ -178,22 +186,17 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, gps_row_length 
     header_data = struct.pack(
         header_format,
         magic,
-
         lowest_longitude,
         lowest_latitude,
         highest_longitude,
         highest_latitude,
-
         tile_count,
         tile_row_size,
         tile_rows,
-
         land_mask_row_size,
         land_mask_rows,
-
         gps_row_length,
         gps_rows,
-
         tile_data_offset,
         land_mask_data_offset,
         gps_data_offset,
@@ -201,36 +204,37 @@ def create_binary(yaml_data: dict, tiles: list, row_length: int, gps_row_length 
 
     offset = bin_file.write(header_data)
 
-    assert(offset == tile_data_offset)
+    assert offset == tile_data_offset
     for size, png_offset in tile_metadata:
         cur = bin_file.write(struct.pack("<II", size, png_offset))
-        assert(cur == 8)
+        assert cur == 8
         offset += cur
 
     offset += bin_file.write(tile_data)
 
     # Align the land mask to 4 bytes
     while offset % 4 != 0:
-        offset += bin_file.write(b'\xaa')
-    assert(offset == land_mask_data_offset)
+        offset += bin_file.write(b"\xaa")
+    assert offset == land_mask_data_offset
 
-    bin_file.write(land_mask)
+    offset += bin_file.write(land_mask)
 
     # Create the GPS data (make sure it's filled with zeroes, and of the right size)
     gps_data = []
-    for i in range(0, tile_count):
-        gps_data.append([0.0, 0.0])
+    for i in range(0, gps_row_length * gps_rows):
+        gps_data.append([0.0, 0.0, 0.0, 0.0])
 
+    assert offset == gps_data_offset
     for entry in yaml_data["point_to_gps_position"]:
         x = entry["x_pixel"] // kGpsTileSize
         y = entry["y_pixel"] // kGpsTileSize
         index = y * gps_row_length + x
 
         assert index < len(gps_data)
-        gps_data[index] = [entry["latitude"], entry["longitude"]]
+        gps_data[index] = [entry["latitude"], entry["longitude"], entry["latitude_offset"], entry["longitude_offset"]]
 
-    for latitude, longitude in gps_data:
-        bin_file.write(struct.pack("<ffff", latitude, longitude))
+    for latitude, longitude, latitude_offset, longitude_offset in gps_data:
+        bin_file.write(struct.pack("<ffff", latitude, longitude, latitude_offset, longitude_offset))
 
     return data_size
 
@@ -283,7 +287,7 @@ if __name__ == "__main__":
         tiles,
         row_length=tile_row_length,
         gps_row_length=gps_row_length,
-        gps_rows = gps_rows,
+        gps_rows=gps_rows,
         dst_file=sys.argv[2],
     )
 
