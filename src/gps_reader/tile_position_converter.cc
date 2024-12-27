@@ -16,22 +16,6 @@ PositionSpanFromMetadata(const MapMetadata& metadata)
         metadata.gps_data_rows * metadata.gps_data_row_size};
 }
 
-Point
-MapGpsTileToPoint(const MapGpsRasterTile& tile, const GpsPosition& gps_data)
-{
-    float diff_longitude = tile.longitude_offset;
-    float diff_latitude = tile.latitude_offset;
-
-    auto out =
-        Point {static_cast<int32_t>(((gps_data.longitude - tile.longitude) / diff_longitude) *
-                                    kGpsPositionSize),
-               static_cast<int32_t>(((gps_data.latitude - tile.latitude) / diff_latitude) *
-                                    kGpsPositionSize)};
-
-    return out;
-}
-
-
 std::optional<Point>
 PositionIsInTile(const MapGpsRasterTile& cur, int32_t x, int32_t y, const GpsPosition& gps_data)
 {
