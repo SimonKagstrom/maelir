@@ -33,22 +33,8 @@ MapGpsTileToPoint(const MapGpsRasterTile& tile, const GpsPosition& gps_data)
 
 
 std::optional<Point>
-PositionIsInTile(const MapMetadata& metadata,
-                 std::span<const MapGpsRasterTile> positions,
-                 int32_t x,
-                 int32_t y,
-                 const GpsPosition& gps_data)
+PositionIsInTile(const MapGpsRasterTile& cur, int32_t x, int32_t y, const GpsPosition& gps_data)
 {
-    uint32_t cur_index = y * metadata.gps_data_row_size + x;
-
-    if (cur_index >= positions.size())
-    {
-        return std::nullopt;
-    }
-
-    // Make a copy to get it out of flash
-    auto cur = positions[cur_index];
-
     if (gps_data.longitude >= cur.longitude &&
         gps_data.longitude <= cur.longitude + cur.longitude_offset &&
         gps_data.latitude <= cur.latitude &&
@@ -74,6 +60,15 @@ PositionIsInTile(const MapMetadata& metadata,
     return std::nullopt;
 }
 
+struct CachedGpsTile
+{
+    MapGpsRasterTile tile;
+    int32_t x;
+    int32_t y;
+};
+
+static CachedGpsTile g_current_tile {{0, 0, 0, 0}, 0, 0};
+
 } // namespace
 
 
@@ -83,6 +78,14 @@ namespace gps
 Point
 PositionToPoint(const MapMetadata& metadata, const GpsPosition& gps_data)
 {
+    // First look in the cached tile (where the boat was last time)
+    if (auto point =
+            PositionIsInTile(g_current_tile.tile, g_current_tile.x, g_current_tile.y, gps_data);
+        point)
+    {
+        return *point;
+    }
+
     if (gps_data.longitude < metadata.lowest_longitude ||
         gps_data.longitude > metadata.highest_longitude ||
         gps_data.latitude < metadata.lowest_latitude ||
@@ -108,10 +111,22 @@ PositionToPoint(const MapMetadata& metadata, const GpsPosition& gps_data)
     {
         for (auto dy = -kScanDistance; dy < kScanDistance; dy++)
         {
-            if (auto point =
-                    PositionIsInTile(metadata, positions, tile_x + dx, tile_y + dy, gps_data);
-                point)
+            uint32_t cur_index = (tile_y + dy) * metadata.gps_data_row_size + (tile_x + dx);
+
+            if (cur_index >= positions.size())
             {
+                return {0, 0};
+            }
+
+            // Make a copy to get it out of flash
+            auto cur = positions[cur_index];
+
+            if (auto point = PositionIsInTile(cur, tile_x + dx, tile_y + dy, gps_data); point)
+            {
+                g_current_tile.tile = cur;
+                g_current_tile.x = tile_x + dx;
+                g_current_tile.y = tile_y + dy;
+
                 return *point;
             }
         }

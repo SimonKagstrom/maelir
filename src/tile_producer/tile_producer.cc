@@ -79,6 +79,7 @@ private:
 
 } // namespace
 
+
 TileProducer::TileProducer(const MapMetadata& map_metadata)
     : m_flash_start(reinterpret_cast<const uint8_t*>(&map_metadata))
     , m_flash_tile_data(
@@ -87,7 +88,8 @@ TileProducer::TileProducer(const MapMetadata& map_metadata)
     , m_tile_row_size(map_metadata.tile_row_size)
     , m_tile_rows(map_metadata.tile_rows)
 {
-    assert(m_tile_count == m_tile_row_size * m_tile_rows);
+    // Including the default land/empty tile
+    assert(m_tile_count == m_tile_row_size * m_tile_rows + 1);
 
     m_tile_index_to_cache.resize(m_tile_count);
 
