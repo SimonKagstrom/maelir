@@ -1,5 +1,5 @@
 #include "../../src/gps_reader/gps_reader.cc"
-#include "gps_utils.hh"
+#include "position_converter.hh"
 #include "test.hh"
 
 using P = GpsPosition;

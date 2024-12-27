@@ -1,6 +1,6 @@
 #include "gps_simulator.hh"
 
-#include "gps_utils.hh"
+#include "position_converter.hh"
 #include "route_utils.hh"
 
 #include <cstdlib>
