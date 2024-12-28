@@ -452,10 +452,10 @@ UserInterface::PositionToMapCenter(const auto& pixel_position) const
 
     x = std::clamp(static_cast<int>(x - hal::kDisplayWidth / 2),
                    0,
-                   static_cast<int>(m_tile_rows) * kTileSize - hal::kDisplayWidth);
+                   static_cast<int>(m_tile_row_size) * kTileSize - hal::kDisplayWidth);
     y = std::clamp(static_cast<int>(y - hal::kDisplayHeight / 2),
                    0,
-                   static_cast<int>(m_tile_rows) * kTileSize - hal::kDisplayHeight);
+                   static_cast<int>(m_tile_row_size) * kTileSize - hal::kDisplayHeight);
 
     return {x, y};
 }

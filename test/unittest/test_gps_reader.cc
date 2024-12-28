@@ -1,4 +1,4 @@
-#include "../../src/gps_reader/gps_reader.cc"
+#include "../../src/gps_reader/tile_position_converter.cc"
 #include "position_converter.hh"
 #include "test.hh"
 
@@ -6,6 +6,22 @@ using P = GpsPosition;
 
 namespace
 {
+
+Point
+MapGpsTileToPoint(const MapGpsRasterTile& tile, const GpsPosition& gps_data)
+{
+    float diff_longitude = tile.longitude_offset;
+    float diff_latitude = tile.latitude_offset;
+
+    auto out =
+        Point {static_cast<int32_t>(((gps_data.longitude - tile.longitude) / diff_longitude) *
+                                    kGpsPositionSize),
+               static_cast<int32_t>(((gps_data.latitude - tile.latitude) / diff_latitude) *
+                                    kGpsPositionSize)};
+
+    return out;
+}
+
 
 consteval MapGpsRasterTile
 D(float latitude, float longitude, float latitude_offset = 1, float longitude_offset = 1)

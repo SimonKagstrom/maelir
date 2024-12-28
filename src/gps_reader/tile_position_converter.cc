@@ -36,8 +36,6 @@ PositionIsInTile(const MapGpsRasterTile& cur, int32_t x, int32_t y, const GpsPos
                     ((gps_data.latitude - cur.latitude + cur.latitude_offset) / diff_latitude) *
                     kGpsPositionSize)};
 
-        //        fmt::print("Found in tile {} ({},{}) -> {},{}\n", cur_index, x, y, out.x, out.y);
-
         return out;
     }
 
@@ -151,8 +149,8 @@ PointToPosition(const MapMetadata& metadata, const Point& pixel_position)
     //               pos.longitude + pos.longitude_offset,
     //               x,
     //               y,
-    //               longitude,
-    //               latitude);
+    //               latitude,
+    //               longitude);
     return GpsPosition {.latitude = latitude, .longitude = longitude};
 }
 
