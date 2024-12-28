@@ -84,12 +84,17 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
     // Install the event filter on the viewport
     m_ui->displayGraphicsView->viewport()->installEventFilter(this);
 
-    LoadYaml(m_out_yaml.toStdString().c_str());
+    m_ui->actionShow_GPS_tiles->connect(m_ui->actionShow_GPS_tiles, &QAction::triggered, [this]() {
+        m_show_gps_tiles = !m_show_gps_tiles;
+        m_scene->invalidate(m_scene->sceneRect());
+    });
 
-    auto stugan = InterpolateGpsPosition(m_gps_positions, m_gps_map_width, 9490, 6187);
-    fmt::print("Stugan position: {}, {}. Should be 59.5141, 17.04114\n",
-               stugan.latitude,
-               stugan.longitude);
+    m_ui->actionShow_map_tiles->connect(m_ui->actionShow_map_tiles, &QAction::triggered, [this]() {
+        m_show_map_tiles = !m_show_map_tiles;
+        m_scene->invalidate(m_scene->sceneRect());
+    });
+
+    LoadYaml(m_out_yaml.toStdString().c_str());
 }
 
 MapEditorMainWindow::~MapEditorMainWindow()

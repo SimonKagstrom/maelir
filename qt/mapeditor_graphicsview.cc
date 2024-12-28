@@ -52,8 +52,14 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
         }
     }
 
-    //drawTileRects(painter, visibleArea);
-    drawGpsTileRects(painter, visibleArea);
+    if (m_owner->m_show_map_tiles)
+    {
+        drawTileRects(painter, visibleArea);
+    }
+    if (m_owner->m_show_gps_tiles)
+    {
+        drawGpsTileRects(painter, visibleArea);
+    }
 
     if (!m_owner->m_current_route.empty())
     {

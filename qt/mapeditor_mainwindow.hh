@@ -85,6 +85,9 @@ private:
     uint32_t m_gps_map_width {0};
     uint32_t m_gps_map_height {0};
 
+    bool m_show_map_tiles {true};
+    bool m_show_gps_tiles {false};
+
     std::optional<Point> m_home_position;
 
     // Colors for land (for route planning)
