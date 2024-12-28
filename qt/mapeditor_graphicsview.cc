@@ -5,6 +5,7 @@
 #include "route_utils.hh"
 
 #include <QPainter>
+#include <fmt/format.h>
 
 MapEditorGraphicsView::MapEditorGraphicsView(QWidget* parent)
     : QGraphicsView(parent)
@@ -24,21 +25,6 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
     QRectF visibleArea = mapToScene(viewport()->rect()).boundingRect();
 
     painter->setPen(Qt::NoPen);
-
-    QVector<QPointF> scene_positions;
-    for (auto pos : m_owner->m_positions)
-    {
-        scene_positions.push_back(QPointF(pos.x, pos.y));
-    }
-
-    // Draw a dot for each GPS position
-    for (const auto& pos : scene_positions)
-    {
-        painter->setBrush(Qt::magenta);
-        painter->drawEllipse(pos, 8, 8);
-        painter->setBrush(Qt::cyan);
-        painter->drawEllipse(pos, 5, 5);
-    }
 
     // Draw a dot for each GPS position
     for (const auto& cur : m_owner->m_wanted_route)
@@ -64,6 +50,15 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
             // Draw the grayscale image
             painter->drawImage(tileRect, grayscaleImage);
         }
+    }
+
+    if (m_owner->m_show_map_tiles)
+    {
+        drawTileRects(painter, visibleArea);
+    }
+    if (m_owner->m_show_gps_tiles)
+    {
+        drawGpsTileRects(painter, visibleArea);
     }
 
     if (!m_owner->m_current_route.empty())
@@ -93,6 +88,31 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
         }
     }
 
+    // Fill the visible land with red boxes
+    for (int y = 0; y < m_owner->m_map->height(); y += kPathFinderTileSize)
+    {
+        for (int x = 0; x < m_owner->m_map->width(); x += kPathFinderTileSize)
+        {
+            QRectF tileRect(x, y, kPathFinderTileSize, kPathFinderTileSize);
+            if (visibleArea.intersects(tileRect) &&
+                m_owner->m_land_mask[(y / kPathFinderTileSize) * m_owner->m_map->width() /
+                                         kPathFinderTileSize +
+                                     x / kPathFinderTileSize])
+            {
+                painter->setBrush(Qt::NoBrush);
+                QPen pen(Qt::red);
+                pen.setWidth(1);
+                painter->setPen(pen);
+
+                painter->drawRect(tileRect);
+            }
+        }
+    }
+}
+
+void
+MapEditorGraphicsView::drawTileRects(QPainter* painter, const QRectF& visibleArea)
+{
     // Fill the 240x240 tiles with black rectangles
     for (int y = 0; y < m_owner->m_map->height(); y += kTileSize)
     {
@@ -103,7 +123,8 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
             {
                 // Set brush to NoBrush to make the rectangles hollow
                 painter->setBrush(Qt::NoBrush);
-                QPen pen(Qt::black);
+                QPen pen(Qt::darkCyan);
+                pen.setDashPattern({2, 2});
                 pen.setWidth(2);
                 painter->setPen(pen);
 
@@ -125,21 +146,43 @@ MapEditorGraphicsView::drawForeground(QPainter* painter, const QRectF&)
             }
         }
     }
+}
 
-    // Fill the visible land with red boxes
-    for (int y = 0; y < m_owner->m_map->height(); y += kPathFinderTileSize)
+
+void
+MapEditorGraphicsView::drawGpsTileRects(QPainter* painter, const QRectF& visibleArea)
+{
+    // Fill the 256x256 tiles with black rectangles
+    for (int y = 0; y < m_owner->m_map->height(); y += kGpsPositionSize)
     {
-        for (int x = 0; x < m_owner->m_map->width(); x += kPathFinderTileSize)
+        for (int x = 0; x < m_owner->m_map->width(); x += kGpsPositionSize)
         {
-            QRectF tileRect(x, y, kPathFinderTileSize, kPathFinderTileSize);
-            if (visibleArea.intersects(tileRect) &&
-                m_owner->m_land_mask[(y / kPathFinderTileSize) * m_owner->m_map->width() /
-                                         kPathFinderTileSize +
-                                     x / kPathFinderTileSize])
+            QRectF tileRect(x, y, kGpsPositionSize, kGpsPositionSize);
+            if (visibleArea.intersects(tileRect))
             {
+                auto index = (y / kGpsPositionSize) * m_owner->m_gps_map_width / kGpsPositionSize +
+                             x / kGpsPositionSize;
+                const auto& position = m_owner->m_gps_positions[index];
+
+                auto l1 = fmt::format("{:.4f}, {:.4f} -> {:.4f}, {:.4f}\nx,y: {},{}",
+                                      position.latitude,
+                                      position.longitude,
+                                      position.latitude + position.latitude_offset,
+                                      position.longitude + position.longitude_offset,
+                                      x,
+                                      y);
+
+                QString text = QString("%1").arg(l1.c_str());
+                painter->drawText(QRectF(x + 2, y + 2, kGpsPositionSize, kGpsPositionSize),
+                                  QTextOption::WordWrap,
+                                  text);
+
+
+                // Set brush to NoBrush to make the rectangles hollow
                 painter->setBrush(Qt::NoBrush);
-                QPen pen(Qt::red);
-                pen.setWidth(1);
+                QPen pen(Qt::black);
+                pen.setWidth(2);
+                pen.setStyle(Qt::DashLine); // Set the pen style to dashed
                 painter->setPen(pen);
 
                 painter->drawRect(tileRect);

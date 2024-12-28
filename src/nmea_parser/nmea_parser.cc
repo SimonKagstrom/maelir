@@ -7,7 +7,7 @@
 namespace
 {
 
-auto
+float
 ToDegrees(auto nmea)
 {
     int deg = static_cast<int>(nmea) / 100;
@@ -102,8 +102,8 @@ void
 NmeaParser::ParseGppgaData(std::string_view line)
 {
     auto index = 0;
-    std::optional<double> latitude;
-    std::optional<double> longitude;
+    std::optional<float> latitude;
+    std::optional<float> longitude;
 
     // time      latitude  N/S longitude E/W fix sat hdop altitude M height M time diff
     // 174558.00,5917.60788,N,01757.40192,E,1,08,1.08,48.3,M,24.6,M,,*69

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gps_data.hh"
 #include "mapeditor_graphicsview.hh"
 #include "router.hh"
 
@@ -59,25 +60,6 @@ protected:
 private slots:
 
 private:
-    struct GpsToPixel
-    {
-        double longitude;
-        double latitude;
-        int x;
-        int y;
-    };
-
-    struct MapPositionData
-    {
-        double longitude_at_pixel_0;
-        double latitude_at_pixel_0;
-        double longitude_per_pixel;
-        double latitude_per_pixel;
-
-        unsigned longitude_pixel_size;
-        unsigned latitude_pixel_size;
-    };
-
     bool FilterMouse(QObject* obj, QEvent* event);
     std::pair<int, int> GetMapCoordinates(QPoint pos);
     void RightClickContextMenu(QPoint mouse_position, QPoint map_posititon);
@@ -100,8 +82,12 @@ private:
     const QString m_out_yaml;
     QGraphicsPixmapItem* m_pixmap;
 
-    etl::list<GpsToPixel, 2> m_positions;
-    std::optional<MapPositionData> m_map_position_data;
+    uint32_t m_gps_map_width {0};
+    uint32_t m_gps_map_height {0};
+
+    bool m_show_map_tiles {true};
+    bool m_show_gps_tiles {false};
+
     std::optional<Point> m_home_position;
 
     // Colors for land (for route planning)
@@ -121,6 +107,9 @@ private:
     std::vector<bool> m_land_mask;
     std::vector<bool> m_all_land_tiles;
     std::vector<uint32_t> m_land_mask_uint32;
+
+    std::vector<MapGpsRasterTile> m_gps_positions;
+
     std::unique_ptr<Router<kTargetCacheSize>> m_router;
 
     std::span<const IndexType> m_current_route;

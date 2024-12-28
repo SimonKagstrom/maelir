@@ -29,7 +29,7 @@ private:
 
     void RunDemo();
 
-    const MapMetadata m_map_metadata;
+    const MapMetadata &m_map_metadata;
     ApplicationState& m_application_state;
     RouteService& m_route_service;
 

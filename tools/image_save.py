@@ -5,6 +5,7 @@ from haralyzer import HarParser, HarPage
 
 import time
 import os
+import yaml
 
 from sweden_crs_transformations.crs_projection import CrsProjection
 from sweden_crs_transformations.crs_coordinate import CrsCoordinate
@@ -12,6 +13,8 @@ from sweden_crs_transformations.crs_coordinate import CrsCoordinate
 from PIL import Image
 
 import sys
+
+kGpsTileSize = 256
 
 
 class Position:
@@ -104,8 +107,8 @@ class SjofartsverketEntry:
         #                f.close()
 
         self.image = Image.open(self.cache_entry)
-        assert self.image.size[0] == 256
-        assert self.image.size[1] == 256
+        assert self.image.size[0] == kGpsTileSize
+        assert self.image.size[1] == kGpsTileSize
 
         #        print("E: {} {}".format(self.bottom_right, self.top_left))
         self.x = None
@@ -198,7 +201,7 @@ class OrderTiles:
         width = 0
         height = 0
         entries_by_position = {}
-        print(lowest_longitude, highest_latitude)
+        #print(lowest_longitude, highest_latitude)
         empties = []
 
         # Sort entries by latitude and longitude
@@ -231,6 +234,16 @@ class OrderTiles:
         lowest_longitude_entry.resolve_neighbors(0, None)
         lowest_latitude_entry.resolve_neighbors(None, 0)
 
+        lowest_x = min(entry.x for entry in resolved)
+        lowest_y = min(entry.y for entry in resolved)
+
+        if lowest_x < 0:
+            for entry in resolved:
+                entry.x -= lowest_x
+        if lowest_y < 0:
+            for entry in resolved:
+                entry.y -= lowest_y
+
         width = 0
         height = 0
         for entry in resolved:
@@ -239,14 +252,16 @@ class OrderTiles:
             if entry.y is not None:
                 height = max(height, entry.y * 256)
 
-        print(width, height)
+        #print(width, height)
         img = Image.new("RGB", (width, height), (255,0,0))
 
-        for entry in self.entries:
-            if entry.x is not None and entry.y is not None:
-                img.paste(entry.image, (entry.x * 256, entry.y * 256))
+        self.resolved = resolved
 
-        img.save("test.png")
+#        for entry in self.entries:
+#            if entry.x is not None and entry.y is not None:
+#                img.paste(entry.image, (entry.x * 256, entry.y * 256))
+#
+#        img.save("test.png")
 
 # Download the .har file from Developer tools(roughly the same as your operations), and we can parse it offline.
 # Even if we have many image files to be download, it will not take too much time to wait to paste.
@@ -271,6 +286,18 @@ if __name__ == "__main__":
     except:
         pass
 
+    yaml_file = os.path.join(out_dir, "mapeditor_metadata.yaml")
+    yaml_data = {}
+    if not os.path.exists(yaml_file):
+        f = open(yaml_file, "w")
+        f.close()
+    else:
+        yaml_data = yaml.safe_load(open(yaml_file, "r"))
+    if yaml_data is None:
+        yaml_data = {}
+
+    yaml_data["point_to_gps_position"] = []
+
     for har_file in sys.argv[3:]:
 
         with open(har_file, "r") as f:
@@ -283,3 +310,20 @@ if __name__ == "__main__":
                 entries.append(SjofartsverketEntry(entry["request"], cache_dir))
 
     tile_orderer = OrderTiles(entries)
+    for entry in tile_orderer.resolved:
+        if entry.x is not None and entry.y is not None:
+            cur = {}
+            cur["x_pixel"] = entry.x * kGpsTileSize
+            cur["y_pixel"] = entry.y * kGpsTileSize
+            cur["latitude"] = entry.top_left.latitude
+            cur["longitude"] = entry.top_left.longitude
+            cur["latitude_offset"] = entry.top_left.latitude - entry.bottom_right.latitude
+            cur["longitude_offset"] = entry.bottom_right.longitude - entry.top_left.longitude
+
+            if cur["x_pixel"] == 9490 - 9490 % kGpsTileSize and cur["y_pixel"] == 6187 - 6187 % kGpsTileSize:
+                print(cur, cur["latitude"] + cur["latitude_offset"], cur["longitude"] + cur["longitude_offset"])
+                print("Index should be" , cur["x_pixel"] / kGpsTileSize, cur["y_pixel"] / kGpsTileSize)
+            yaml_data["point_to_gps_position"].append(cur)
+
+    with open(yaml_file, "w") as f:
+        f.write(yaml.dump(yaml_data))

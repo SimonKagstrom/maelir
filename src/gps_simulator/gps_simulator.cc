@@ -1,9 +1,10 @@
 #include "gps_simulator.hh"
 
-#include "gps_utils.hh"
+#include "position_converter.hh"
 #include "route_utils.hh"
 
 #include <cstdlib>
+#include <fmt/format.h>
 
 GpsSimulator::GpsSimulator(const MapMetadata& metadata,
                            ApplicationState& application_state,
@@ -96,6 +97,7 @@ GpsSimulator::OnActivation()
             }
             if (!m_route_pending && m_route_iterator)
             {
+                printf("route found!\n");
                 m_state = State::kDemo;
                 break;
             }
@@ -139,6 +141,11 @@ GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
 
     semaphore.release();
 
+//    fmt::print("Returning position: {}, {} from {}, {}\n",
+//               position.latitude,
+//               position.longitude,
+//               m_position.x,
+//               m_position.y);
     return hal::RawGpsData {position, m_angle, m_speed};
 }
 

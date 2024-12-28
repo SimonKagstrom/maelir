@@ -71,7 +71,7 @@ private:
 
 
     const uint32_t m_tile_rows;
-    const uint32_t m_tile_columns;
+    const uint32_t m_tile_row_size;
     const uint32_t m_land_mask_rows;
     const uint32_t m_land_mask_row_size;
 

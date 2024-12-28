@@ -10,6 +10,33 @@
 #include <fmt/format.h>
 #include <fstream>
 
+namespace
+{
+
+GpsPosition
+InterpolateGpsPosition(std::span<const MapGpsRasterTile> positions, auto map_width, auto x, auto y)
+{
+    auto index = (y / kGpsPositionSize - 1) * (map_width / kGpsPositionSize) + x / kGpsPositionSize;
+
+    if (index >= positions.size())
+    {
+        // Should never happen
+        return GpsPosition {.latitude = 0, .longitude = 0};
+    }
+    const auto& pos = positions[index];
+
+    float x_offset = x % kGpsPositionSize;
+    float y_offset = y % kGpsPositionSize;
+
+    auto longitude = pos.longitude + (pos.longitude_offset * x_offset) / kGpsPositionSize;
+    auto latitude = pos.latitude + (pos.latitude_offset * y_offset) / kGpsPositionSize;
+
+    return GpsPosition {.latitude = latitude, .longitude = longitude};
+}
+
+} // namespace
+
+
 MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
                                          const QString& out_yaml,
                                          QWidget* parent)
@@ -28,15 +55,25 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
         exit(1);
     }
 
+    m_gps_map_width = m_map->width();
+    m_gps_map_height = m_map->height();
+    assert(m_gps_map_width % kGpsPositionSize == 0);
+    assert(m_gps_map_height % kGpsPositionSize == 0);
+
     auto cropped_height = m_map->height() - m_map->height() % kTileSize;
     auto cropped_width = m_map->width() - m_map->width() % kTileSize;
 
     *m_map = m_map->copy(0, 0, cropped_width, cropped_height);
+    assert(m_map->width() == cropped_width);
+    assert(m_map->height() == cropped_height);
 
     m_all_land_tiles.resize((cropped_height / kTileSize) * (cropped_width / kTileSize), false);
     m_land_mask.resize(
         (cropped_height / kPathFinderTileSize) * (cropped_width / kPathFinderTileSize), false);
     m_pixmap = m_scene->addPixmap(QPixmap::fromImage(*m_map));
+
+    m_gps_positions.resize((m_gps_map_width / kGpsPositionSize) *
+                           (m_gps_map_height / kGpsPositionSize));
 
     m_ui->setupUi(this);
     m_ui->displayGraphicsView->SetOwner(this);
@@ -46,6 +83,16 @@ MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
 
     // Install the event filter on the viewport
     m_ui->displayGraphicsView->viewport()->installEventFilter(this);
+
+    m_ui->actionShow_GPS_tiles->connect(m_ui->actionShow_GPS_tiles, &QAction::triggered, [this]() {
+        m_show_gps_tiles = !m_show_gps_tiles;
+        m_scene->invalidate(m_scene->sceneRect());
+    });
+
+    m_ui->actionShow_map_tiles->connect(m_ui->actionShow_map_tiles, &QAction::triggered, [this]() {
+        m_show_map_tiles = !m_show_map_tiles;
+        m_scene->invalidate(m_scene->sceneRect());
+    });
 
     LoadYaml(m_out_yaml.toStdString().c_str());
 }
@@ -103,15 +150,8 @@ MapEditorMainWindow::FilterMouse(QObject* obj, QEvent* event)
     {
         auto [x, y] = GetMapCoordinates(mouse_event->pos());
         QString gps_text = "";
-        if (m_map_position_data)
-        {
-            auto longitude = m_map_position_data->longitude_at_pixel_0 +
-                             m_map_position_data->longitude_per_pixel * x;
-            auto latitude = m_map_position_data->latitude_at_pixel_0 +
-                            m_map_position_data->latitude_per_pixel * y;
-
-            gps_text = QString(",  Longitude: %1, Latitude: %2").arg(longitude).arg(latitude);
-        }
+        auto position = InterpolateGpsPosition(m_gps_positions, m_gps_map_width, x, y);
+        gps_text = QString(", position: %1, %2").arg(position.latitude).arg(position.longitude);
 
         m_ui->coordinateLabel->setText(QString("x: %1, y: %2%3").arg(x).arg(y).arg(gps_text));
 
@@ -161,7 +201,6 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     auto action_route_add_point = contextMenu.addAction("Add route point");
     // .. and here
     contextMenu.addSeparator();
-    auto action_set_coordinates = contextMenu.addAction("Set GPS coordinates for this point");
     auto action_add_land_color = contextMenu.addAction("Add land color for this point");
     auto action_home_position = contextMenu.addAction("Set home position at this point");
     auto action_calculate_land = contextMenu.addAction("Calculate land tiles");
@@ -169,51 +208,8 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     auto selectedAction = contextMenu.exec(mouse_position);
     auto [x, y] = GetMapCoordinates(map_posititon);
 
-    if (selectedAction == action_set_coordinates)
-    {
-        bool ok;
-        QString text = QInputDialog::getText(
-            this,
-            tr("Set GPS Coordinates"),
-            tr("Enter Latitude, longitude (e.g., 59.30233189848152, 17.941052011787928):"),
-            QLineEdit::Normal,
-            "",
-            &ok);
 
-        if (ok && !text.isEmpty())
-        {
-            QStringList coordinates = text.split(",");
-            if (coordinates.size() == 2)
-            {
-                bool long_ok, lat_ok;
-                double latitude = coordinates[0].trimmed().toDouble(&long_ok);
-                double longitude = coordinates[1].trimmed().toDouble(&lat_ok);
-
-                if (long_ok && lat_ok)
-                {
-                    SetGpsPosition(longitude, latitude, x, y);
-
-                    SaveYaml();
-                }
-                else
-                {
-                    QMessageBox::warning(
-                        this,
-                        tr("Invalid Input"),
-                        tr("Please enter valid numeric values for longitude and latitude."));
-                }
-            }
-            else
-            {
-                QMessageBox::warning(
-                    this,
-                    tr("Invalid Input"),
-                    tr("Please enter the coordinates in the format: Longitude, Latitude."));
-            }
-        }
-    }
-
-    else if (selectedAction == action_add_land_color)
+    if (selectedAction == action_add_land_color)
     {
         auto color = m_map->pixelColor(x, y);
         fmt::print("Color at {},{}: R: {}, G: {}, B: {}\n",
@@ -291,79 +287,11 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 }
 
 void
-MapEditorMainWindow::SetGpsPosition(double longitude, double latitude, int x, int y)
-{
-    fmt::print("Setting GPS coordinates at {},{} to Longitude: {}, Latitude: {}\n",
-               x,
-               y,
-               longitude,
-               latitude);
-
-    if (m_positions.full())
-    {
-        m_positions.clear();
-        m_map_position_data = std::nullopt;
-    }
-    m_positions.push_back({longitude, latitude, x, y});
-
-    if (m_positions.size() == 2)
-    {
-        auto& first = m_positions.front();
-        auto& second = m_positions.back();
-
-        if (first.x > second.x)
-        {
-            printf(
-                "First coordinate should be top left, second bottom right. Unreliable results\n");
-            std::swap(first, second);
-        }
-
-        auto longitude_diff = second.longitude - first.longitude;
-        auto latitude_diff = second.latitude - first.latitude;
-
-        auto x_pixel_diff = second.x - first.x;
-        auto y_pixel_diff = second.y - first.y;
-
-        auto latitude_at_pixel_0 = first.latitude - (latitude_diff / y_pixel_diff) * first.y;
-        auto longitude_at_pixel_0 = first.longitude - (longitude_diff / x_pixel_diff) * first.x;
-
-        auto latitude_pixel_size = y_pixel_diff / latitude_diff;
-        auto longitude_pixel_size = x_pixel_diff / longitude_diff;
-
-        m_map_position_data = {longitude_at_pixel_0,
-                               latitude_at_pixel_0,
-                               longitude_diff / x_pixel_diff,
-                               latitude_diff / y_pixel_diff,
-                               static_cast<unsigned>(std::abs(longitude_pixel_size)),
-                               static_cast<unsigned>(std::abs(latitude_pixel_size))};
-
-        fmt::print("Longitude diff: {}, Latitude diff: {}\n", longitude_diff, latitude_diff);
-        fmt::print("X pixel diff: {}, Y pixel diff: {}\n", x_pixel_diff, y_pixel_diff);
-        fmt::print("Latitude at pixel 0: {}, Longitude at pixel 0: {}\n",
-                   latitude_at_pixel_0,
-                   longitude_at_pixel_0);
-    }
-
-    update();
-}
-
-void
 MapEditorMainWindow::LoadYaml(const char* filename)
 {
     try
     {
         auto node = YAML::LoadFile(filename);
-
-        for (const auto& pos : node["reference_positions"])
-        {
-            if (pos["longitude"] && pos["latitude"] && pos["x_pixel"] && pos["y_pixel"])
-            {
-                SetGpsPosition(pos["longitude"].as<double>(),
-                               pos["latitude"].as<double>(),
-                               pos["x_pixel"].as<int>(),
-                               pos["y_pixel"].as<int>());
-            }
-        }
 
         for (const auto& color : node["land_pixel_colors"])
         {
@@ -405,6 +333,28 @@ MapEditorMainWindow::LoadYaml(const char* filename)
                 auto index = (pos["y_pixel"].as<int>() / kTileSize) * m_map->width() / kTileSize +
                              pos["x_pixel"].as<int>() / kTileSize;
                 m_all_land_tiles[index] = true;
+            }
+        }
+
+        for (const auto& pos : node["point_to_gps_position"])
+        {
+            if (pos["x_pixel"] && pos["y_pixel"] && pos["longitude"] && pos["latitude"] &&
+                pos["longitude_offset"] && pos["latitude_offset"] && pos["longitude_offset"])
+            {
+                auto x = pos["x_pixel"].as<int>();
+                auto y = pos["y_pixel"].as<int>();
+
+                if (x >= m_gps_map_width || y >= m_gps_map_height)
+                {
+                    continue;
+                }
+
+                auto index = (y / kGpsPositionSize) * (m_gps_map_width / kGpsPositionSize) +
+                             x / kGpsPositionSize;
+                m_gps_positions[index] = {.latitude = pos["latitude"].as<float>(),
+                                          .longitude = pos["longitude"].as<float>(),
+                                          .latitude_offset = pos["latitude_offset"].as<float>(),
+                                          .longitude_offset = pos["longitude_offset"].as<float>()};
             }
         }
 
@@ -451,30 +401,6 @@ MapEditorMainWindow::SaveYaml()
     node["map_filename"] = m_map_name.toStdString();
     node["tile_size"] = kTileSize;
     node["path_finder_tile_size"] = kPathFinderTileSize;
-
-    for (const auto& pos : m_positions)
-    {
-        YAML::Node pos_node;
-
-        pos_node["longitude"] = pos.longitude;
-        pos_node["latitude"] = pos.latitude;
-        pos_node["x_pixel"] = pos.x;
-        pos_node["y_pixel"] = pos.y;
-
-        node["reference_positions"].push_back(pos_node);
-    }
-
-    if (m_map_position_data)
-    {
-        YAML::Node corner_position;
-
-        corner_position["latitude"] = m_map_position_data->latitude_at_pixel_0;
-        corner_position["longitude"] = m_map_position_data->longitude_at_pixel_0;
-        corner_position["latitude_pixel_size"] = m_map_position_data->latitude_pixel_size;
-        corner_position["longitude_pixel_size"] = m_map_position_data->longitude_pixel_size;
-
-        node["corner_position"] = corner_position;
-    }
 
     if (!m_land_colors.empty())
     {
@@ -549,6 +475,26 @@ MapEditorMainWindow::SaveYaml()
 
         node["home_position"] = home_position;
     }
+
+    YAML::Node gps_positions;
+    for (auto i = 0; i < m_gps_positions.size(); ++i)
+    {
+        auto y = i / (m_gps_map_width / kGpsPositionSize);
+        auto x = i % (m_gps_map_width / kGpsPositionSize);
+
+        YAML::Node pos_node;
+
+        pos_node["x_pixel"] = x * kGpsPositionSize;
+        pos_node["y_pixel"] = y * kGpsPositionSize;
+        pos_node["longitude"] = m_gps_positions[i].longitude;
+        pos_node["latitude"] = m_gps_positions[i].latitude;
+        pos_node["longitude_offset"] = m_gps_positions[i].longitude_offset;
+        pos_node["latitude_offset"] = m_gps_positions[i].latitude_offset;
+
+        gps_positions.push_back(pos_node);
+    }
+    node["point_to_gps_position"] = gps_positions;
+
 
     YAML::Node all_land_tiles;
     for (auto y = 0; y < m_map->height(); y += kTileSize)

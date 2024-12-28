@@ -1,9 +1,11 @@
 #include "gps_reader.hh"
 
-#include "gps_utils.hh"
+#include "position_converter.hh"
 
 #include <cassert>
 #include <etl/queue_spsc_atomic.h>
+#include <fmt/format.h>
+#include <span>
 
 class GpsReader::GpsPortImpl : public IGpsPort
 {
@@ -131,53 +133,3 @@ GpsReader::Reset()
     m_speed = std::nullopt;
     m_heading = std::nullopt;
 }
-
-
-namespace gps
-{
-
-Point
-PositionToPoint(const MapMetadata& metadata, const GpsPosition& gps_data)
-{
-    auto longitude_offset = gps_data.longitude - metadata.corner_longitude;
-    auto latitude_offset = metadata.corner_latitude - gps_data.latitude;
-
-    int32_t x = longitude_offset * metadata.pixel_longitude_size;
-    int32_t y = latitude_offset * metadata.pixel_latitude_size;
-
-    if (longitude_offset < 0)
-    {
-        x = 0;
-    }
-    if (latitude_offset < 0)
-    {
-        y = 0;
-    }
-
-    if (x > kTileSize * metadata.tile_row_size)
-    {
-        x = kTileSize * metadata.tile_row_size;
-    }
-    if (y > kTileSize * metadata.tile_column_size)
-    {
-        y = kTileSize * metadata.tile_column_size;
-    }
-
-    return Point {x, y};
-}
-
-GpsPosition
-PointToPosition(const MapMetadata& metadata, const Point& pixel_position)
-{
-    GpsPosition gps_position;
-
-    double longitude_offset = static_cast<double>(pixel_position.x) / metadata.pixel_longitude_size;
-    double latitude_offset = static_cast<double>(pixel_position.y) / metadata.pixel_latitude_size;
-
-    gps_position.longitude = metadata.corner_longitude + longitude_offset;
-    gps_position.latitude = metadata.corner_latitude - latitude_offset;
-
-    return gps_position;
-}
-
-} // namespace gps

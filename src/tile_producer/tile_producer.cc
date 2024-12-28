@@ -79,15 +79,19 @@ private:
 
 } // namespace
 
+
 TileProducer::TileProducer(const MapMetadata& map_metadata)
     : m_flash_start(reinterpret_cast<const uint8_t*>(&map_metadata))
     , m_flash_tile_data(
           reinterpret_cast<const FlashTile*>(m_flash_start + map_metadata.tile_data_offset))
     , m_tile_count(map_metadata.tile_count)
-    , m_tile_rows(map_metadata.tile_row_size)
-    , m_tile_columns(map_metadata.tile_column_size)
+    , m_tile_row_size(map_metadata.tile_row_size)
+    , m_tile_rows(map_metadata.tile_rows)
 {
-    m_tile_index_to_cache.resize(map_metadata.tile_row_size * map_metadata.tile_column_size);
+    // Including the default land/empty tile
+    assert(m_tile_count == m_tile_row_size * m_tile_rows + 1);
+
+    m_tile_index_to_cache.resize(m_tile_count);
 
     std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
 }
@@ -272,17 +276,13 @@ TileProducer::DecodeTile(unsigned index)
 std::optional<unsigned>
 TileProducer::PointToTileIndex(const Point& point) const
 {
-    if (point.x >= kTileSize * m_tile_rows || point.x < 0)
+    auto index = (point.y / kTileSize) * m_tile_row_size + point.x / kTileSize;
+    if (index >= m_tile_count)
     {
         return std::nullopt;
     }
 
-    if (point.y >= kTileSize * m_tile_columns || point.y < 0)
-    {
-        return std::nullopt;
-    }
-
-    return (point.y / kTileSize) * m_tile_rows + point.x / kTileSize;
+    return index;
 }
 
 std::unique_ptr<Image>
