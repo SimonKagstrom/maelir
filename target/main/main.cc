@@ -42,9 +42,9 @@ app_main(void)
     //state.Checkout()->demo_mode = false;
     state.Checkout()->demo_mode = true;
 
-    auto encoder_input = std::make_unique<EncoderInput>(6,  // Pin A -> 6 (MOSI/MISO)
-                                                        7,  // Pin B -> 7 (MOSI/MISO)
-                                                        5); // Button -> 5 (SCK)
+    auto encoder_input = std::make_unique<EncoderInput>(7,  // Pin A -> 7 (MOSI))
+                                                        6,  // Pin B -> 6 (MISO)
+                                                        5); // Button -> 5(SCK)
     auto display = std::make_unique<DisplayTarget>();
     auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,
                                               17,  // RX -> A0
