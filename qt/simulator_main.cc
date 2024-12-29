@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QFile>
 #include <fmt/format.h>
+#include <lvgl.h>
 #include <stdlib.h>
 
 int
@@ -19,6 +20,8 @@ main(int argc, char* argv[])
         fmt::print("Usage: {} <path_to_generated_tiles.bin>\n", argv[0]);
         exit(1);
     }
+
+    lv_init();
 
     QApplication a(argc, argv);
     MainWindow window;

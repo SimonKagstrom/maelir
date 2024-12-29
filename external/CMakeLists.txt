@@ -1,3 +1,5 @@
+add_subdirectory(lvgl)
+
 if (NOT "${TARGET_TYPE}" STREQUAL "esp32")
     # Build as shared for host, since this otherwise conflicts with libz
     set(LIB_TYPE SHARED)
