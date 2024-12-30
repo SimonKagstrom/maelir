@@ -10,6 +10,21 @@
 #include <cmath>
 #include <numbers>
 
+
+namespace
+{
+
+uint32_t
+ms_to_ticks(void)
+{
+    auto out = os::GetTimeStamp();
+
+    return out.count();
+}
+
+} // namespace
+
+
 UserInterface::UserInterface(ApplicationState& application_state,
                              const MapMetadata& metadata,
                              TileProducer& tile_producer,
@@ -42,11 +57,44 @@ UserInterface::UserInterface(ApplicationState& application_state,
     input.AttachListener(this);
     m_gps_port->AwakeOn(GetSemaphore());
     m_route_listener->AwakeOn(GetSemaphore());
+
+    m_position = {9210, 6000};
+    m_map_position = PositionToMapCenter(m_position);
 }
+
+void
+UserInterface::LvFlushCallback(const lv_area_t* area, uint8_t* px_map)
+{
+    memset(px_map, 0, area->x2 - area->x1 + 1);
+    lv_display_flush_ready(m_lvgl_display);
+}
+
+void
+UserInterface::LvFlushCallbackStatic(lv_display_t* display, const lv_area_t* area, uint8_t* px_map)
+{
+    auto pThis = static_cast<UserInterface*>(lv_display_get_user_data(display));
+    pThis->LvFlushCallback(area, px_map);
+}
+
 
 std::optional<milliseconds>
 UserInterface::OnActivation()
 {
+    if (!m_lvgl_display)
+    {
+        lv_init();
+        lv_tick_set_cb(ms_to_ticks);
+
+        m_lvgl_display = lv_display_create(hal::kDisplayWidth, hal::kDisplayHeight);
+        lv_display_set_buffers(m_lvgl_display,
+                               m_display.GetFrameBuffer(),
+                               nullptr,
+                               sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
+                               lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
+        lv_display_set_user_data(m_lvgl_display, this);
+    }
+
+
     // Handle input
     hal::IInput::Event event;
     while (m_input_queue.pop(event))
@@ -125,11 +173,18 @@ UserInterface::OnActivation()
         DrawSpeedometer();
     }
 
+
+    printf("da tajma\n");
+    lv_refr_now(nullptr);
+    auto delay = lv_timer_handler();
+
+    printf("Flipping\n");
     m_display.Flip();
     // Now invalid
     m_frame_buffer = nullptr;
 
-    return std::nullopt;
+    printf("Soon restart\n");
+    return milliseconds(delay);
 }
 
 
@@ -162,8 +217,15 @@ UserInterface::RequestMapTiles(const Point& position)
                 m_tile_producer.LockTile({start_x + x * kTileSize, start_y + y * kTileSize});
             if (tile)
             {
-                m_tiles.push_back(
-                    {std::move(tile), {x * kTileSize - x_remainder, y * kTileSize - y_remainder}});
+                auto img = lv_img_create(lv_screen_active());
+
+                lv_img_set_src(img, &tile->GetImage().lv_image_dsc);
+                lv_obj_align(img,
+                             LV_ALIGN_TOP_LEFT,
+                             x * kTileSize - x_remainder,
+                             y * kTileSize - y_remainder);
+
+                m_tiles.emplace_back(std::move(tile), img);
             }
         }
     }
@@ -339,8 +401,7 @@ UserInterface::DrawMap()
     {
         for (const auto& [tile, position] : m_tiles)
         {
-            auto& image = static_cast<const ImageImpl&>(tile->GetImage());
-            painter::Blit(m_frame_buffer, tile->GetImage(), {position.x, position.y});
+            //            painter::Blit(m_frame_buffer, tile->GetImage(), {position.x, position.y});
         }
     }
     else

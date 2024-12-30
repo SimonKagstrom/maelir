@@ -10,6 +10,7 @@
 
 #include <etl/queue_spsc_atomic.h>
 #include <etl/vector.h>
+#include <lvgl.h>
 
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
@@ -45,7 +46,18 @@ private:
     struct TileAndPosition
     {
         std::unique_ptr<ITileHandle> tile;
-        Point position;
+        lv_obj_t* image {nullptr};
+
+        TileAndPosition(std::unique_ptr<ITileHandle> tile, lv_obj_t* image)
+            : tile(std::move(tile))
+            , image(image)
+        {
+        }
+
+        ~TileAndPosition()
+        {
+            lv_obj_delete(image);
+        }
     };
     std::optional<milliseconds> OnActivation() final;
 
@@ -69,6 +81,9 @@ private:
 
     Point PositionToMapCenter(const auto& pixel_position) const;
 
+    void LvFlushCallback(const lv_area_t* area, uint8_t* px_map);
+    static void
+    LvFlushCallbackStatic(lv_display_t* display, const lv_area_t* area, uint8_t* px_map);
 
     const uint32_t m_tile_rows;
     const uint32_t m_tile_row_size;
@@ -79,6 +94,7 @@ private:
     TileProducer& m_tile_producer;
 
     hal::IDisplay& m_display;
+    lv_display_t* m_lvgl_display {nullptr};
     std::unique_ptr<IGpsPort> m_gps_port;
     std::unique_ptr<IRouteListener> m_route_listener;
 

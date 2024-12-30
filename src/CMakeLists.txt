@@ -1,5 +1,3 @@
-find_package(mp-units REQUIRED)
-
 set(RESOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../resources CACHE PATH "Path to resources directory")
 
 add_subdirectory(application_state)
@@ -22,5 +20,6 @@ target_include_directories(maelir_interface INTERFACE
 
 target_link_libraries(maelir_interface INTERFACE
     etl::etl
-    mp-units::mp-units
+    fmt::fmt
+    lvgl
 )

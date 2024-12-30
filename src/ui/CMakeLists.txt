@@ -17,6 +17,7 @@ PUBLIC
     tile_producer
     gps_reader
     route_service
+    lvgl
 PRIVATE
     painter
     boat_library
