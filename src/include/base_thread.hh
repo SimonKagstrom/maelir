@@ -38,6 +38,11 @@ public:
     }
 
 protected:
+    // The thread has just started
+    virtual void OnStartup()
+    {
+    }
+
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
 
@@ -78,6 +83,8 @@ private:
 
     void ThreadLoop()
     {
+        OnStartup();
+
         while (m_running)
         {
             auto thread_wakeup = OnActivation();

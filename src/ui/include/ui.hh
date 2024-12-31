@@ -59,6 +59,9 @@ private:
             lv_obj_delete(image);
         }
     };
+
+    // From BaseThread
+    void OnStartup() final;
     std::optional<milliseconds> OnActivation() final;
 
     void OnInput(const hal::IInput::Event& event) final;
@@ -80,10 +83,6 @@ private:
     void DrawSpeedometer();
 
     Point PositionToMapCenter(const auto& pixel_position) const;
-
-    void LvFlushCallback(const lv_area_t* area, uint8_t* px_map);
-    static void
-    LvFlushCallbackStatic(lv_display_t* display, const lv_area_t* area, uint8_t* px_map);
 
     const uint32_t m_tile_rows;
     const uint32_t m_tile_row_size;

@@ -8,6 +8,7 @@
 #include "time.hh"
 
 #include <cmath>
+#include <fmt/format.h>
 #include <numbers>
 
 
@@ -62,39 +63,27 @@ UserInterface::UserInterface(ApplicationState& application_state,
     m_map_position = PositionToMapCenter(m_position);
 }
 
-void
-UserInterface::LvFlushCallback(const lv_area_t* area, uint8_t* px_map)
-{
-    memset(px_map, 0, area->x2 - area->x1 + 1);
-    lv_display_flush_ready(m_lvgl_display);
-}
 
 void
-UserInterface::LvFlushCallbackStatic(lv_display_t* display, const lv_area_t* area, uint8_t* px_map)
+UserInterface::OnStartup()
 {
-    auto pThis = static_cast<UserInterface*>(lv_display_get_user_data(display));
-    pThis->LvFlushCallback(area, px_map);
-}
+    assert(m_lvgl_display == nullptr);
 
+    lv_init();
+    lv_tick_set_cb(ms_to_ticks);
+
+    m_lvgl_display = lv_display_create(hal::kDisplayWidth, hal::kDisplayHeight);
+    lv_display_set_buffers(m_lvgl_display,
+                           m_display.GetFrameBuffer(),
+                           nullptr,
+                           sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
+                           lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
+    lv_display_set_user_data(m_lvgl_display, this);
+}
 
 std::optional<milliseconds>
 UserInterface::OnActivation()
 {
-    if (!m_lvgl_display)
-    {
-        lv_init();
-        lv_tick_set_cb(ms_to_ticks);
-
-        m_lvgl_display = lv_display_create(hal::kDisplayWidth, hal::kDisplayHeight);
-        lv_display_set_buffers(m_lvgl_display,
-                               m_display.GetFrameBuffer(),
-                               nullptr,
-                               sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
-                               lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
-        lv_display_set_user_data(m_lvgl_display, this);
-    }
-
-
     // Handle input
     hal::IInput::Event event;
     while (m_input_queue.pop(event))
@@ -175,15 +164,16 @@ UserInterface::OnActivation()
 
 
     printf("da tajma\n");
-    lv_refr_now(nullptr);
     auto delay = lv_timer_handler();
 
     printf("Flipping\n");
     m_display.Flip();
+    lv_display_flush_ready(m_lvgl_display);
+
     // Now invalid
     m_frame_buffer = nullptr;
 
-    printf("Soon restart\n");
+    printf("Soon restart %u\n", delay);
     return milliseconds(delay);
 }
 
@@ -217,9 +207,9 @@ UserInterface::RequestMapTiles(const Point& position)
                 m_tile_producer.LockTile({start_x + x * kTileSize, start_y + y * kTileSize});
             if (tile)
             {
-                auto img = lv_img_create(lv_screen_active());
+                auto img = lv_image_create(lv_screen_active());
 
-                lv_img_set_src(img, &tile->GetImage().lv_image_dsc);
+                lv_image_set_src(img, &tile->GetImage().lv_image_dsc);
                 lv_obj_align(img,
                              LV_ALIGN_TOP_LEFT,
                              x * kTileSize - x_remainder,
