@@ -44,8 +44,6 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_route_listener(std::move(route_listener))
     , m_boat(DecodePng(boat_data))
     , m_numbers(DecodePng(numbers_data))
-    , m_boat_rotation(painter::AllocateRotationBuffer(*m_boat))
-    , m_rotated_boat(*m_boat)
 {
     m_static_map_buffer = std::make_unique<uint16_t[]>(hal::kDisplayWidth * hal::kDisplayHeight);
     m_static_map_image = std::make_unique<Image>(
@@ -53,7 +51,6 @@ UserInterface::UserInterface(ApplicationState& application_state,
                                    hal::kDisplayWidth * hal::kDisplayHeight},
         hal::kDisplayWidth,
         hal::kDisplayHeight);
-    m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, 0);
 
     input.AttachListener(this);
     m_gps_port->AwakeOn(GetSemaphore());
@@ -79,6 +76,9 @@ UserInterface::OnStartup()
                            sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
                            lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
     lv_display_set_user_data(m_lvgl_display, this);
+
+    m_boat_lv_img = std::make_unique<LvWrapper<lv_obj_t>>(lv_image_create(lv_screen_active()));
+    lv_image_set_src(m_boat_lv_img->obj, &m_boat->lv_image_dsc);
 }
 
 std::optional<milliseconds>
@@ -145,7 +145,7 @@ UserInterface::OnActivation()
 
         m_speed = position->speed;
 
-        m_rotated_boat = painter::Rotate(*m_boat, m_boat_rotation, position->heading);
+        lv_image_set_rotation(m_boat_lv_img->obj, position->heading * 10);
     }
 
     RunStateMachine();
@@ -162,18 +162,15 @@ UserInterface::OnActivation()
         DrawSpeedometer();
     }
 
-
-    printf("da tajma\n");
     auto delay = lv_timer_handler();
 
-    printf("Flipping\n");
+    // Display the frame buffer and let LVGL know that it's done
     m_display.Flip();
     lv_display_flush_ready(m_lvgl_display);
 
     // Now invalid
     m_frame_buffer = nullptr;
 
-    printf("Soon restart %u\n", delay);
     return milliseconds(delay);
 }
 
@@ -209,6 +206,7 @@ UserInterface::RequestMapTiles(const Point& position)
             {
                 auto img = lv_image_create(lv_screen_active());
 
+                lv_obj_move_background(img);
                 lv_image_set_src(img, &tile->GetImage().lv_image_dsc);
                 lv_obj_align(img,
                              LV_ALIGN_TOP_LEFT,
@@ -405,10 +403,12 @@ UserInterface::DrawMap()
 void
 UserInterface::DrawRoute()
 {
+    m_route_line = nullptr;
     if (m_route.empty())
     {
         return;
     }
+    m_route_line = std::make_unique<RouteLine>();
 
     auto index = 0;
     auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
@@ -434,13 +434,8 @@ UserInterface::DrawRoute()
 
         if (m_state == State::kMap)
         {
-            painter::DrawAlphaLine(
-                m_frame_buffer,
-                {last_point->x - m_map_position.x, last_point->y - m_map_position.y},
-                {cur_point->x - m_map_position.x, cur_point->y - m_map_position.y},
-                8,
-                color,
-                128);
+            m_route_line->points.push_back(
+                {cur_point->x - m_map_position.x, cur_point->y - m_map_position.y});
         }
         else
         {
@@ -459,6 +454,19 @@ UserInterface::DrawRoute()
         last_point = cur_point;
         index++;
     }
+
+    lv_line_set_points(
+        m_route_line->lv_line->obj, m_route_line->points.data(), m_route_line->points.size());
+
+    // TMP
+    /*Create style*/
+    static lv_style_t style_line;
+    lv_style_init(&style_line);
+    lv_style_set_line_width(&style_line, 8);
+    lv_style_set_line_color(&style_line, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
+    lv_style_set_line_rounded(&style_line, true);
+
+    lv_obj_add_style(m_route_line->lv_line->obj, &style_line, 0);
 }
 
 void
@@ -469,16 +477,17 @@ UserInterface::DrawBoat()
 
     if (m_state == State::kMap)
     {
-        x = m_position.x - m_map_position.x - m_rotated_boat.width / 2;
-        y = m_position.y - m_map_position.y - m_rotated_boat.height / 2;
+        x = m_position.x - m_map_position.x;
+        y = m_position.y - m_map_position.y;
     }
     else
     {
-        x = (m_position.x - m_map_position_zoomed_out.x) / m_zoom_level - m_rotated_boat.width / 2;
-        y = (m_position.y - m_map_position_zoomed_out.y) / m_zoom_level - m_rotated_boat.height / 2;
+        x = (m_position.x - m_map_position_zoomed_out.x) / m_zoom_level;
+        y = (m_position.y - m_map_position_zoomed_out.y) / m_zoom_level;
     }
 
-    painter::MaskBlit(m_frame_buffer, m_rotated_boat, {x, y});
+    lv_obj_move_foreground(m_boat_lv_img->obj);
+    lv_obj_align(m_boat_lv_img->obj, LV_ALIGN_TOP_LEFT, x, y);
 }
 
 void

@@ -88,6 +88,7 @@ main(int argc, char* argv[])
     window.show();
 
     //    route_service->RequestRoute({2592, 7032}, {16008, 4728});
+    //route_service->RequestRoute({8735,6117}, {9771, 6493});
     auto out = QApplication::exec();
 
     // Stop to avoid the destructor accessing the thread

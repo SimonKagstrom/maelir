@@ -43,6 +43,25 @@ private:
         kValueCount,
     };
 
+    template <typename T>
+    struct LvWrapper
+    {
+        T* obj;
+
+        LvWrapper(T* obj)
+            : obj(obj)
+        {
+        }
+
+        LvWrapper() = delete;
+        LvWrapper(const LvWrapper&) = delete;
+
+        ~LvWrapper()
+        {
+            lv_obj_delete(obj);
+        }
+    };
+
     struct TileAndPosition
     {
         std::unique_ptr<ITileHandle> tile;
@@ -59,6 +78,22 @@ private:
             lv_obj_delete(image);
         }
     };
+
+    struct RouteLine
+    {
+        RouteLine()
+            : lv_line(std::make_unique<LvWrapper<lv_obj_t>>(lv_line_create(lv_screen_active())))
+        {
+        }
+
+        std::unique_ptr<LvWrapper<lv_obj_t>> lv_line;
+        std::vector<lv_point_precise_t> points;
+    };
+
+    auto CreateLv(auto obj)
+    {
+        return std::make_unique<LvWrapper<std::decay_t<decltype(obj)>>>(obj);
+    }
 
     // From BaseThread
     void OnStartup() final;
@@ -108,6 +143,7 @@ private:
     float m_speed {0};
 
     std::vector<IndexType> m_route;
+    std::unique_ptr<RouteLine> m_route_line;
     std::optional<unsigned> m_passed_route_index;
 
     etl::queue_spsc_atomic<hal::IInput::Event, 4> m_input_queue;
@@ -119,13 +155,11 @@ private:
     std::unique_ptr<Image> m_static_map_image;
 
     std::unique_ptr<Image> m_boat;
+    std::unique_ptr<LvWrapper<lv_obj_t>> m_boat_lv_img;
     std::unique_ptr<Image> m_numbers;
-    std::vector<uint16_t> m_boat_rotation;
 
     etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
         m_zoomed_out_map_tiles;
-
-    Image m_rotated_boat;
 
     int32_t m_zoom_level {1};
     Mode m_mode {Mode::kMap};

@@ -81,7 +81,7 @@ GpsSimulator::OnActivation()
             {
                 auto from = m_route_service.RandomWaterPoint();
                 auto to = m_route_service.RandomWaterPoint();
-
+from = {9210, 6000}; to = {9771, 6493};
                 printf("Request route from %d %d to %d %d\n", from.x, from.y, to.x, to.y);
                 m_route_service.RequestRoute(from, to);
                 m_state = State::kWaitForRoute;

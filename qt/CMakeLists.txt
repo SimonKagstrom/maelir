@@ -22,8 +22,10 @@ endif()
 
 # Enable sanitizers in debug builds
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options(-fsanitize=address,undefined -g)
-    add_link_options(-fsanitize=address,undefined -g)
+#add_compile_options(-fsanitize=address,undefined -g)
+#add_link_options(-fsanitize=address,undefined -g)
+add_compile_options(-g)
+add_link_options(-g)
 endif()
 
 include_directories(lvgl_setup)
