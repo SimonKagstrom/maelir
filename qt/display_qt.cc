@@ -61,7 +61,7 @@ DisplayQt::UpdateScreen()
 
     // Create a mask region
     QRegion maskRegion(0, 0, width, height);
-    QRegion circleRegion(0, 0, width, height, QRegion::Ellipse);
+    QRegion circleRegion(0, 0, width - 1, height - 1, QRegion::Ellipse);
     maskRegion = maskRegion.subtracted(circleRegion);
 
     // Fill the masked area with black

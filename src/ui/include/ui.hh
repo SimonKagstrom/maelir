@@ -158,6 +158,9 @@ private:
     std::unique_ptr<LvWrapper<lv_obj_t>> m_boat_lv_img;
     std::unique_ptr<Image> m_numbers;
 
+    std::unique_ptr<LvWrapper<lv_obj_t>> m_speedometer_scale;
+    std::unique_ptr<LvWrapper<lv_obj_t>> m_speedometer_arc;
+
     etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
         m_zoomed_out_map_tiles;
 

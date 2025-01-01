@@ -79,6 +79,42 @@ UserInterface::OnStartup()
 
     m_boat_lv_img = std::make_unique<LvWrapper<lv_obj_t>>(lv_image_create(lv_screen_active()));
     lv_image_set_src(m_boat_lv_img->obj, &m_boat->lv_image_dsc);
+    lv_obj_center(m_boat_lv_img->obj);
+
+
+    m_speedometer_arc = std::make_unique<LvWrapper<lv_obj_t>>(lv_arc_create(lv_screen_active()));
+    lv_obj_set_size(m_speedometer_arc->obj, lv_pct(100), lv_pct(100));
+    lv_obj_remove_style(m_speedometer_arc->obj, NULL, LV_PART_KNOB);
+    lv_obj_remove_flag(m_speedometer_arc->obj, LV_OBJ_FLAG_CLICKABLE);
+    lv_arc_set_rotation(m_speedometer_arc->obj, 135);
+    lv_arc_set_bg_angles(m_speedometer_arc->obj, 0, 20);
+    lv_arc_set_value(m_speedometer_arc->obj, 100);
+    lv_obj_center(m_speedometer_arc->obj);
+
+
+    m_speedometer_scale = std::make_unique<LvWrapper<lv_obj_t>>(lv_scale_create(lv_screen_active()));
+
+    lv_obj_set_size(m_speedometer_scale->obj, hal::kDisplayWidth, hal::kDisplayHeight);
+    lv_scale_set_mode(m_speedometer_scale->obj, LV_SCALE_MODE_ROUND_INNER);
+    lv_obj_set_style_bg_opa(m_speedometer_scale->obj, LV_OPA_0, 0);
+    lv_obj_set_style_bg_color(m_speedometer_scale->obj, lv_palette_lighten(LV_PALETTE_RED, 5), 0);
+    lv_obj_set_style_radius(m_speedometer_scale->obj, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_clip_corner(m_speedometer_scale->obj, true, 0);
+    lv_obj_align(m_speedometer_scale->obj, LV_ALIGN_TOP_LEFT, 0, 0);
+
+    lv_scale_set_label_show(m_speedometer_scale->obj, true);
+
+    lv_scale_set_total_tick_count(m_speedometer_scale->obj, 31);
+    lv_scale_set_major_tick_every(m_speedometer_scale->obj, 5);
+
+    lv_obj_set_style_length(m_speedometer_scale->obj, 5, LV_PART_ITEMS);
+    lv_obj_set_style_length(m_speedometer_scale->obj, 10, LV_PART_INDICATOR);
+    lv_scale_set_range(m_speedometer_scale->obj, 0, 40);
+
+    lv_scale_set_angle_range(m_speedometer_scale->obj, 270);
+    lv_scale_set_rotation(m_speedometer_scale->obj, 135);
+
+    m_route_line = std::make_unique<RouteLine>();
 }
 
 std::optional<milliseconds>
@@ -403,12 +439,12 @@ UserInterface::DrawMap()
 void
 UserInterface::DrawRoute()
 {
-    m_route_line = nullptr;
+    m_route_line->points.clear();
+    lv_line_set_points(m_route_line->lv_line->obj, {}, 0);
     if (m_route.empty())
     {
         return;
     }
-    m_route_line = std::make_unique<RouteLine>();
 
     auto index = 0;
     auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
@@ -486,22 +522,13 @@ UserInterface::DrawBoat()
         y = (m_position.y - m_map_position_zoomed_out.y) / m_zoom_level;
     }
 
-    lv_obj_move_foreground(m_boat_lv_img->obj);
     lv_obj_align(m_boat_lv_img->obj, LV_ALIGN_TOP_LEFT, x, y);
 }
 
 void
 UserInterface::DrawSpeedometer()
 {
-    char speed_str[3] {};
-
-    speed_str[0] = '0' + static_cast<int>(m_speed) / 10 % 10;
-    speed_str[1] = '0' + static_cast<int>(m_speed) % 10;
-
-    const auto x = hal::kDisplayWidth / 2 - m_numbers->width / 10;
-    const auto y = 20;
-
-    painter::DrawNumbers(m_frame_buffer, *m_numbers, {x, y}, speed_str);
+    lv_arc_set_bg_angles(m_speedometer_arc->obj, 0, m_speed);
 }
 
 Point
