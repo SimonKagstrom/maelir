@@ -84,8 +84,11 @@ UserInterface::OnStartup()
     lv_obj_set_size(m_speedometer_arc->obj, lv_pct(100), lv_pct(100));
     lv_obj_remove_style(m_speedometer_arc->obj, NULL, LV_PART_KNOB);
     lv_obj_remove_flag(m_speedometer_arc->obj, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_arc_color(m_speedometer_arc->obj,
+                               lv_color_t {.red = 50, .blue = 155, .green = 255},
+                               LV_PART_INDICATOR);
+    lv_obj_set_style_arc_width(m_speedometer_arc->obj, 20, LV_PART_INDICATOR);
     lv_arc_set_rotation(m_speedometer_arc->obj, 135);
-    lv_arc_set_bg_angles(m_speedometer_arc->obj, 0, 20);
     lv_arc_set_value(m_speedometer_arc->obj, 100);
     lv_obj_center(m_speedometer_arc->obj);
 
@@ -93,7 +96,7 @@ UserInterface::OnStartup()
     m_speedometer_scale =
         std::make_unique<LvWrapper<lv_obj_t>>(lv_scale_create(lv_screen_active()));
 
-    lv_obj_set_size(m_speedometer_scale->obj, hal::kDisplayWidth, hal::kDisplayHeight);
+    lv_obj_set_size(m_speedometer_scale->obj, lv_pct(100), lv_pct(100));
     lv_scale_set_mode(m_speedometer_scale->obj, LV_SCALE_MODE_ROUND_INNER);
     lv_obj_set_style_bg_opa(m_speedometer_scale->obj, LV_OPA_0, 0);
     lv_obj_set_style_bg_color(m_speedometer_scale->obj, lv_palette_lighten(LV_PALETTE_RED, 5), 0);
@@ -103,7 +106,7 @@ UserInterface::OnStartup()
 
     lv_scale_set_label_show(m_speedometer_scale->obj, true);
 
-    lv_scale_set_total_tick_count(m_speedometer_scale->obj, 31);
+    lv_scale_set_total_tick_count(m_speedometer_scale->obj, 41);
     lv_scale_set_major_tick_every(m_speedometer_scale->obj, 5);
 
     lv_obj_set_style_length(m_speedometer_scale->obj, 5, LV_PART_ITEMS);
@@ -535,7 +538,13 @@ UserInterface::DrawBoat()
 void
 UserInterface::DrawSpeedometer()
 {
-    lv_arc_set_bg_angles(m_speedometer_arc->obj, 0, m_speed);
+    constexpr auto max_speed = 40.0f;
+    constexpr auto max_angle = 270.0f;
+    auto speed = std::min(m_speed, max_speed);
+
+    auto angle = speed * max_angle / max_speed;
+
+    lv_arc_set_bg_angles(m_speedometer_arc->obj, 0, angle);
 }
 
 Point
