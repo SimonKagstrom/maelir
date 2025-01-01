@@ -77,10 +77,8 @@ UserInterface::OnStartup()
                            lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
     lv_display_set_user_data(m_lvgl_display, this);
 
-    m_boat_lv_img = std::make_unique<LvWrapper<lv_obj_t>>(lv_image_create(lv_screen_active()));
-    lv_image_set_src(m_boat_lv_img->obj, &m_boat->lv_image_dsc);
-    lv_obj_center(m_boat_lv_img->obj);
 
+    m_route_line = std::make_unique<RouteLine>();
 
     m_speedometer_arc = std::make_unique<LvWrapper<lv_obj_t>>(lv_arc_create(lv_screen_active()));
     lv_obj_set_size(m_speedometer_arc->obj, lv_pct(100), lv_pct(100));
@@ -92,7 +90,8 @@ UserInterface::OnStartup()
     lv_obj_center(m_speedometer_arc->obj);
 
 
-    m_speedometer_scale = std::make_unique<LvWrapper<lv_obj_t>>(lv_scale_create(lv_screen_active()));
+    m_speedometer_scale =
+        std::make_unique<LvWrapper<lv_obj_t>>(lv_scale_create(lv_screen_active()));
 
     lv_obj_set_size(m_speedometer_scale->obj, hal::kDisplayWidth, hal::kDisplayHeight);
     lv_scale_set_mode(m_speedometer_scale->obj, LV_SCALE_MODE_ROUND_INNER);
@@ -114,7 +113,9 @@ UserInterface::OnStartup()
     lv_scale_set_angle_range(m_speedometer_scale->obj, 270);
     lv_scale_set_rotation(m_speedometer_scale->obj, 135);
 
-    m_route_line = std::make_unique<RouteLine>();
+    m_boat_lv_img = std::make_unique<LvWrapper<lv_obj_t>>(lv_image_create(lv_screen_active()));
+    lv_image_set_src(m_boat_lv_img->obj, &m_boat->lv_image_dsc);
+    lv_obj_center(m_boat_lv_img->obj);
 }
 
 std::optional<milliseconds>
@@ -448,8 +449,11 @@ UserInterface::DrawRoute()
 
     auto index = 0;
     auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
-
     auto last_point = route_iterator.Next();
+
+    m_route_line->points.push_back(
+        {last_point->x - m_map_position.x, last_point->y - m_map_position.y});
+
     while (auto cur_point = route_iterator.Next())
     {
         constexpr auto kThreshold = 3 * kPathFinderTileSize;
@@ -522,7 +526,10 @@ UserInterface::DrawBoat()
         y = (m_position.y - m_map_position_zoomed_out.y) / m_zoom_level;
     }
 
-    lv_obj_align(m_boat_lv_img->obj, LV_ALIGN_TOP_LEFT, x, y);
+    lv_obj_align(m_boat_lv_img->obj,
+                 LV_ALIGN_TOP_LEFT,
+                 x - m_boat->lv_image_dsc.header.w / 2,
+                 y - m_boat->lv_image_dsc.header.h / 2);
 }
 
 void
