@@ -1,6 +1,7 @@
 #include "ui.hh"
 
 #include "boat.hh"
+#include "cohen_sutherland.hh"
 #include "numbers.hh"
 #include "painter.hh"
 #include "route_iterator.hh"
@@ -454,8 +455,11 @@ UserInterface::DrawRoute()
     auto route_iterator = RouteIterator(m_route, m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
-    m_route_line->points.push_back(
-        {last_point->x - m_map_position.x, last_point->y - m_map_position.y});
+    if (cs::PointClipsDisplay(last_point->x - m_map_position.x, last_point->y - m_map_position.y))
+    {
+        m_route_line->points.push_back(
+            {last_point->x - m_map_position.x, last_point->y - m_map_position.y});
+    }
 
     while (auto cur_point = route_iterator.Next())
     {
@@ -469,6 +473,16 @@ UserInterface::DrawRoute()
             {
                 m_passed_route_index = index;
             }
+        }
+
+        if (!cs::LineClipsDisplay(last_point->x - m_map_position.x,
+                                  last_point->y - m_map_position.y,
+                                  cur_point->x - m_map_position.x,
+                                  cur_point->y - m_map_position.y))
+        {
+            last_point = cur_point;
+            index++;
+            continue;
         }
 
         auto color = m_passed_route_index && index < *m_passed_route_index
