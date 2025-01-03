@@ -18,7 +18,23 @@ struct ReadHelper
 
 struct DecodeHelper
 {
-    DecodeHelper(PNG& png, std::optional<uint16_t> mask_color, uint8_t* dst)
+    DecodeHelper(PNG& png, uint16_t* dst)
+        : png(png)
+        , dst(dst)
+        , offset(0)
+    {
+    }
+
+    DecodeHelper() = delete;
+
+    PNG& png;
+    uint16_t* dst;
+    size_t offset;
+};
+
+struct DecodeHelperMask
+{
+    DecodeHelperMask(PNG& png, std::optional<uint16_t> mask_color, uint8_t* dst)
         : png(png)
         , mask_color(mask_color)
         , dst(dst)
@@ -27,7 +43,7 @@ struct DecodeHelper
     {
     }
 
-    DecodeHelper() = delete;
+    DecodeHelperMask() = delete;
 
     PNG& png;
     std::optional<uint16_t> mask_color;
@@ -40,8 +56,14 @@ struct DecodeHelper
 class StandaloneImage : public Image
 {
 public:
-    StandaloneImage(std::unique_ptr<uint8_t[]> data, size_t width, size_t height, unsigned pixel_size)
-        : Image(std::span<const uint8_t>({data.get(), width * height * pixel_size}), width, height, pixel_size != 2)
+    StandaloneImage(std::unique_ptr<uint8_t[]> data,
+                    size_t width,
+                    size_t height,
+                    unsigned pixel_size)
+        : Image(std::span<const uint8_t>({data.get(), width * height * pixel_size}),
+                width,
+                height,
+                pixel_size != 2)
         , m_data(std::move(data))
     {
     }
@@ -57,31 +79,32 @@ PngDraw(PNGDRAW* pDraw)
     auto helper = static_cast<DecodeHelper*>(pDraw->pUser);
 
     helper->png.getLineAsRGB565(
+        pDraw, helper->dst + helper->offset, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
+    helper->offset += pDraw->iWidth;
+}
+
+void
+PngDrawMask(PNGDRAW* pDraw)
+{
+    auto helper = static_cast<DecodeHelperMask*>(pDraw->pUser);
+
+    helper->png.getLineAsRGB565(
         pDraw, helper->line_buffer.get(), PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
 
-    if (helper->mask_color)
+    for (auto i = 0; i < pDraw->iWidth; i++)
     {
-        for (auto i = 0; i < pDraw->iWidth; i++)
-        {
-            auto pixel = helper->line_buffer[i];
-            auto alpha_value = pixel == helper->mask_color ? LV_OPA_TRANSP : LV_OPA_COVER;
+        auto pixel = helper->line_buffer[i];
+        auto alpha_value = pixel == helper->mask_color ? LV_OPA_TRANSP : LV_OPA_COVER;
 
-            auto b = pixel >> 11;
-            auto g = (pixel >> 5) & 0x3f;
-            auto r = pixel & 0x1f;
+        auto b = pixel >> 11;
+        auto g = (pixel >> 5) & 0x3f;
+        auto r = pixel & 0x1f;
 
-            // ARGB
-            // RGB565 -> RGB888
-            helper->dst[helper->offset++] = (r * 255) / 31;
-            helper->dst[helper->offset++] = (g * 255) / 63;
-            helper->dst[helper->offset++] = (b * 255) / 31;
-            helper->dst[helper->offset++] = alpha_value;
-        }
-    }
-    else
-    {
-        memcpy(helper->dst + helper->offset, helper->line_buffer.get(), pDraw->iWidth * 2);
-        helper->offset += pDraw->iWidth * 2;
+        // RGB565 -> ARGB888
+        helper->dst[helper->offset++] = (r * 255) / 31;
+        helper->dst[helper->offset++] = (g * 255) / 63;
+        helper->dst[helper->offset++] = (b * 255) / 31;
+        helper->dst[helper->offset++] = alpha_value;
     }
 }
 
@@ -297,7 +320,7 @@ TileProducer::DecodeTile(unsigned index)
     }
     auto img = std::make_unique<ImageImpl>(index);
 
-    DecodeHelper priv(*png, std::nullopt, img->rgb565_data.data());
+    DecodeHelper priv(*png, reinterpret_cast<uint16_t*>(img->rgb565_data.data()));
 
     rc = png->decode((void*)&priv, 0);
     png->close();
@@ -328,7 +351,8 @@ DecodePng(std::span<const uint8_t> data, std::optional<uint16_t> mask_color)
 {
     auto png = std::make_unique<PNG>();
 
-    auto rc = png->openFLASH((uint8_t*)data.data(), data.size(), PngDraw);
+    auto rc =
+        png->openFLASH((uint8_t*)data.data(), data.size(), mask_color ? PngDrawMask : PngDraw);
 
     if (rc != PNG_SUCCESS)
     {
@@ -339,9 +363,16 @@ DecodePng(std::span<const uint8_t> data, std::optional<uint16_t> mask_color)
 
     auto rgb565_data = std::make_unique<uint8_t[]>(png->getWidth() * png->getHeight() * pixel_size);
 
-    DecodeHelper priv(*png, mask_color, rgb565_data.get());
-
-    rc = png->decode((void*)&priv, 0);
+    if (mask_color)
+    {
+        DecodeHelperMask priv(*png, mask_color, rgb565_data.get());
+        rc = png->decode((void*)&priv, 0);
+    }
+    else
+    {
+        DecodeHelper priv(*png, reinterpret_cast<uint16_t*>(rgb565_data.get()));
+        rc = png->decode((void*)&priv, 0);
+    }
     png->close();
     if (rc != PNG_SUCCESS)
     {
