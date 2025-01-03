@@ -113,8 +113,10 @@ UserInterface::OnStartup()
     lv_scale_set_total_tick_count(m_speedometer_scale->obj, 41);
     lv_scale_set_major_tick_every(m_speedometer_scale->obj, 5);
 
-    lv_obj_set_style_length(m_speedometer_scale->obj, 5, LV_PART_ITEMS);
-    lv_obj_set_style_length(m_speedometer_scale->obj, 10, LV_PART_INDICATOR);
+    lv_obj_set_style_length(m_speedometer_scale->obj, 10, LV_PART_ITEMS);
+    lv_obj_set_style_length(m_speedometer_scale->obj, 20, LV_PART_INDICATOR);
+    lv_obj_set_style_width(m_speedometer_scale->obj, 2, LV_PART_ITEMS);
+    lv_obj_set_style_width(m_speedometer_scale->obj, 2, LV_PART_INDICATOR);
     lv_scale_set_range(m_speedometer_scale->obj, 0, 40);
 
     lv_scale_set_angle_range(m_speedometer_scale->obj, 270);
