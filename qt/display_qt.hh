@@ -14,7 +14,7 @@ class DisplayQt : public QObject, public hal::IDisplay
 public:
     DisplayQt(QGraphicsScene* scene);
 
-    uint16_t* GetFrameBuffer();
+    uint16_t* GetFrameBuffer(hal::IDisplay::Owner owner) final;
     void Flip() final;
 
 signals:

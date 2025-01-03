@@ -11,8 +11,14 @@ DisplayQt::DisplayQt(QGraphicsScene* scene)
 }
 
 uint16_t*
-DisplayQt::GetFrameBuffer()
+DisplayQt::GetFrameBuffer(hal::IDisplay::Owner owner)
 {
+    if (owner == hal::IDisplay::Owner::kHardware)
+    {
+        // Single buffer
+        return nullptr;
+    }
+
     return m_frame_buffer.data();
 }
 

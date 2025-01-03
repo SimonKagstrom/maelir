@@ -15,6 +15,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <hal/gpio_types.h>
+#include <utility>
 
 #define PCA_TFT_BACKLIGHT 4
 
@@ -357,9 +358,9 @@ DisplayTarget::DisplayTarget()
 }
 
 uint16_t*
-DisplayTarget::GetFrameBuffer()
+DisplayTarget::GetFrameBuffer(hal::IDisplay::Owner owner)
 {
-    return m_frame_buffers[m_current_update_frame];
+    return m_frame_buffers[std::to_underlying(owner)];
 }
 
 void IRAM_ATTR

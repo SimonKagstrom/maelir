@@ -70,9 +70,12 @@ UserInterface::OnStartup()
     lv_tick_set_cb(ms_to_ticks);
 
     m_lvgl_display = lv_display_create(hal::kDisplayWidth, hal::kDisplayHeight);
+    auto f1 = m_display.GetFrameBuffer(hal::IDisplay::Owner::kSoftware);
+    auto f2 = m_display.GetFrameBuffer(hal::IDisplay::Owner::kHardware);
+
     lv_display_set_buffers(m_lvgl_display,
-                           m_display.GetFrameBuffer(),
-                           nullptr,
+                           f1,
+                           f2,
                            sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
                            lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
     lv_display_set_user_data(m_lvgl_display, this);
@@ -84,9 +87,9 @@ UserInterface::OnStartup()
     lv_obj_set_size(m_speedometer_arc->obj, lv_pct(100), lv_pct(100));
     lv_obj_remove_style(m_speedometer_arc->obj, NULL, LV_PART_KNOB);
     lv_obj_remove_flag(m_speedometer_arc->obj, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_arc_color(m_speedometer_arc->obj,
-                               lv_color_t {.red = 50, .blue = 155, .green = 255},
-                               LV_PART_INDICATOR);
+    //    lv_obj_set_style_arc_color(m_speedometer_arc->obj,
+    //                               lv_color_t {.red = 50, .blue = 155, .green = 255},
+    //                               LV_PART_INDICATOR);
     lv_obj_set_style_arc_width(m_speedometer_arc->obj, 20, LV_PART_INDICATOR);
     lv_arc_set_rotation(m_speedometer_arc->obj, 135);
     lv_arc_set_value(m_speedometer_arc->obj, 100);
@@ -190,8 +193,12 @@ UserInterface::OnActivation()
 
     RunStateMachine();
 
-    // Can potentially have to wait
-    m_frame_buffer = m_display.GetFrameBuffer();
+    //    lv_display_set_buffers(m_lvgl_display,
+    //                           m_display.GetFrameBuffer(),
+    //                           nullptr,
+    //                           sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
+    //                           lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
+    //    m_lvgl_display->_static_buf1 = m_frame_buffer;
 
     DrawMap();
     DrawRoute();
@@ -207,9 +214,6 @@ UserInterface::OnActivation()
     // Display the frame buffer and let LVGL know that it's done
     m_display.Flip();
     lv_display_flush_ready(m_lvgl_display);
-
-    // Now invalid
-    m_frame_buffer = nullptr;
 
     return milliseconds(delay);
 }
@@ -434,9 +438,9 @@ UserInterface::DrawMap()
     }
     else
     {
-        memcpy(m_frame_buffer,
-               m_static_map_buffer.get(),
-               hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
+        //        memcpy(m_frame_buffer,
+        //               m_static_map_buffer.get(),
+        //               hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
     }
 }
 
@@ -482,16 +486,16 @@ UserInterface::DrawRoute()
         }
         else
         {
-            painter::DrawAlphaLine(m_frame_buffer,
-                                   Point {last_point->x - m_map_position_zoomed_out.x,
-                                          last_point->y - m_map_position_zoomed_out.y} /
-                                       m_zoom_level,
-                                   Point {cur_point->x - m_map_position_zoomed_out.x,
-                                          cur_point->y - m_map_position_zoomed_out.y} /
-                                       m_zoom_level,
-                                   8,
-                                   color,
-                                   128);
+            //            painter::DrawAlphaLine(m_frame_buffer,
+            //                                   Point {last_point->x - m_map_position_zoomed_out.x,
+            //                                          last_point->y - m_map_position_zoomed_out.y} /
+            //                                       m_zoom_level,
+            //                                   Point {cur_point->x - m_map_position_zoomed_out.x,
+            //                                          cur_point->y - m_map_position_zoomed_out.y} /
+            //                                       m_zoom_level,
+            //                                   8,
+            //                                   color,
+            //                                   128);
         }
 
         last_point = cur_point;

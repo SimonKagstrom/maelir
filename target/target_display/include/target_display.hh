@@ -11,7 +11,7 @@ class DisplayTarget : public hal::IDisplay
 public:
     DisplayTarget();
 
-    uint16_t* GetFrameBuffer() final;
+    uint16_t* GetFrameBuffer(Owner owner) final;
     void Flip() final;
 
 private:

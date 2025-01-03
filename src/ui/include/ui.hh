@@ -150,7 +150,6 @@ private:
 
     etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
 
-    uint16_t* m_frame_buffer {nullptr};
     std::unique_ptr<uint16_t[]> m_static_map_buffer;
     std::unique_ptr<Image> m_static_map_image;
 
