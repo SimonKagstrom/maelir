@@ -30,7 +30,7 @@ class ImageImpl : public Image
 {
 public:
     ImageImpl(unsigned index)
-        : Image(std::span<const uint16_t>(rgb565_data), kTileSize, kTileSize)
+        : Image(std::span<const uint8_t>(rgb565_data), kTileSize, kTileSize, false)
         , index(index)
     {
     }
@@ -40,7 +40,7 @@ public:
     }
 
     unsigned int index;
-    std::array<uint16_t, kTileSize * kTileSize> rgb565_data;
+    std::array<uint8_t, kTileSize * kTileSize * sizeof(uint16_t)> rgb565_data;
 };
 
 class TileProducer : public os::BaseThread
@@ -80,4 +80,5 @@ private:
     mutable etl::mutex m_mutex;
 };
 
-std::unique_ptr<Image> DecodePng(std::span<const uint8_t> data);
+std::unique_ptr<Image> DecodePng(std::span<const uint8_t> data,
+                                 std::optional<uint16_t> mask_color = std::nullopt);

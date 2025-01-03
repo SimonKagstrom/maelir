@@ -3,7 +3,6 @@
 #include "boat.hh"
 #include "cohen_sutherland.hh"
 #include "numbers.hh"
-#include "painter.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
 #include "time.hh"
@@ -43,13 +42,14 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_display(display)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
-    , m_boat(DecodePng(boat_data))
+    , m_boat(DecodePng(boat_data, 0))
     , m_numbers(DecodePng(numbers_data))
 {
-    m_static_map_buffer = std::make_unique<uint16_t[]>(hal::kDisplayWidth * hal::kDisplayHeight);
+    m_static_map_buffer =
+        std::make_unique<uint8_t[]>(hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
     m_static_map_image = std::make_unique<Image>(
-        std::span<const uint16_t> {m_static_map_buffer.get(),
-                                   hal::kDisplayWidth * hal::kDisplayHeight},
+        std::span<const uint8_t> {m_static_map_buffer.get(),
+                                  hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t)},
         hal::kDisplayWidth,
         hal::kDisplayHeight);
 
@@ -83,6 +83,15 @@ UserInterface::OnStartup()
 
 
     m_route_line = std::make_unique<RouteLine>();
+
+    /* Create line style */
+    static lv_style_t style_line;
+    lv_style_init(&style_line);
+    lv_style_set_line_width(&style_line, 8);
+    lv_style_set_line_color(&style_line, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
+    lv_style_set_line_rounded(&style_line, true);
+
+    lv_obj_add_style(m_route_line->lv_line->obj, &style_line, 0);
 
     m_speedometer_arc = std::make_unique<LvWrapper<lv_obj_t>>(lv_arc_create(lv_screen_active()));
     lv_obj_set_size(m_speedometer_arc->obj, lv_pct(100), lv_pct(100));
@@ -318,10 +327,10 @@ UserInterface::DrawZoomedTile(const Point& position)
     {
         auto dst = Point {position.x - m_map_position_zoomed_out.x,
                           position.y - m_map_position_zoomed_out.y};
-        painter::ZoomedBlit(m_static_map_buffer.get(),
-                            tile->GetImage(),
-                            m_zoom_level,
-                            {dst.x / m_zoom_level, dst.y / m_zoom_level});
+        //        painter::ZoomedBlit(m_static_map_buffer.get(),
+        //                            tile->GetImage(),
+        //                            m_zoom_level,
+        //                            {dst.x / m_zoom_level, dst.y / m_zoom_level});
     }
 }
 
@@ -514,16 +523,6 @@ UserInterface::DrawRoute()
 
     lv_line_set_points(
         m_route_line->lv_line->obj, m_route_line->points.data(), m_route_line->points.size());
-
-    // TMP
-    /*Create style*/
-    static lv_style_t style_line;
-    lv_style_init(&style_line);
-    lv_style_set_line_width(&style_line, 8);
-    lv_style_set_line_color(&style_line, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
-    lv_style_set_line_rounded(&style_line, true);
-
-    lv_obj_add_style(m_route_line->lv_line->obj, &style_line, 0);
 }
 
 void

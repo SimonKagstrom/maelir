@@ -19,7 +19,6 @@ PUBLIC
     route_service
     lvgl
 PRIVATE
-    painter
     boat_library
     numbers_library
 )
