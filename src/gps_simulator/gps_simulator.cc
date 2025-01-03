@@ -192,7 +192,7 @@ GpsSimulator::RunDemo()
         if (m_next_position)
         {
             m_direction = PointPairToVector(m_position, *m_next_position);
-            m_target_speed = 0 + rand() % 35;
+            m_target_speed = 0 + rand() % 40;
             printf("Target speed now %.0f\n", m_target_speed);
         }
         else

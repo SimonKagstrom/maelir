@@ -90,7 +90,8 @@ UserInterface::OnStartup()
     //    lv_obj_set_style_arc_color(m_speedometer_arc->obj,
     //                               lv_color_t {.red = 50, .blue = 155, .green = 255},
     //                               LV_PART_INDICATOR);
-    lv_obj_set_style_arc_width(m_speedometer_arc->obj, 20, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_width(m_speedometer_arc->obj, 30, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(m_speedometer_arc->obj, false, LV_PART_INDICATOR);
     lv_arc_set_rotation(m_speedometer_arc->obj, 135);
     lv_arc_set_value(m_speedometer_arc->obj, 100);
     lv_obj_center(m_speedometer_arc->obj);
@@ -192,13 +193,6 @@ UserInterface::OnActivation()
     }
 
     RunStateMachine();
-
-    //    lv_display_set_buffers(m_lvgl_display,
-    //                           m_display.GetFrameBuffer(),
-    //                           nullptr,
-    //                           sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
-    //                           lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
-    //    m_lvgl_display->_static_buf1 = m_frame_buffer;
 
     DrawMap();
     DrawRoute();
