@@ -10,12 +10,12 @@ namespace
 {
 
 auto
-Prepare(const auto& image, auto& from, auto& to)
+Prepare(const auto& image, auto& to)
 {
-    int32_t height = from.has_value() ? from->height : image.Height();
-    int32_t width = from.has_value() ? from->width : image.Width();
-    int32_t from_y = from.has_value() ? from->y : 0;
-    int32_t from_x = from.has_value() ? from->x : 0;
+    int32_t height = image.Height();
+    int32_t width = image.Width();
+    int32_t from_y = 0;
+    int32_t from_x = 0;
 
     if (to.x < 0)
     {
@@ -50,9 +50,9 @@ namespace painter
 {
 
 void
-Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> from)
+Blit(uint16_t* frame_buffer, const Image& image, Rect to)
 {
-    auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);
+    auto [height, width, from_y, from_x, row_length] = Prepare(image, to);
 
     for (int y = 0; y < height; ++y)
     {
@@ -70,10 +70,9 @@ Blit(uint16_t* frame_buffer, const Image& image, Rect to, std::optional<Rect> fr
 }
 
 void
-ZoomedBlit(
-    uint16_t* frame_buffer, const Image& image, unsigned factor, Rect to, std::optional<Rect> from)
+ZoomedBlit(uint16_t* frame_buffer, const Image& image, unsigned factor, Rect to)
 {
-    auto [height, width, from_y, from_x, row_length] = Prepare(image, from, to);
+    auto [height, width, from_y, from_x, row_length] = Prepare(image, to);
 
     for (auto y = 0; y < height; y += factor)
     {
