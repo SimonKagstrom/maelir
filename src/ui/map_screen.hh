@@ -34,29 +34,16 @@ private:
         std::vector<lv_point_precise_t> points;
     };
 
-    struct TileAndPosition
-    {
-        std::unique_ptr<ITileHandle> tile;
-        lv_obj_t* image {nullptr};
-
-        TileAndPosition(std::unique_ptr<ITileHandle> tile, lv_obj_t* image)
-            : tile(std::move(tile))
-            , image(image)
-        {
-        }
-
-        ~TileAndPosition()
-        {
-            lv_obj_delete(image);
-        }
-    };
-
     Point PositionToMapCenter(const Point& pixel_position) const;
     void DrawMapTiles(const Point& position);
 
     void DrawBoat();
     void DrawSpeedometer();
     void DrawRoute();
+
+    void PrepareInitialZoomedOutMap();
+    void FillZoomedOutMap();
+    void DrawZoomedTile(const Point& position);
 
     void RunStateMachine();
 
@@ -67,6 +54,7 @@ private:
     std::unique_ptr<RouteLine> m_route_line;
 
     // Freed via the screen deleter
+    lv_obj_t* m_background;
     lv_obj_t* m_boat;
     lv_obj_t* m_speedometer_scale;
     lv_obj_t* m_speedometer_arc;
@@ -76,8 +64,9 @@ private:
     Point m_map_position_zoomed_out {0, 0};
     State m_state {State::kMap};
 
-    etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
     etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
         m_zoomed_out_map_tiles;
 
+    std::unique_ptr<uint8_t[]> m_static_map_buffer;
+    std::unique_ptr<Image> m_static_map_image;
 };

@@ -17,10 +17,9 @@ public:
         lv_image_dsc.header.h = height;
         lv_image_dsc.header.flags = 0;
         lv_image_dsc.header.stride = width * pixel_size;
-        lv_image_dsc.header.cf =
-            has_alpha ? LV_COLOR_FORMAT_ARGB8888 : LV_COLOR_FORMAT_NATIVE;
+        lv_image_dsc.header.cf = has_alpha ? LV_COLOR_FORMAT_ARGB8888 : LV_COLOR_FORMAT_NATIVE;
 
-        lv_image_dsc.data_size = width * height  * pixel_size;
+        lv_image_dsc.data_size = width * height * pixel_size;
         lv_image_dsc.data = reinterpret_cast<const uint8_t*>(data.data());
     }
 
@@ -32,6 +31,11 @@ public:
     auto Height() const
     {
         return lv_image_dsc.header.h;
+    }
+
+    const std::span<const uint16_t> Data16() const
+    {
+        return {reinterpret_cast<const uint16_t*>(data.data()), data.size() / sizeof(uint16_t)};
     }
 
     std::span<const uint8_t> data;

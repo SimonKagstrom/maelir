@@ -2,12 +2,27 @@
 
 #include "boat.hh"
 #include "cohen_sutherland.hh"
+#include "painter.hh"
 
 UserInterface::MapScreen::MapScreen(UserInterface& parent)
     : m_parent(parent)
     , m_boat_data(DecodePngMask(boat_data, 0))
 {
+    m_static_map_buffer =
+        std::make_unique<uint8_t[]>(hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
+    m_static_map_image = std::make_unique<Image>(
+        std::span<const uint8_t> {m_static_map_buffer.get(),
+                                  hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t)},
+        hal::kDisplayWidth,
+        hal::kDisplayHeight);
+
     m_map_position = PositionToMapCenter(m_parent.m_position);
+
+
+    m_background = lv_image_create(m_screen);
+
+    lv_obj_move_background(m_background);
+    lv_image_set_src(m_background, &m_static_map_image->lv_image_dsc);
 
 
     /* Create line style */
@@ -123,13 +138,13 @@ UserInterface::MapScreen::RunStateMachine()
 
         case State::kInitialOverviewMap:
             m_parent.m_zoom_level = m_parent.m_mode == Mode::kZoom2 ? 2 : 4;
-            //PrepareInitialZoomedOutMap();
+            PrepareInitialZoomedOutMap();
 
             m_state = State::kFillOverviewMapTiles;
 
             break;
         case State::kFillOverviewMapTiles:
-            //FillZoomedOutMap();
+            FillZoomedOutMap();
 
             if (m_zoomed_out_map_tiles.empty())
             {
@@ -154,16 +169,16 @@ UserInterface::MapScreen::RunStateMachine()
             {
                 m_state = State::kInitialOverviewMap;
             }
-            //            else if (m_position.x < m_map_position_zoomed_out.x + 30 ||
-            //                     m_position.y < m_map_position_zoomed_out.y + 30 ||
-            //                     m_position.x >
-            //                         m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - 30 ||
-            //                     m_position.y >
-            //                         m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - 30)
-            //            {
-            //                // Boat outside the visible area
-            //                m_state = State::kInitialOverviewMap;
-            //            }
+            else if (m_parent.m_position.x < m_map_position_zoomed_out.x + 30 ||
+                     m_parent.m_position.y < m_map_position_zoomed_out.y + 30 ||
+                     m_parent.m_position.x > m_map_position_zoomed_out.x +
+                                                 hal::kDisplayWidth * m_parent.m_zoom_level - 30 ||
+                     m_parent.m_position.y > m_map_position_zoomed_out.y +
+                                                 hal::kDisplayHeight * m_parent.m_zoom_level - 30)
+            {
+                // Boat outside the visible area
+                m_state = State::kInitialOverviewMap;
+            }
             break;
 
         case State::kValueCount:
@@ -187,8 +202,8 @@ UserInterface::MapScreen::DrawBoat()
     }
     else
     {
-        //        x = (m_position.x - m_map_position_zoomed_out.x) / m_zoom_level;
-        //        y = (m_position.y - m_map_position_zoomed_out.y) / m_zoom_level;
+        x = (m_parent.m_position.x - m_map_position_zoomed_out.x) / m_parent.m_zoom_level;
+        y = (m_parent.m_position.y - m_map_position_zoomed_out.y) / m_parent.m_zoom_level;
     }
 
     lv_obj_align(
@@ -262,16 +277,9 @@ UserInterface::MapScreen::DrawRoute()
         }
         else
         {
-            //            painter::DrawAlphaLine(m_frame_buffer,
-            //                                   Point {last_point->x - m_map_position_zoomed_out.x,
-            //                                          last_point->y - m_map_position_zoomed_out.y} /
-            //                                       m_zoom_level,
-            //                                   Point {cur_point->x - m_map_position_zoomed_out.x,
-            //                                          cur_point->y - m_map_position_zoomed_out.y} /
-            //                                       m_zoom_level,
-            //                                   8,
-            //                                   color,
-            //                                   128);
+            m_route_line->points.push_back(
+                {(cur_point->x - m_map_position_zoomed_out.x) / m_parent.m_zoom_level,
+                 (cur_point->y - m_map_position_zoomed_out.y) / m_parent.m_zoom_level});
         }
 
         last_point = cur_point;
@@ -285,8 +293,6 @@ UserInterface::MapScreen::DrawRoute()
 void
 UserInterface::MapScreen::DrawMapTiles(const Point& position)
 {
-    m_tiles.clear();
-
     auto x_remainder = position.x % kTileSize;
     auto y_remainder = position.y % kTileSize;
     auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
@@ -304,16 +310,9 @@ UserInterface::MapScreen::DrawMapTiles(const Point& position)
                 {start_x + x * kTileSize, start_y + y * kTileSize});
             if (tile)
             {
-                auto img = lv_image_create(m_screen);
-
-                lv_obj_move_background(img);
-                lv_image_set_src(img, &tile->GetImage().lv_image_dsc);
-                lv_obj_align(img,
-                             LV_ALIGN_TOP_LEFT,
-                             x * kTileSize - x_remainder,
-                             y * kTileSize - y_remainder);
-
-                m_tiles.emplace_back(std::move(tile), img);
+                painter::Blit(reinterpret_cast<uint16_t*>(m_static_map_buffer.get()),
+                              tile->GetImage(),
+                              {x * kTileSize - x_remainder, y * kTileSize - y_remainder});
             }
         }
     }
@@ -334,4 +333,87 @@ UserInterface::MapScreen::PositionToMapCenter(const Point& pixel_position) const
                    static_cast<int>(m_parent.m_tile_row_size) * kTileSize - hal::kDisplayHeight);
 
     return {x, y};
+}
+
+void
+UserInterface::MapScreen::PrepareInitialZoomedOutMap()
+{
+    // Free old tiles and fill with black
+    m_zoomed_out_map_tiles.clear();
+    memset(
+        m_static_map_buffer.get(), 0, hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
+
+    // Align with the nearest tile
+    auto aligned = Point {m_parent.m_position.x - m_parent.m_position.x % kTileSize,
+                          m_parent.m_position.y - m_parent.m_position.y % kTileSize};
+
+    const auto offset_x = std::max(static_cast<int32_t>(0),
+                                   aligned.x - (m_parent.m_zoom_level * hal::kDisplayWidth) / 2);
+    const auto offset_y = std::max(static_cast<int32_t>(0),
+                                   aligned.y - (m_parent.m_zoom_level * hal::kDisplayHeight) / 2);
+    m_map_position_zoomed_out = Point {offset_x, offset_y};
+
+    auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_parent.m_zoom_level);
+    auto num_tiles_y = hal::kDisplayHeight / (kTileSize / m_parent.m_zoom_level);
+
+    constexpr auto kVisibleTiles = hal::kDisplayWidth / kTileSize;
+    etl::vector<Point, kVisibleTiles * kVisibleTiles> cached_tiles;
+
+    for (auto y = 0; y < num_tiles_y; y++)
+    {
+        for (auto x = 0; x < num_tiles_x; x++)
+        {
+            auto at = Point {offset_x + x * kTileSize, offset_y + y * kTileSize};
+
+            if (m_parent.m_tile_producer.IsCached(at) && cached_tiles.full() == false)
+            {
+                cached_tiles.push_back(at);
+            }
+            else
+            {
+                m_zoomed_out_map_tiles.push_back(at);
+            }
+        }
+    }
+
+    for (const auto& position : cached_tiles)
+    {
+        DrawZoomedTile(position);
+    }
+
+    m_parent.Awake();
+}
+
+void
+UserInterface::MapScreen::FillZoomedOutMap()
+{
+    const auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_parent.m_zoom_level);
+    for (auto i = 0; i < num_tiles_x; i++)
+    {
+        if (m_zoomed_out_map_tiles.empty())
+        {
+            break;
+        }
+
+        auto position = m_zoomed_out_map_tiles.back();
+        DrawZoomedTile(position);
+        m_zoomed_out_map_tiles.pop_back();
+    }
+
+    m_parent.Awake();
+}
+
+void
+UserInterface::MapScreen::DrawZoomedTile(const Point& position)
+{
+    auto tile = m_parent.m_tile_producer.LockTile(position);
+    if (tile)
+    {
+        auto dst = Point {position.x - m_map_position_zoomed_out.x,
+                          position.y - m_map_position_zoomed_out.y};
+        painter::ZoomedBlit(reinterpret_cast<uint16_t*>(m_static_map_buffer.get()),
+                            tile->GetImage(),
+                            m_parent.m_zoom_level,
+                            {dst.x / m_parent.m_zoom_level, dst.y / m_parent.m_zoom_level});
+    }
 }

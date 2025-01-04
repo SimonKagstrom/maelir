@@ -1,7 +1,6 @@
 #include "ui.hh"
 
 #include "map_screen.hh"
-#include "numbers.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
 #include "time.hh"
@@ -42,14 +41,6 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
 {
-    m_static_map_buffer =
-        std::make_unique<uint8_t[]>(hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
-    m_static_map_image = std::make_unique<Image>(
-        std::span<const uint8_t> {m_static_map_buffer.get(),
-                                  hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t)},
-        hal::kDisplayWidth,
-        hal::kDisplayHeight);
-
     input.AttachListener(this);
     m_gps_port->AwakeOn(GetSemaphore());
     m_route_listener->AwakeOn(GetSemaphore());
@@ -163,107 +154,3 @@ UserInterface::OnInput(const hal::IInput::Event& event)
     m_input_queue.push(event);
     Awake();
 }
-
-void
-UserInterface::PrepareInitialZoomedOutMap()
-{
-#if 0
-    // Free old tiles and fill with black
-    m_zoomed_out_map_tiles.clear();
-    memset(
-        m_static_map_buffer.get(), 0, hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
-
-    // Align with the nearest tile
-    auto aligned =
-        Point {m_position.x - m_position.x % kTileSize, m_position.y - m_position.y % kTileSize};
-
-    const auto offset_x =
-        std::max(static_cast<int32_t>(0), aligned.x - (m_zoom_level * hal::kDisplayWidth) / 2);
-    const auto offset_y =
-        std::max(static_cast<int32_t>(0), aligned.y - (m_zoom_level * hal::kDisplayHeight) / 2);
-    m_map_position_zoomed_out = Point {offset_x, offset_y};
-
-    auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
-    auto num_tiles_y = hal::kDisplayHeight / (kTileSize / m_zoom_level);
-
-    constexpr auto kVisibleTiles = hal::kDisplayWidth / kTileSize;
-    etl::vector<Point, kVisibleTiles * kVisibleTiles> cached_tiles;
-
-    for (auto y = 0; y < num_tiles_y; y++)
-    {
-        for (auto x = 0; x < num_tiles_x; x++)
-        {
-            auto at = Point {offset_x + x * kTileSize, offset_y + y * kTileSize};
-
-            if (m_tile_producer.IsCached(at) && cached_tiles.full() == false)
-            {
-                cached_tiles.push_back(at);
-            }
-            else
-            {
-                m_zoomed_out_map_tiles.push_back(at);
-            }
-        }
-    }
-
-    for (const auto& position : cached_tiles)
-    {
-        DrawZoomedTile(position);
-    }
-
-    m_tiles.clear();
-    Awake();
-#endif
-}
-
-void
-UserInterface::DrawZoomedTile(const Point& position)
-{
-#if 0
-    auto tile = m_tile_producer.LockTile(position);
-    if (tile)
-    {
-        auto dst = Point {position.x - m_map_position_zoomed_out.x,
-                          position.y - m_map_position_zoomed_out.y};
-                painter::ZoomedBlit(m_static_map_buffer.get(),
-                                    tile->GetImage(),
-                                    m_zoom_level,
-                                    {dst.x / m_zoom_level, dst.y / m_zoom_level});
-    }
-#endif
-}
-
-void
-UserInterface::FillZoomedOutMap()
-{
-    const auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
-    for (auto i = 0; i < num_tiles_x; i++)
-    {
-        if (m_zoomed_out_map_tiles.empty())
-        {
-            break;
-        }
-
-        auto position = m_zoomed_out_map_tiles.back();
-        DrawZoomedTile(position);
-        m_zoomed_out_map_tiles.pop_back();
-    }
-
-    Awake();
-}
-
-
-//void
-//UserInterface::DrawMap()
-//{
-//    if (m_state == State::kMap)
-//    {
-//    }
-//    else
-//    {
-//                memcpy(m_frame_buffer,
-//                       m_static_map_buffer.get(),
-//                       hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
-//    }
-//}
-//

@@ -60,59 +60,12 @@ private:
         kValueCount,
     };
 
-    enum class State
-    {
-        kMap,
-        kInitialOverviewMap,
-        kFillOverviewMapTiles,
-        kOverviewMap,
-
-        kValueCount,
-    };
-
-    struct LvWrapper
-    {
-        lv_obj_t *obj;
-
-        LvWrapper(lv_obj_t* obj)
-            : obj(obj)
-        {
-        }
-
-        LvWrapper() = delete;
-        LvWrapper(const LvWrapper&) = delete;
-
-        ~LvWrapper()
-        {
-            lv_obj_delete(obj);
-        }
-    };
-
-
-    struct RouteLine
-    {
-        RouteLine()
-            : lv_line(std::make_unique<LvWrapper>(lv_line_create(lv_screen_active())))
-        {
-        }
-
-        std::unique_ptr<LvWrapper> lv_line;
-        std::vector<lv_point_precise_t> points;
-    };
-
-
     // From BaseThread
     void OnStartup() final;
     std::optional<milliseconds> OnActivation() final;
 
     void OnInput(const hal::IInput::Event& event) final;
 
-    void DrawZoomedTile(const Point& position);
-    void PrepareInitialZoomedOutMap();
-    void FillZoomedOutMap();
-
-
-    void DrawZoomedOutMap();
 
     const uint32_t m_tile_rows;
     const uint32_t m_tile_row_size;
@@ -137,9 +90,6 @@ private:
     std::optional<unsigned> m_passed_route_index;
 
     etl::queue_spsc_atomic<hal::IInput::Event, 4> m_input_queue;
-
-    std::unique_ptr<uint8_t[]> m_static_map_buffer;
-    std::unique_ptr<Image> m_static_map_image;
 
     std::unique_ptr<ScreenBase> m_map_screen;
     std::unique_ptr<ScreenBase> m_menu_screen;
