@@ -12,6 +12,30 @@
 #include <etl/vector.h>
 #include <lvgl.h>
 
+class ScreenBase
+{
+public:
+    ScreenBase()
+        : m_screen(lv_obj_create(nullptr))
+    {
+    }
+
+    virtual ~ScreenBase() = default;
+
+    virtual void Activate() = 0;
+
+    virtual void Update() = 0;
+
+    virtual void OnPosition(const GpsData& position)
+    {
+    }
+
+protected:
+    lv_obj_t *m_screen;
+};
+
+
+
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
 public:
@@ -24,6 +48,9 @@ public:
                   std::unique_ptr<IRouteListener> route_listener);
 
 private:
+    class MapScreen;
+    class MenuScreen;
+
     enum class Mode
     {
         kMap,
@@ -43,12 +70,11 @@ private:
         kValueCount,
     };
 
-    template <typename T>
     struct LvWrapper
     {
-        T* obj;
+        lv_obj_t *obj;
 
-        LvWrapper(T* obj)
+        LvWrapper(lv_obj_t* obj)
             : obj(obj)
         {
         }
@@ -62,38 +88,18 @@ private:
         }
     };
 
-    struct TileAndPosition
-    {
-        std::unique_ptr<ITileHandle> tile;
-        lv_obj_t* image {nullptr};
-
-        TileAndPosition(std::unique_ptr<ITileHandle> tile, lv_obj_t* image)
-            : tile(std::move(tile))
-            , image(image)
-        {
-        }
-
-        ~TileAndPosition()
-        {
-            lv_obj_delete(image);
-        }
-    };
 
     struct RouteLine
     {
         RouteLine()
-            : lv_line(std::make_unique<LvWrapper<lv_obj_t>>(lv_line_create(lv_screen_active())))
+            : lv_line(std::make_unique<LvWrapper>(lv_line_create(lv_screen_active())))
         {
         }
 
-        std::unique_ptr<LvWrapper<lv_obj_t>> lv_line;
+        std::unique_ptr<LvWrapper> lv_line;
         std::vector<lv_point_precise_t> points;
     };
 
-    auto CreateLv(auto obj)
-    {
-        return std::make_unique<LvWrapper<std::decay_t<decltype(obj)>>>(obj);
-    }
 
     // From BaseThread
     void OnStartup() final;
@@ -101,23 +107,14 @@ private:
 
     void OnInput(const hal::IInput::Event& event) final;
 
-    bool NeedsRedraw(int32_t x, int32_t y) const;
-
     void RunStateMachine();
 
-    void RequestMapTiles(const Point& position);
     void DrawZoomedTile(const Point& position);
     void PrepareInitialZoomedOutMap();
     void FillZoomedOutMap();
 
 
     void DrawZoomedOutMap();
-    void DrawMap();
-    void DrawRoute();
-    void DrawBoat();
-    void DrawSpeedometer();
-
-    Point PositionToMapCenter(const auto& pixel_position) const;
 
     const uint32_t m_tile_rows;
     const uint32_t m_tile_row_size;
@@ -135,30 +132,19 @@ private:
     // Global pixel position of the boat
     Point m_position {0, 0};
 
-    // Global pixel position of the left corner of the map
-    Point m_map_position {0, 0};
-    Point m_map_position_zoomed_out {0, 0};
-
     // Current speed in knots
     float m_speed {0};
 
     std::vector<IndexType> m_route;
-    std::unique_ptr<RouteLine> m_route_line;
     std::optional<unsigned> m_passed_route_index;
 
     etl::queue_spsc_atomic<hal::IInput::Event, 4> m_input_queue;
 
-    etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
-
     std::unique_ptr<uint8_t[]> m_static_map_buffer;
     std::unique_ptr<Image> m_static_map_image;
 
-    std::unique_ptr<Image> m_boat;
-    std::unique_ptr<LvWrapper<lv_obj_t>> m_boat_lv_img;
-    std::unique_ptr<Image> m_numbers;
-
-    std::unique_ptr<LvWrapper<lv_obj_t>> m_speedometer_scale;
-    std::unique_ptr<LvWrapper<lv_obj_t>> m_speedometer_arc;
+    std::unique_ptr<ScreenBase> m_map_screen;
+    std::unique_ptr<ScreenBase> m_menu_screen;
 
     etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
         m_zoomed_out_map_tiles;
