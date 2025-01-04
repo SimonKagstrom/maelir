@@ -83,7 +83,7 @@ private:
 std::unique_ptr<Image> DecodePng(std::span<const uint8_t> data,
                                  std::optional<uint16_t> mask_color = std::nullopt);
 
-static std::unique_ptr<Image>
+static inline std::unique_ptr<Image>
 DecodePngMask(std::span<const uint8_t> data, std::optional<uint16_t> mask_color)
 {
     return DecodePng(data, mask_color);

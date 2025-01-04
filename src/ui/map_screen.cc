@@ -89,11 +89,89 @@ UserInterface::MapScreen::Update()
     {
     }
 
-    DrawMapTiles(m_map_position);
+    RunStateMachine();
 
     DrawBoat();
     DrawSpeedometer();
     DrawRoute();
+}
+
+void
+UserInterface::MapScreen::RunStateMachine()
+{
+    auto before = m_state;
+
+    auto zoom_mismatch = [this]() {
+        return m_parent.m_zoom_level == 2 && m_parent.m_mode == Mode::kZoom4 ||
+               m_parent.m_zoom_level == 4 && m_parent.m_mode == Mode::kZoom2;
+    };
+
+    do
+    {
+        switch (m_state)
+        {
+        case State::kMap:
+            m_parent.m_zoom_level = 1;
+            DrawMapTiles(m_map_position);
+
+            if (m_parent.m_mode != Mode::kMap)
+            {
+                // Always go through this
+                m_state = State::kInitialOverviewMap;
+            }
+            break;
+
+        case State::kInitialOverviewMap:
+            m_parent.m_zoom_level = m_parent.m_mode == Mode::kZoom2 ? 2 : 4;
+            //PrepareInitialZoomedOutMap();
+
+            m_state = State::kFillOverviewMapTiles;
+
+            break;
+        case State::kFillOverviewMapTiles:
+            //FillZoomedOutMap();
+
+            if (m_zoomed_out_map_tiles.empty())
+            {
+                m_state = State::kOverviewMap;
+            }
+            else if (m_parent.m_mode == Mode::kMap)
+            {
+                m_state = State::kMap;
+            }
+            else if (zoom_mismatch())
+            {
+                m_state = State::kInitialOverviewMap;
+            }
+            break;
+
+        case State::kOverviewMap:
+            if (m_parent.m_mode == Mode::kMap)
+            {
+                m_state = State::kMap;
+            }
+            else if (zoom_mismatch())
+            {
+                m_state = State::kInitialOverviewMap;
+            }
+            //            else if (m_position.x < m_map_position_zoomed_out.x + 30 ||
+            //                     m_position.y < m_map_position_zoomed_out.y + 30 ||
+            //                     m_position.x >
+            //                         m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - 30 ||
+            //                     m_position.y >
+            //                         m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - 30)
+            //            {
+            //                // Boat outside the visible area
+            //                m_state = State::kInitialOverviewMap;
+            //            }
+            break;
+
+        case State::kValueCount:
+            break;
+        }
+
+        before = m_state;
+    } while (m_state != before);
 }
 
 void
@@ -102,7 +180,7 @@ UserInterface::MapScreen::DrawBoat()
     int32_t x;
     int32_t y;
 
-    if (m_parent.m_state == State::kMap)
+    if (m_state == State::kMap)
     {
         x = m_parent.m_position.x - m_map_position.x;
         y = m_parent.m_position.y - m_map_position.y;
@@ -177,7 +255,7 @@ UserInterface::MapScreen::DrawRoute()
                          ? 0x7BEF
                          : 0x07E0; // Green in RGB565
 
-        if (m_parent.m_state == State::kMap)
+        if (m_state == State::kMap)
         {
             m_route_line->points.push_back(
                 {cur_point->x - m_map_position.x, cur_point->y - m_map_position.y});

@@ -12,6 +12,17 @@ public:
     void Update() final;
 
 private:
+    enum class State
+    {
+        kMap,
+        kInitialOverviewMap,
+        kFillOverviewMapTiles,
+        kOverviewMap,
+
+        kValueCount,
+    };
+
+
     struct RouteLine
     {
         RouteLine(lv_obj_t* parent)
@@ -47,6 +58,8 @@ private:
     void DrawSpeedometer();
     void DrawRoute();
 
+    void RunStateMachine();
+
 
     UserInterface& m_parent;
     std::unique_ptr<Image> m_boat_data;
@@ -61,6 +74,10 @@ private:
     // Global pixel position of the left corner of the map
     Point m_map_position {0, 0};
     Point m_map_position_zoomed_out {0, 0};
+    State m_state {State::kMap};
 
     etl::vector<TileAndPosition, kTileCacheSize> m_tiles;
+    etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
+        m_zoomed_out_map_tiles;
+
 };

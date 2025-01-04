@@ -107,8 +107,6 @@ private:
 
     void OnInput(const hal::IInput::Event& event) final;
 
-    void RunStateMachine();
-
     void DrawZoomedTile(const Point& position);
     void PrepareInitialZoomedOutMap();
     void FillZoomedOutMap();
@@ -151,7 +149,6 @@ private:
 
     int32_t m_zoom_level {1};
     Mode m_mode {Mode::kMap};
-    State m_state {State::kMap};
     bool m_show_speedometer {true};
 
     std::unique_ptr<os::ITimer> m_button_timer;

@@ -145,7 +145,6 @@ UserInterface::OnActivation()
         m_map_screen->OnPosition(*position);
     }
 
-    RunStateMachine();
     m_map_screen->Update();
 
     auto delay = lv_timer_handler();
@@ -253,84 +252,6 @@ UserInterface::FillZoomedOutMap()
     Awake();
 }
 
-
-void
-UserInterface::RunStateMachine()
-{
-    auto before = m_state;
-
-    auto zoom_mismatch = [this]() {
-        return m_zoom_level == 2 && m_mode == Mode::kZoom4 ||
-               m_zoom_level == 4 && m_mode == Mode::kZoom2;
-    };
-
-    do
-    {
-        switch (m_state)
-        {
-        case State::kMap:
-            m_zoom_level = 1;
-            //            RequestMapTiles(m_map_position);
-
-            if (m_mode != Mode::kMap)
-            {
-                // Always go through this
-                m_state = State::kInitialOverviewMap;
-            }
-            break;
-
-        case State::kInitialOverviewMap:
-            m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 4;
-            PrepareInitialZoomedOutMap();
-
-            m_state = State::kFillOverviewMapTiles;
-
-            break;
-        case State::kFillOverviewMapTiles:
-            FillZoomedOutMap();
-
-            if (m_zoomed_out_map_tiles.empty())
-            {
-                m_state = State::kOverviewMap;
-            }
-            else if (m_mode == Mode::kMap)
-            {
-                m_state = State::kMap;
-            }
-            else if (zoom_mismatch())
-            {
-                m_state = State::kInitialOverviewMap;
-            }
-            break;
-
-        case State::kOverviewMap:
-            if (m_mode == Mode::kMap)
-            {
-                m_state = State::kMap;
-            }
-            else if (zoom_mismatch())
-            {
-                m_state = State::kInitialOverviewMap;
-            }
-            //            else if (m_position.x < m_map_position_zoomed_out.x + 30 ||
-            //                     m_position.y < m_map_position_zoomed_out.y + 30 ||
-            //                     m_position.x >
-            //                         m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - 30 ||
-            //                     m_position.y >
-            //                         m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - 30)
-            //            {
-            //                // Boat outside the visible area
-            //                m_state = State::kInitialOverviewMap;
-            //            }
-            break;
-
-        case State::kValueCount:
-            break;
-        }
-
-        before = m_state;
-    } while (m_state != before);
-}
 
 //void
 //UserInterface::DrawMap()
