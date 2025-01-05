@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ui.hh"
 
 class UserInterface::MapScreen : public ScreenBase
@@ -6,8 +8,6 @@ public:
     MapScreen(UserInterface& parent);
 
     void OnPosition(const GpsData& position) final;
-
-    void Activate() final;
 
     void Update() final;
 

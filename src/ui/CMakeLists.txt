@@ -2,6 +2,7 @@ library_from_data(${RESOURCE_DIR}/boat.png boat)
 
 add_library(ui EXCLUDE_FROM_ALL
     map_screen.cc
+    menu_screen.cc
     ui.cc
 )
 

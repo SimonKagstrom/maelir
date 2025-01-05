@@ -22,7 +22,14 @@ public:
 
     virtual ~ScreenBase() = default;
 
-    virtual void Activate() = 0;
+    virtual void Activate()
+    {
+        lv_screen_load(m_screen);
+    }
+
+    virtual void Deactivate()
+    {
+    }
 
     virtual void Update() = 0;
 
@@ -31,9 +38,8 @@ public:
     }
 
 protected:
-    lv_obj_t *m_screen;
+    lv_obj_t* m_screen;
 };
-
 
 
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
@@ -66,6 +72,7 @@ private:
 
     void OnInput(const hal::IInput::Event& event) final;
 
+    static void StaticLvglEncoderRead(lv_indev_t* indev, lv_indev_data_t* data);
 
     const uint32_t m_tile_rows;
     const uint32_t m_tile_row_size;
@@ -77,6 +84,8 @@ private:
 
     hal::IDisplay& m_display;
     lv_display_t* m_lvgl_display {nullptr};
+    lv_indev_t* m_lvgl_input_dev {nullptr};
+
     std::unique_ptr<IGpsPort> m_gps_port;
     std::unique_ptr<IRouteListener> m_route_listener;
 
@@ -100,6 +109,9 @@ private:
     int32_t m_zoom_level {1};
     Mode m_mode {Mode::kMap};
     bool m_show_speedometer {true};
+
+    int16_t m_enc_diff {0};
+    lv_indev_state_t m_button_state {LV_INDEV_STATE_RELEASED};
 
     std::unique_ptr<os::ITimer> m_button_timer;
 };

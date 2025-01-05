@@ -32,6 +32,7 @@ DummyListener g_dummy_listener;
 EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button)
     : m_pin_button(static_cast<gpio_num_t>(pin_button))
     , m_listener(&g_dummy_listener)
+    , m_button_timestamp(os::GetTimeStamp())
 {
     ESP_ERROR_CHECK(pcnt_new_unit(&kPcntUnitConfig, &m_pcnt_unit));
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(m_pcnt_unit, &kFilterConfig));
@@ -127,6 +128,14 @@ EncoderInput::StaticPcntOnReach(pcnt_unit_handle_t unit,
 void
 EncoderInput::ButtonIsr()
 {
+    auto now = os::GetTimeStamp();
+
+    if (now - m_button_timestamp < 50ms)
+    {
+        return;
+    }
+    m_button_timestamp = now;
+
     IInput::Event event = {
         .button = 0,
         .type = gpio_get_level(m_pin_button) ? IInput::EventType::kButtonDown

@@ -43,10 +43,16 @@ BaseThread::Start(uint8_t core, ThreadPriority priority)
 }
 
 
+uint32_t
+os::GetTimeStampRaw()
+{
+    return pdTICKS_TO_MS(xTaskGetTickCount());
+}
+
 milliseconds
 os::GetTimeStamp()
 {
-    auto ms_count = pdTICKS_TO_MS(xTaskGetTickCount());
+    auto ms_count = os::GetTimeStampRaw();
 
     return milliseconds(ms_count);
 }

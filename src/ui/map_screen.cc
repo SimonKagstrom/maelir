@@ -89,12 +89,6 @@ UserInterface::MapScreen::OnPosition(const GpsData& position)
 }
 
 void
-UserInterface::MapScreen::Activate()
-{
-    lv_screen_load(m_screen);
-}
-
-void
 UserInterface::MapScreen::Update()
 {
     if (m_parent.m_show_speedometer)

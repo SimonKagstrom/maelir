@@ -42,6 +42,12 @@ os::GetTimeStamp()
         std::chrono::high_resolution_clock::now() - at_start);
 }
 
+uint32_t
+os::GetTimeStampRaw()
+{
+    return GetTimeStamp().count();
+}
+
 void
 os::Sleep(milliseconds delay)
 {

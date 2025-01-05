@@ -1,6 +1,7 @@
 #include "ui.hh"
 
 #include "map_screen.hh"
+#include "menu_screen.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
 #include "time.hh"
@@ -8,20 +9,6 @@
 #include <cmath>
 #include <fmt/format.h>
 #include <numbers>
-
-
-namespace
-{
-
-uint32_t
-ms_to_ticks(void)
-{
-    auto out = os::GetTimeStamp();
-
-    return out.count();
-}
-
-} // namespace
 
 
 UserInterface::UserInterface(ApplicationState& application_state,
@@ -55,7 +42,7 @@ UserInterface::OnStartup()
     assert(m_lvgl_display == nullptr);
 
     lv_init();
-    lv_tick_set_cb(ms_to_ticks);
+    lv_tick_set_cb(os::GetTimeStampRaw);
 
     m_lvgl_display = lv_display_create(hal::kDisplayWidth, hal::kDisplayHeight);
     auto f1 = m_display.GetFrameBuffer(hal::IDisplay::Owner::kSoftware);
@@ -68,8 +55,31 @@ UserInterface::OnStartup()
                            lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
     lv_display_set_user_data(m_lvgl_display, this);
 
+
+    m_lvgl_input_dev = lv_indev_create();
+    lv_indev_set_mode(m_lvgl_input_dev, LV_INDEV_MODE_EVENT);
+    lv_indev_set_type(m_lvgl_input_dev, LV_INDEV_TYPE_ENCODER);
+    lv_indev_set_user_data(m_lvgl_input_dev, this);
+    lv_indev_set_read_cb(m_lvgl_input_dev, StaticLvglEncoderRead);
+
     m_map_screen = std::make_unique<MapScreen>(*this);
     m_map_screen->Activate();
+
+    m_menu_screen = std::make_unique<MenuScreen>(*this, [this]() {
+        m_menu_screen->Deactivate();
+        m_map_screen->Activate();
+    });
+
+    m_menu_screen->Activate();
+}
+
+void
+UserInterface::StaticLvglEncoderRead(lv_indev_t* indev, lv_indev_data_t* data)
+{
+    auto p = reinterpret_cast<UserInterface*>(lv_indev_get_user_data(indev));
+
+    data->state = p->m_button_state;
+    data->enc_diff = p->m_enc_diff;
 }
 
 std::optional<milliseconds>
@@ -79,38 +89,59 @@ UserInterface::OnActivation()
     hal::IInput::Event event;
     while (m_input_queue.pop(event))
     {
-        auto mode = std::to_underlying(m_mode);
+        m_enc_diff = 0;
 
         switch (event.type)
         {
         case hal::IInput::EventType::kButtonDown:
-            m_button_timer = nullptr;
-            m_button_timer = StartTimer(5s, [this]() {
-                auto state = m_application_state.Checkout();
-
-                state->demo_mode = !state->demo_mode;
-
-                return std::nullopt;
-            });
+            m_button_state = LV_INDEV_STATE_PRESSED;
             break;
         case hal::IInput::EventType::kButtonUp:
-            if (m_button_timer && (m_button_timer->TimeLeft() > 4500ms))
-            {
-                m_show_speedometer = !m_show_speedometer;
-            }
-            m_button_timer = nullptr;
+            m_button_state = LV_INDEV_STATE_RELEASED;
             break;
         case hal::IInput::EventType::kLeft:
-            mode--;
+            m_enc_diff = -1;
             break;
         case hal::IInput::EventType::kRight:
-            mode++;
+            m_enc_diff = 1;
             break;
-        default:
+        case hal::IInput::EventType::kValueCount:
             break;
         }
-        printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
-        m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
+
+        lv_indev_read(m_lvgl_input_dev);
+
+//        auto mode = std::to_underlying(m_mode);
+//        switch (event.type)
+//        {
+//        case hal::IInput::EventType::kButtonDown:
+//            m_button_timer = nullptr;
+//            m_button_timer = StartTimer(5s, [this]() {
+//                auto state = m_application_state.Checkout();
+//
+//                state->demo_mode = !state->demo_mode;
+//
+//                return std::nullopt;
+//            });
+//            break;
+//        case hal::IInput::EventType::kButtonUp:
+//            if (m_button_timer && (m_button_timer->TimeLeft() > 4500ms))
+//            {
+//                m_show_speedometer = !m_show_speedometer;
+//            }
+//            m_button_timer = nullptr;
+//            break;
+//        case hal::IInput::EventType::kLeft:
+//            mode--;
+//            break;
+//        case hal::IInput::EventType::kRight:
+//            mode++;
+//            break;
+//        default:
+//            break;
+//        }
+//        printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
+//        m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
     }
 
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hal/i_input.hh"
+#include "time.hh"
 
 #include <driver/gpio.h>
 #include <driver/pulse_cnt.h>
@@ -25,4 +26,5 @@ private:
     const gpio_num_t m_pin_button;
     hal::IInput::IListener* m_listener;
     pcnt_unit_handle_t m_pcnt_unit;
+    milliseconds m_button_timestamp;
 };
