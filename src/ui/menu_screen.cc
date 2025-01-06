@@ -14,6 +14,16 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     auto back_button = lv_menu_get_main_header_back_button(m_menu);
     lv_obj_set_style_bg_color(m_screen, lv_obj_get_style_bg_color(m_menu, 0), 0);
 
+
+    // Create a style for the selected state
+    static lv_style_t style_selected;
+    lv_style_init(&style_selected);
+    lv_style_set_bg_opa(&style_selected, LV_OPA_COVER); // Ensure the background is fully opaque
+    lv_style_set_radius(&style_selected, 10);
+
+    // Apply the style to the back button when it is focused
+    lv_obj_add_style(back_button, &style_selected, LV_STATE_FOCUSED);
+
     lv_group_add_obj(m_input_group, back_button);
     lv_group_focus_obj(back_button);
     lv_obj_add_state(back_button, LV_STATE_FOCUS_KEY);
@@ -25,6 +35,8 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     auto cont = lv_menu_cont_create(sub_page);
     auto label = lv_label_create(cont);
+    lv_obj_add_style(cont, &style_selected, LV_STATE_FOCUSED);
+
     lv_group_add_obj(m_input_group, cont);
     lv_label_set_text(label, "not yet");
 
@@ -35,11 +47,13 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     label = lv_label_create(cont);
     lv_label_set_text(label, "New route");
     lv_group_add_obj(m_input_group, cont);
+    lv_obj_add_style(cont, &style_selected, LV_STATE_FOCUSED);
 
     cont = lv_menu_cont_create(main_page);
     label = lv_label_create(cont);
     lv_label_set_text(label, "Recall route");
     lv_group_add_obj(m_input_group, cont);
+    lv_obj_add_style(cont, &style_selected, LV_STATE_FOCUSED);
     lv_menu_set_load_page_event(m_menu, cont, sub_page);
 
 
@@ -47,6 +61,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     cont = lv_menu_cont_create(main_page);
     label = lv_label_create(cont);
+    lv_obj_add_style(cont, &style_selected, LV_STATE_FOCUSED);
     lv_obj_set_flex_grow(label, 1);
     lv_label_set_text(label, "Show speedometer");
     auto speedometer_switch = lv_switch_create(cont);
@@ -60,6 +75,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     cont = lv_menu_cont_create(main_page);
     label = lv_label_create(cont);
+    lv_obj_add_style(cont, &style_selected, LV_STATE_FOCUSED);
     lv_obj_set_flex_grow(label, 1);
     lv_label_set_text(label, "Demo mode");
     auto demo_switch = lv_switch_create(cont);
