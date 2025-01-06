@@ -27,7 +27,7 @@ BaseThread::~BaseThread()
 }
 
 void
-BaseThread::Start(uint8_t core, ThreadPriority priority)
+BaseThread::Start(uint8_t core, ThreadPriority priority, uint32_t stack_size)
 {
     static_assert(tskIDLE_PRIORITY == 0, "FreeRTOS priority assumption broken");
     assert(priority < configMAX_PRIORITIES);
@@ -35,7 +35,7 @@ BaseThread::Start(uint8_t core, ThreadPriority priority)
 
     xTaskCreatePinnedToCore([](void* arg) { static_cast<BaseThread*>(arg)->ThreadLoop(); },
                             "x",
-                            5000,
+                            stack_size,
                             this,
                             priority,
                             &m_impl->m_task,

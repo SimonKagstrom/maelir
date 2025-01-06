@@ -29,7 +29,9 @@ public:
         m_semaphore.release();
     }
 
-    void Start(uint8_t core = 0, ThreadPriority priority = ThreadPriority::kLow);
+    void Start(uint8_t core = 0,
+               ThreadPriority priority = ThreadPriority::kLow,
+               uint32_t stack_size = 5000);
 
     void Stop()
     {
