@@ -9,9 +9,9 @@ class UserInterface::MenuScreen : public ScreenBase
 public:
     MenuScreen(UserInterface& parent, std::function<void()> on_close);
 
+    ~MenuScreen();
+
     void Update() final;
-    void Activate() final;
-    void Deactivate() final;
 
 private:
     static void BackEventHandler(lv_event_t* e);

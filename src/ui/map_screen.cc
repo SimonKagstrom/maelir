@@ -115,8 +115,8 @@ UserInterface::MapScreen::RunStateMachine()
     auto before = m_state;
 
     auto zoom_mismatch = [this]() {
-        return m_parent.m_zoom_level == 2 && m_parent.m_mode == Mode::kZoom4 ||
-               m_parent.m_zoom_level == 4 && m_parent.m_mode == Mode::kZoom2;
+        return m_parent.m_zoom_level == 2 && m_mode == Mode::kZoom4 ||
+               m_parent.m_zoom_level == 4 && m_mode == Mode::kZoom2;
     };
 
     do
@@ -127,7 +127,7 @@ UserInterface::MapScreen::RunStateMachine()
             m_parent.m_zoom_level = 1;
             DrawMapTiles(m_map_position);
 
-            if (m_parent.m_mode != Mode::kMap)
+            if (m_mode != Mode::kMap)
             {
                 // Always go through this
                 m_state = State::kInitialOverviewMap;
@@ -135,7 +135,7 @@ UserInterface::MapScreen::RunStateMachine()
             break;
 
         case State::kInitialOverviewMap:
-            m_parent.m_zoom_level = m_parent.m_mode == Mode::kZoom2 ? 2 : 4;
+            m_parent.m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 4;
             PrepareInitialZoomedOutMap();
 
             m_state = State::kFillOverviewMapTiles;
@@ -148,7 +148,7 @@ UserInterface::MapScreen::RunStateMachine()
             {
                 m_state = State::kOverviewMap;
             }
-            else if (m_parent.m_mode == Mode::kMap)
+            else if (m_mode == Mode::kMap)
             {
                 m_state = State::kMap;
             }
@@ -159,7 +159,7 @@ UserInterface::MapScreen::RunStateMachine()
             break;
 
         case State::kOverviewMap:
-            if (m_parent.m_mode == Mode::kMap)
+            if (m_mode == Mode::kMap)
             {
                 m_state = State::kMap;
             }
@@ -414,4 +414,29 @@ UserInterface::MapScreen::DrawZoomedTile(const Point& position)
                             m_parent.m_zoom_level,
                             {dst.x / m_parent.m_zoom_level, dst.y / m_parent.m_zoom_level});
     }
+}
+
+void
+UserInterface::MapScreen::OnInput(hal::IInput::Event event)
+{
+    auto mode = std::to_underlying(m_mode);
+    switch (event.type)
+    {
+    case hal::IInput::EventType::kButtonDown:
+        break;
+    case hal::IInput::EventType::kButtonUp:
+        m_parent.EnterMenu();
+        break;
+    case hal::IInput::EventType::kLeft:
+        mode--;
+        break;
+    case hal::IInput::EventType::kRight:
+        mode++;
+        break;
+    default:
+        break;
+    }
+
+    printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
+    m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
 }

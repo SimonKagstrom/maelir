@@ -64,13 +64,6 @@ UserInterface::OnStartup()
 
     m_map_screen = std::make_unique<MapScreen>(*this);
     m_map_screen->Activate();
-
-    m_menu_screen = std::make_unique<MenuScreen>(*this, [this]() {
-        m_menu_screen->Deactivate();
-        m_map_screen->Activate();
-    });
-
-    m_menu_screen->Activate();
 }
 
 void
@@ -111,37 +104,11 @@ UserInterface::OnActivation()
 
         lv_indev_read(m_lvgl_input_dev);
 
-//        auto mode = std::to_underlying(m_mode);
-//        switch (event.type)
-//        {
-//        case hal::IInput::EventType::kButtonDown:
-//            m_button_timer = nullptr;
-//            m_button_timer = StartTimer(5s, [this]() {
-//                auto state = m_application_state.Checkout();
-//
-//                state->demo_mode = !state->demo_mode;
-//
-//                return std::nullopt;
-//            });
-//            break;
-//        case hal::IInput::EventType::kButtonUp:
-//            if (m_button_timer && (m_button_timer->TimeLeft() > 4500ms))
-//            {
-//                m_show_speedometer = !m_show_speedometer;
-//            }
-//            m_button_timer = nullptr;
-//            break;
-//        case hal::IInput::EventType::kLeft:
-//            mode--;
-//            break;
-//        case hal::IInput::EventType::kRight:
-//            mode++;
-//            break;
-//        default:
-//            break;
-//        }
-//        printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
-//        m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
+        // Ugly
+        if (m_menu_screen == nullptr)
+        {
+            m_map_screen->OnInput(event);
+        }
     }
 
 
@@ -178,6 +145,16 @@ UserInterface::OnActivation()
     return milliseconds(delay);
 }
 
+void
+UserInterface::EnterMenu()
+{
+    m_menu_screen = std::make_unique<MenuScreen>(*this, [this]() {
+        m_map_screen->Activate();
+        m_menu_screen = nullptr;
+    });
+
+    m_menu_screen->Activate();
+}
 
 void
 UserInterface::OnInput(const hal::IInput::Event& event)

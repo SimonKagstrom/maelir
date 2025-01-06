@@ -20,20 +20,25 @@ public:
     {
     }
 
-    virtual ~ScreenBase() = default;
+    virtual ~ScreenBase()
+    {
+        lv_obj_delete(m_screen);
+    }
 
     virtual void Activate()
     {
         lv_screen_load(m_screen);
     }
 
-    virtual void Deactivate()
+    virtual void OnPosition(const GpsData& position)
     {
     }
 
-    virtual void Update() = 0;
+    virtual void OnInput(hal::IInput::Event event)
+    {
+    }
 
-    virtual void OnPosition(const GpsData& position)
+    virtual void Update()
     {
     }
 
@@ -57,15 +62,6 @@ private:
     class MapScreen;
     class MenuScreen;
 
-    enum class Mode
-    {
-        kMap,
-        kZoom2,
-        kZoom4,
-
-        kValueCount,
-    };
-
     // From BaseThread
     void OnStartup() final;
     std::optional<milliseconds> OnActivation() final;
@@ -73,6 +69,9 @@ private:
     void OnInput(const hal::IInput::Event& event) final;
 
     static void StaticLvglEncoderRead(lv_indev_t* indev, lv_indev_data_t* data);
+
+
+    void EnterMenu();
 
     const uint32_t m_tile_rows;
     const uint32_t m_tile_row_size;
@@ -100,6 +99,7 @@ private:
 
     etl::queue_spsc_atomic<hal::IInput::Event, 4> m_input_queue;
 
+    // The map is always active, but the menu can be created/deleted
     std::unique_ptr<ScreenBase> m_map_screen;
     std::unique_ptr<ScreenBase> m_menu_screen;
 
@@ -107,11 +107,8 @@ private:
         m_zoomed_out_map_tiles;
 
     int32_t m_zoom_level {1};
-    Mode m_mode {Mode::kMap};
     bool m_show_speedometer {true};
 
     int16_t m_enc_diff {0};
     lv_indev_state_t m_button_state {LV_INDEV_STATE_RELEASED};
-
-    std::unique_ptr<os::ITimer> m_button_timer;
 };

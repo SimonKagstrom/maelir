@@ -9,6 +9,8 @@ public:
 
     void OnPosition(const GpsData& position) final;
 
+    void OnInput(hal::IInput::Event event) final;
+
     void Update() final;
 
 private:
@@ -18,6 +20,15 @@ private:
         kInitialOverviewMap,
         kFillOverviewMapTiles,
         kOverviewMap,
+
+        kValueCount,
+    };
+
+    enum class Mode
+    {
+        kMap,
+        kZoom2,
+        kZoom4,
 
         kValueCount,
     };
@@ -47,7 +58,6 @@ private:
 
     void RunStateMachine();
 
-
     UserInterface& m_parent;
     std::unique_ptr<Image> m_boat_data;
 
@@ -69,4 +79,6 @@ private:
 
     std::unique_ptr<uint8_t[]> m_static_map_buffer;
     std::unique_ptr<Image> m_static_map_image;
+
+    Mode m_mode {Mode::kMap};
 };
