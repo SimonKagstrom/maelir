@@ -42,8 +42,8 @@ app_main(void)
     //state.Checkout()->demo_mode = false;
     state.Checkout()->demo_mode = true;
 
-    auto encoder_input = std::make_unique<EncoderInput>(7,  // Pin A -> 7 (MOSI))
-                                                        6,  // Pin B -> 6 (MISO)
+    auto encoder_input = std::make_unique<EncoderInput>(6,  // Pin A -> 6 (MISO)
+                                                        7,  // Pin B -> 7 (MOSI)
                                                         5); // Button -> 5(SCK)
     auto display = std::make_unique<DisplayTarget>();
     auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,
@@ -68,10 +68,9 @@ app_main(void)
 
     gps_simulator->Start(1);
     gps_reader->Start(1);
-    producer->Start(0);
-    route_service->Start(1);
-    ui->Start(0, os::ThreadPriority::kHigh);
-
+    producer->Start(0, os::ThreadPriority::kHigh);
+    route_service->Start(1, os::ThreadPriority::kNormal, 5000);
+    ui->Start(0, os::ThreadPriority::kHigh, 8192);
 
     while (true)
     {
