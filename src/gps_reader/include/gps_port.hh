@@ -10,7 +10,18 @@ class IGpsPort
 public:
     virtual ~IGpsPort() = default;
 
-    virtual void AwakeOn(os::binary_semaphore& semaphore) = 0;
+    void AwakeOn(os::binary_semaphore& semaphore)
+    {
+        DoAwakeOn(&semaphore);
+    }
+
+    void DisableWakeup()
+    {
+        DoAwakeOn(nullptr);
+    }
 
     virtual std::optional<GpsData> Poll() = 0;
+
+protected:
+    virtual void DoAwakeOn(os::binary_semaphore* semaphore) = 0;
 };

@@ -150,9 +150,11 @@ UserInterface::OnActivation()
 void
 UserInterface::EnterMenu()
 {
+    m_gps_port->DisableWakeup();
     m_menu_screen = std::make_unique<MenuScreen>(*this, [this]() {
         m_map_screen->Activate();
         m_menu_screen = nullptr;
+        m_gps_port->AwakeOn(GetSemaphore());
     });
 
     m_menu_screen->Activate();

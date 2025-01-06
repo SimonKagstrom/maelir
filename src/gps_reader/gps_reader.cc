@@ -33,9 +33,9 @@ public:
     }
 
 private:
-    void AwakeOn(os::binary_semaphore& semaphore) final
+    void DoAwakeOn(os::binary_semaphore* semaphore) final
     {
-        m_semaphore = &semaphore;
+        m_semaphore = semaphore;
     }
 
     std::optional<GpsData> Poll() final
