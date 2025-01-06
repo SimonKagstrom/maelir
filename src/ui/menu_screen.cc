@@ -12,11 +12,13 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_menu_set_mode_root_back_button(m_menu, LV_MENU_ROOT_BACK_BUTTON_ENABLED);
 
     auto back_button = lv_menu_get_main_header_back_button(m_menu);
+    lv_obj_set_style_bg_color(m_screen, lv_obj_get_style_bg_color(m_menu, 0), 0);
+
     lv_group_add_obj(m_input_group, back_button);
     lv_group_focus_obj(back_button);
     lv_obj_add_state(back_button, LV_STATE_FOCUS_KEY);
 
-    lv_obj_set_size(m_menu, hal::kDisplayWidth * 0.70f, hal::kDisplayHeight * 0.70f);
+    lv_obj_set_size(m_menu, hal::kDisplayWidth * 0.72f, hal::kDisplayHeight * 0.72f);
     lv_obj_center(m_menu);
 
     lv_obj_t* sub_page = lv_menu_page_create(m_menu, NULL);
@@ -72,17 +74,23 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_menu_set_page(m_menu, main_page);
 
 
+    m_event_listeners.push_back(LvEventListener::Create(m_menu, LV_EVENT_CLICKED, [this](auto e) {
+        auto obj = static_cast<lv_obj_t*>(lv_event_get_target(e));
+        if (lv_menu_back_button_is_root(m_menu, obj))
+        {
+            m_on_close();
+        }
+    }));
     m_event_listeners.push_back(
-        LvEventListener::Create(m_menu, LV_EVENT_CLICKED, [this]() { m_on_close(); }));
-    m_event_listeners.push_back(
-        LvEventListener::Create(speedometer_switch, LV_EVENT_CLICKED, [this]() {
+        LvEventListener::Create(speedometer_switch, LV_EVENT_CLICKED, [this](auto) {
             auto state = m_parent.m_application_state.Checkout();
             state->show_speedometer = !state->show_speedometer;
         }));
-    m_event_listeners.push_back(LvEventListener::Create(demo_switch, LV_EVENT_CLICKED, [this]() {
-        auto state = m_parent.m_application_state.Checkout();
-        state->demo_mode = !state->demo_mode;
-    }));
+    m_event_listeners.push_back(
+        LvEventListener::Create(demo_switch, LV_EVENT_CLICKED, [this](auto) {
+            auto state = m_parent.m_application_state.Checkout();
+            state->demo_mode = !state->demo_mode;
+        }));
 
     lv_indev_set_group(m_parent.m_lvgl_input_dev, m_input_group);
 }

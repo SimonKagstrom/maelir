@@ -10,13 +10,13 @@ public:
     LvEventListener() = delete;
 
     static std::unique_ptr<LvEventListener>
-    Create(lv_obj_t* obj, lv_event_code_t event, std::function<void()> cb)
+    Create(lv_obj_t* obj, lv_event_code_t event, std::function<void(lv_event_t*)> cb)
     {
         return std::unique_ptr<LvEventListener>(new LvEventListener(obj, event, cb));
     }
 
 private:
-    LvEventListener(lv_obj_t* obj, lv_event_code_t event, std::function<void()> cb)
+    LvEventListener(lv_obj_t* obj, lv_event_code_t event, std::function<void(lv_event_t*)> cb)
         : m_cb(cb)
     {
         lv_obj_add_event_cb(obj, EventHandler, event, this);
@@ -25,8 +25,8 @@ private:
     static void EventHandler(lv_event_t* e)
     {
         auto p = reinterpret_cast<LvEventListener*>(lv_event_get_user_data(e));
-        p->m_cb();
+        p->m_cb(e);
     }
 
-    std::function<void()> m_cb;
+    std::function<void(lv_event_t*)> m_cb;
 };
