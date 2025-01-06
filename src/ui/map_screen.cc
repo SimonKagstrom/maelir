@@ -91,7 +91,9 @@ UserInterface::MapScreen::OnPosition(const GpsData& position)
 void
 UserInterface::MapScreen::Update()
 {
-    if (m_parent.m_show_speedometer)
+    auto state = m_parent.m_application_state.CheckoutReadonly();
+
+    if (state->show_speedometer)
     {
         lv_obj_remove_flag(m_speedometer_scale, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_speedometer_arc, LV_OBJ_FLAG_HIDDEN);

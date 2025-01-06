@@ -22,11 +22,13 @@ public:
         bool demo_mode {false};
         bool gps_connected {false};
         bool bluetooth_connected {false};
+        bool show_speedometer {true};
 
         auto operator==(const State& other) const
         {
             return demo_mode == other.demo_mode && gps_connected == other.gps_connected &&
-                   bluetooth_connected == other.bluetooth_connected;
+                   bluetooth_connected == other.bluetooth_connected &&
+                   show_speedometer == other.show_speedometer;
         }
     };
 

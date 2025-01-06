@@ -34,6 +34,7 @@ struct ApplicationState::StateImpl : ApplicationState::State
         demo_mode = parent.m_global_state.demo_mode;
         gps_connected = parent.m_global_state.gps_connected;
         bluetooth_connected = parent.m_global_state.bluetooth_connected;
+        show_speedometer = parent.m_global_state.show_speedometer;
     }
 
     ~StateImpl() final

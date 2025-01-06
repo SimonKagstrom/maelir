@@ -102,12 +102,14 @@ UserInterface::OnActivation()
             break;
         }
 
-        lv_indev_read(m_lvgl_input_dev);
-
         // Ugly
         if (m_menu_screen == nullptr)
         {
             m_map_screen->OnInput(event);
+        }
+        else
+        {
+            lv_indev_read(m_lvgl_input_dev);
         }
     }
 
