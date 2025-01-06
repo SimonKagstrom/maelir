@@ -19,12 +19,27 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_obj_set_size(m_menu, hal::kDisplayWidth * 0.70f, hal::kDisplayHeight * 0.70f);
     lv_obj_center(m_menu);
 
+    lv_obj_t* sub_page = lv_menu_page_create(m_menu, NULL);
+
+    auto cont = lv_menu_cont_create(sub_page);
+    auto label = lv_label_create(cont);
+    lv_group_add_obj(m_input_group, cont);
+    lv_label_set_text(label, "not yet");
+
+
     lv_obj_t* main_page = lv_menu_page_create(m_menu, NULL);
 
-    auto cont = lv_menu_cont_create(main_page);
-    auto label = lv_label_create(cont);
-    lv_label_set_text(label, "Routing");
+    cont = lv_menu_cont_create(main_page);
+    label = lv_label_create(cont);
+    lv_label_set_text(label, "New route");
     lv_group_add_obj(m_input_group, cont);
+
+    cont = lv_menu_cont_create(main_page);
+    label = lv_label_create(cont);
+    lv_label_set_text(label, "Recall route");
+    lv_group_add_obj(m_input_group, cont);
+    lv_menu_set_load_page_event(m_menu, cont, sub_page);
+
 
     auto selected_switch_color = lv_palette_main(LV_PALETTE_LIGHT_GREEN);
 
