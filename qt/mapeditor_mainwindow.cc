@@ -537,8 +537,8 @@ MapEditorMainWindow::CalculateLand()
         {
             auto chunk = m_map->copy(x, y, kPathFinderTileSize, kPathFinderTileSize);
 
-            // it's land if it contains at least 20% land colors
-            if (CountLandPixels(chunk) > 0.2 * kPathFinderTileSize * kPathFinderTileSize)
+            // it's land if it contains at least 5% land colors
+            if (CountLandPixels(chunk) > 0.05 * kPathFinderTileSize * kPathFinderTileSize)
             {
                 m_land_mask[(y / kPathFinderTileSize) * m_map->width() / kPathFinderTileSize +
                             x / kPathFinderTileSize] = true;

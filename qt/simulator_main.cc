@@ -40,7 +40,8 @@ main(int argc, char* argv[])
 
     ApplicationState state;
 
-    srand(time(0));
+    //srand(time(0));
+    srand(5);
     state.Checkout()->demo_mode = true;
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
