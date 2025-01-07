@@ -24,12 +24,8 @@ public:
         bool bluetooth_connected {false};
         bool show_speedometer {true};
 
-        auto operator==(const State& other) const
-        {
-            return demo_mode == other.demo_mode && gps_connected == other.gps_connected &&
-                   bluetooth_connected == other.bluetooth_connected &&
-                   show_speedometer == other.show_speedometer;
-        }
+        bool operator==(const State& other) const = default;
+        State &operator=(const State& other) = default;
     };
 
     std::unique_ptr<IListener> AttachListener(os::binary_semaphore& semaphore);

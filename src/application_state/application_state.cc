@@ -31,10 +31,7 @@ struct ApplicationState::StateImpl : ApplicationState::State
     StateImpl(ApplicationState& parent)
         : m_parent(parent)
     {
-        demo_mode = parent.m_global_state.demo_mode;
-        gps_connected = parent.m_global_state.gps_connected;
-        bluetooth_connected = parent.m_global_state.bluetooth_connected;
-        show_speedometer = parent.m_global_state.show_speedometer;
+        static_cast<State&>(*this) = parent.m_global_state;
     }
 
     ~StateImpl() final
