@@ -1,7 +1,6 @@
 #pragma once
 
 #include "base_thread.hh"
-#include "gps_data.hh"
 #include "tile.hh"
 
 #include <array>
@@ -28,7 +27,7 @@ public:
         bool bluetooth_connected {false};
         bool show_speedometer {true};
 
-        GpsPosition home_position {0.0f, 0.0f};
+        Point home_position {0,0};
         etl::deque<Point, 4> stored_positions {};
 
         bool operator==(const State& other) const = default;
