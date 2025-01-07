@@ -1,10 +1,14 @@
 #pragma once
 
 #include "base_thread.hh"
+#include "gps_data.hh"
+#include "tile.hh"
 
+#include <array>
 #include <atomic>
 #include <etl/mutex.h>
 #include <etl/vector.h>
+#include <etl/deque.h>
 
 class ApplicationState
 {
@@ -24,8 +28,11 @@ public:
         bool bluetooth_connected {false};
         bool show_speedometer {true};
 
+        GpsPosition home_position {0.0f, 0.0f};
+        etl::deque<Point, 4> stored_positions {};
+
         bool operator==(const State& other) const = default;
-        State &operator=(const State& other) = default;
+        State& operator=(const State& other) = default;
     };
 
     std::unique_ptr<IListener> AttachListener(os::binary_semaphore& semaphore);
