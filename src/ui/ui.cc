@@ -166,3 +166,9 @@ UserInterface::OnInput(const hal::IInput::Event& event)
     m_input_queue.push(event);
     Awake();
 }
+
+void
+UserInterface::SelectPosition(PositionSelection selection)
+{
+    m_select_position = selection;
+}

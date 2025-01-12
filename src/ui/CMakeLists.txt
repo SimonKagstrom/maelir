@@ -1,4 +1,5 @@
 library_from_data(${RESOURCE_DIR}/boat.png boat)
+library_from_data(${RESOURCE_DIR}/crosshair.png crosshair)
 
 add_library(ui EXCLUDE_FROM_ALL
     map_screen.cc
@@ -21,5 +22,6 @@ PUBLIC
     lvgl
 PRIVATE
     boat_library
+    crosshair_library
     painter
 )

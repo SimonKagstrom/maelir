@@ -42,7 +42,10 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     AddSeparator(main_page);
 
-    AddEntry(main_page, "Set home position", [this](auto) { printf("setting home position\n"); });
+    AddEntry(main_page, "Set home position", [this](auto) {
+        m_parent.SelectPosition(PositionSelection::kHome);
+        m_on_close();
+    });
     AddBooleanEntry(main_page, "Show speedometer", state->show_speedometer, [this](auto) {
         auto state = m_parent.m_application_state.Checkout();
         state->show_speedometer = !state->show_speedometer;

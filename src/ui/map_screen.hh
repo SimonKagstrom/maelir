@@ -20,6 +20,8 @@ private:
         kInitialOverviewMap,
         kFillOverviewMapTiles,
         kOverviewMap,
+        kSelectDestination,
+        kDestinationSelected,
 
         kValueCount,
     };
@@ -51,6 +53,7 @@ private:
     void DrawBoat();
     void DrawSpeedometer();
     void DrawRoute();
+    void DrawDestinationCrosshair();
 
     void PrepareInitialZoomedOutMap();
     void FillZoomedOutMap();
@@ -58,8 +61,12 @@ private:
 
     void RunStateMachine();
 
+    void OnInputSelectDestination(hal::IInput::Event event);
+    void OnInputViewMap(hal::IInput::Event event);
+
     UserInterface& m_parent;
     std::unique_ptr<Image> m_boat_data;
+    std::unique_ptr<Image> m_crosshair_data;
 
     std::unique_ptr<RouteLine> m_route_line;
 
@@ -68,6 +75,7 @@ private:
     lv_obj_t* m_boat;
     lv_obj_t* m_speedometer_scale;
     lv_obj_t* m_speedometer_arc;
+    lv_obj_t* m_crosshair;
 
     // Global pixel position of the left corner of the map
     Point m_map_position {0, 0};
@@ -81,4 +89,7 @@ private:
     std::unique_ptr<Image> m_static_map_image;
 
     Mode m_mode {Mode::kMap};
+
+    // Position selection data
+    Point m_crosshair_position;
 };

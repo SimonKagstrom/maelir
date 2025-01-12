@@ -2,11 +2,15 @@
 
 #include "boat.hh"
 #include "cohen_sutherland.hh"
+#include "crosshair.hh"
 #include "painter.hh"
+
+#include <fmt/format.h>
 
 UserInterface::MapScreen::MapScreen(UserInterface& parent)
     : m_parent(parent)
     , m_boat_data(DecodePngMask(boat_data, 0))
+    , m_crosshair_data(DecodePngMask(crosshair_data, 0))
 {
     m_static_map_buffer =
         std::make_unique<uint8_t[]>(hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
@@ -77,6 +81,11 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     m_boat = lv_image_create(m_screen);
     lv_image_set_src(m_boat, &m_boat_data->lv_image_dsc);
     lv_obj_center(m_boat);
+
+    m_crosshair = lv_image_create(m_screen);
+    lv_image_set_src(m_crosshair, &m_crosshair_data->lv_image_dsc);
+    lv_obj_center(m_crosshair);
+    lv_obj_add_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
 }
 
 void
@@ -92,8 +101,17 @@ void
 UserInterface::MapScreen::Update()
 {
     auto state = m_parent.m_application_state.CheckoutReadonly();
+    auto show_speedometer = state->show_speedometer;
 
-    if (state->show_speedometer)
+    if (m_state == State::kSelectDestination)
+    {
+        lv_obj_add_flag(m_route_line->lv_line, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
+
+        show_speedometer = false;
+    }
+
+    if (show_speedometer)
     {
         lv_obj_remove_flag(m_speedometer_scale, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_speedometer_arc, LV_OBJ_FLAG_HIDDEN);
@@ -109,6 +127,7 @@ UserInterface::MapScreen::Update()
     DrawBoat();
     DrawSpeedometer();
     DrawRoute();
+    DrawDestinationCrosshair();
 }
 
 void
@@ -123,13 +142,21 @@ UserInterface::MapScreen::RunStateMachine()
 
     do
     {
+        before = m_state;
+
         switch (m_state)
         {
         case State::kMap:
             m_parent.m_zoom_level = 1;
             DrawMapTiles(m_map_position);
 
-            if (m_mode != Mode::kMap)
+            if (m_parent.m_select_position)
+            {
+                m_mode = Mode::kZoom2;
+                m_crosshair_position = m_parent.m_position;
+                m_state = State::kInitialOverviewMap;
+            }
+            else if (m_mode != Mode::kMap)
             {
                 // Always go through this
                 m_state = State::kInitialOverviewMap;
@@ -146,9 +173,18 @@ UserInterface::MapScreen::RunStateMachine()
         case State::kFillOverviewMapTiles:
             FillZoomedOutMap();
 
-            if (m_zoomed_out_map_tiles.empty())
+            if (m_parent.m_select_position)
             {
-                m_state = State::kOverviewMap;
+                if (m_zoomed_out_map_tiles.empty())
+                {
+                    m_state = State::kSelectDestination;
+                }
+            }
+            else if (m_zoomed_out_map_tiles.empty())
+            {
+                {
+                    m_state = State::kOverviewMap;
+                }
             }
             else if (m_mode == Mode::kMap)
             {
@@ -181,11 +217,34 @@ UserInterface::MapScreen::RunStateMachine()
             }
             break;
 
+        case State::kSelectDestination:
+            if (m_crosshair_position.x < m_map_position_zoomed_out.x + 60 ||
+                m_crosshair_position.y < m_map_position_zoomed_out.y + 60 ||
+                m_crosshair_position.x >
+                    m_map_position_zoomed_out.x + hal::kDisplayWidth * m_parent.m_zoom_level - 60 ||
+                m_crosshair_position.y >
+                    m_map_position_zoomed_out.y + hal::kDisplayHeight * m_parent.m_zoom_level - 60)
+            {
+                // Boat outside the visible area
+                m_state = State::kInitialOverviewMap;
+            }
+            break;
+
+        case State::kDestinationSelected:
+            m_mode = Mode::kMap;
+            m_crosshair_position = Point {0, 0};
+            lv_obj_remove_flag(m_route_line->lv_line, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(m_boat, LV_OBJ_FLAG_HIDDEN);
+            break;
+
         case State::kValueCount:
             break;
         }
 
-        before = m_state;
+        if (before != m_state)
+        {
+            fmt::print("State: {} -> {}\n", static_cast<int>(before), static_cast<int>(m_state));
+        }
     } while (m_state != before);
 }
 
@@ -208,6 +267,18 @@ UserInterface::MapScreen::DrawBoat()
 
     lv_obj_align(
         m_boat, LV_ALIGN_TOP_LEFT, x - m_boat_data->Width() / 2, y - m_boat_data->Height() / 2);
+}
+
+void
+UserInterface::MapScreen::DrawDestinationCrosshair()
+{
+    auto x = (m_crosshair_position.x - m_map_position_zoomed_out.x) / m_parent.m_zoom_level;
+    auto y = (m_crosshair_position.y - m_map_position_zoomed_out.y) / m_parent.m_zoom_level;
+
+    lv_obj_align(m_crosshair,
+                 LV_ALIGN_TOP_LEFT,
+                 x - m_crosshair_data->Width() / 2,
+                 y - m_crosshair_data->Height() / 2);
 }
 
 void
@@ -347,6 +418,12 @@ UserInterface::MapScreen::PrepareInitialZoomedOutMap()
     auto aligned = Point {m_parent.m_position.x - m_parent.m_position.x % kTileSize,
                           m_parent.m_position.y - m_parent.m_position.y % kTileSize};
 
+    if (m_parent.m_select_position)
+    {
+        aligned = Point {m_crosshair_position.x - m_crosshair_position.x % kTileSize,
+                         m_crosshair_position.y - m_crosshair_position.y % kTileSize};
+    }
+
     const auto offset_x = std::max(static_cast<int32_t>(0),
                                    aligned.x - (m_parent.m_zoom_level * hal::kDisplayWidth) / 2);
     const auto offset_y = std::max(static_cast<int32_t>(0),
@@ -421,6 +498,19 @@ UserInterface::MapScreen::DrawZoomedTile(const Point& position)
 void
 UserInterface::MapScreen::OnInput(hal::IInput::Event event)
 {
+    if (m_state == State::kSelectDestination)
+    {
+        OnInputSelectDestination(event);
+    }
+    else
+    {
+        OnInputViewMap(event);
+    }
+}
+
+void
+UserInterface::MapScreen::OnInputViewMap(hal::IInput::Event event)
+{
     auto mode = std::to_underlying(m_mode);
     switch (event.type)
     {
@@ -441,4 +531,42 @@ UserInterface::MapScreen::OnInput(hal::IInput::Event event)
 
     printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
     m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
+}
+
+void
+UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
+{
+    assert(m_crosshair_position);
+
+    switch (event.type)
+    {
+    case hal::IInput::EventType::kButtonDown:
+        break;
+    case hal::IInput::EventType::kButtonUp:
+        if (m_parent.m_select_position)
+        {
+            if (m_parent.m_select_position == PositionSelection::kHome)
+            {
+                m_parent.m_application_state.Checkout()->home_position = m_crosshair_position;
+            }
+
+            //m_selected_position = m_crosshair_position;
+            m_mode = Mode::kMap;
+            m_crosshair_position = Point {0, 0};
+            lv_obj_remove_flag(m_route_line->lv_line, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(m_boat, LV_OBJ_FLAG_HIDDEN);
+            m_parent.m_select_position = std::nullopt;
+        }
+        break;
+    case hal::IInput::EventType::kLeft:
+        m_crosshair_position =
+            Point {m_crosshair_position.x - kPathFinderTileSize, m_crosshair_position.y};
+        break;
+    case hal::IInput::EventType::kRight:
+        m_crosshair_position =
+            Point {m_crosshair_position.x + kPathFinderTileSize, m_crosshair_position.y};
+        break;
+    default:
+        break;
+    }
 }

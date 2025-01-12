@@ -4,16 +4,23 @@ state kMap : zoom=1
 state kInitialOverviewMap : all tiles unknown,\ndraw present tiles
 state kFillOverviewMapTiles
 state kOverviewMap
+state kSelectDestination
+state kDestinationSelected
 
 [*] --> kMap
-kMap --> kInitialOverviewMap : turn
+kMap --> kInitialOverviewMap : turn, or\nnew destination
 
 kInitialOverviewMap --> kFillOverviewMapTiles
 kFillOverviewMapTiles --> kOverviewMap : all tiles drawn
 kFillOverviewMapTiles --> kInitialOverviewMap : turn, zoom < 3
 
+kFillOverviewMapTiles --> kSelectDestination : all tiles drawn &&\nnew destination\nin menu
+
 kOverviewMap --> kMap : turn, zoom > 3
 kOverviewMap --> kInitialOverviewMap : turn, zoom < 3
 kOverviewMap --> kInitialOverviewMap : boat close\nto the border
+
+kSelectDestination --> kDestinationSelected : destination selected
+kDestinationSelected --> kMap
 
 @enduml

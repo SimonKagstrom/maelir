@@ -59,6 +59,12 @@ public:
                   std::unique_ptr<IRouteListener> route_listener);
 
 private:
+    enum class PositionSelection
+    {
+        kHome,
+        kNewRoute,
+    };
+
     class MapScreen;
     class MenuScreen;
 
@@ -72,6 +78,8 @@ private:
 
 
     void EnterMenu();
+
+    void SelectPosition(PositionSelection selection);
 
     const uint32_t m_tile_rows;
     const uint32_t m_tile_row_size;
@@ -110,4 +118,8 @@ private:
 
     int16_t m_enc_diff {0};
     lv_indev_state_t m_button_state {LV_INDEV_STATE_RELEASED};
+
+
+    // Position selection data
+    std::optional<UserInterface::PositionSelection> m_select_position;
 };
