@@ -10,6 +10,10 @@ constexpr auto kGpsPositionSize = 256;
 constexpr auto kTileSize = 240;
 constexpr auto kPathFinderTileSize = kTileSize / 10;
 
+// For the path finder
+using IndexType = uint32_t;
+using CostType = uint32_t;
+
 // TILRSWFT
 constexpr auto kMetadataMagic = 0x54494C5253574654ull;
 

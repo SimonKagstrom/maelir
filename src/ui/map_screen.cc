@@ -4,6 +4,7 @@
 #include "cohen_sutherland.hh"
 #include "crosshair.hh"
 #include "painter.hh"
+#include "route_utils.hh"
 
 #include <fmt/format.h>
 
@@ -547,7 +548,8 @@ UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
         {
             if (m_parent.m_select_position == PositionSelection::kHome)
             {
-                m_parent.m_application_state.Checkout()->home_position = m_crosshair_position;
+                m_parent.m_application_state.Checkout()->home_position =
+                    PointToLandIndex(m_crosshair_position, m_parent.m_land_mask_row_size);
             }
 
             //m_selected_position = m_crosshair_position;

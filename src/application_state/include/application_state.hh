@@ -27,8 +27,8 @@ public:
         bool bluetooth_connected {false};
         bool show_speedometer {true};
 
-        Point home_position {0,0};
-        etl::deque<Point, 4> stored_positions {};
+        IndexType home_position {0};
+        etl::deque<IndexType, 4> stored_positions {};
 
         bool operator==(const State& other) const = default;
         State& operator=(const State& other) = default;

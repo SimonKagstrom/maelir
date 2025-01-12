@@ -8,9 +8,6 @@
 #include <queue>
 #include <span>
 
-using IndexType = uint32_t;
-using CostType = uint32_t;
-
 constexpr auto kTargetCacheSize = 16384;
 constexpr auto kUnitTestCacheSize = 24;
 constexpr IndexType kInvalidIndex = std::numeric_limits<IndexType>::max();
