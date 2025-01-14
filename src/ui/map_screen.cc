@@ -537,8 +537,6 @@ UserInterface::MapScreen::OnInputViewMap(hal::IInput::Event event)
 void
 UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
 {
-    assert(m_crosshair_position);
-
     switch (event.type)
     {
     case hal::IInput::EventType::kButtonDown:
