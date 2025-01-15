@@ -4,6 +4,7 @@
 #include "gps_simulator.hh"
 #include "route_service.hh"
 #include "sdkconfig.h"
+#include "target_nvm.hh"
 #include "storage.hh"
 #include "target_display.hh"
 #include "tile_producer.hh"
@@ -38,6 +39,8 @@ app_main(void)
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(p);
 
+    auto target_nvm = std::make_unique<NvmTarget>();
+
     ApplicationState state;
 
     //state.Checkout()->demo_mode = false;
@@ -51,6 +54,9 @@ app_main(void)
                                               17,  // RX -> A0
                                               16); // TX -> A1
 
+
+    // Threads
+    auto storage = std::make_unique<Storage>(*target_nvm, state);
     auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto route_service = std::make_unique<RouteService>(*map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
@@ -67,6 +73,7 @@ app_main(void)
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
+    storage->Start(1);
     gps_simulator->Start(1);
     gps_reader->Start(1);
     producer->Start(0, os::ThreadPriority::kHigh);
