@@ -4,6 +4,7 @@
 #include "gps_simulator.hh"
 #include "route_service.hh"
 #include "sdkconfig.h"
+#include "storage.hh"
 #include "target_display.hh"
 #include "tile_producer.hh"
 #include "uart_gps.hh"

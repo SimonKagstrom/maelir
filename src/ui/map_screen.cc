@@ -241,11 +241,6 @@ UserInterface::MapScreen::RunStateMachine()
         case State::kValueCount:
             break;
         }
-
-        if (before != m_state)
-        {
-            fmt::print("State: {} -> {}\n", static_cast<int>(before), static_cast<int>(m_state));
-        }
     } while (m_state != before);
 }
 

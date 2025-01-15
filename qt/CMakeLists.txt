@@ -53,6 +53,7 @@ target_link_libraries(os_qt
 )
 
 add_executable(maelir_qt
+    nvm_host.cc
     simulator_main.cc
     simulator_mainwindow.ui
     simulator_mainwindow.cc
@@ -65,6 +66,7 @@ target_link_libraries(maelir_qt
     tile_producer
     gps_simulator
     route_service
+    storage
     lvgl
 )
 

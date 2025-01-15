@@ -13,5 +13,6 @@ target_link_libraries(${COMPONENT_TARGET}
     gps_reader
     target_display
     target_os
+    storage
     uart_gps
 )

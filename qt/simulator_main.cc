@@ -3,6 +3,8 @@
 #include "route_service.hh"
 #include "simulator_mainwindow.hh"
 #include "tile_producer.hh"
+#include "nvm_host.hh"
+#include "storage.hh"
 #include "time.hh"
 #include "ui.hh"
 
@@ -38,6 +40,8 @@ main(int argc, char* argv[])
         return 1;
     }
 
+    auto nvm = std::make_unique<NvmHost>("nvm.txt");
+
     ApplicationState state;
 
     //srand(time(0));
@@ -66,6 +70,7 @@ main(int argc, char* argv[])
                map_metadata->lowest_longitude,
                map_metadata->highest_longitude);
 
+    auto storage = std::make_unique<Storage>(*nvm, state);
     auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto route_service = std::make_unique<RouteService>(*map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
@@ -80,6 +85,7 @@ main(int argc, char* argv[])
                                               route_service->AttachListener());
 
 
+    storage->Start();
     gps_simulator->Start();
     gps_reader->Start();
     producer->Start();
@@ -98,6 +104,7 @@ main(int argc, char* argv[])
     producer->Stop();
     gps_reader->Stop();
     gps_simulator->Stop();
+    storage->Stop();
 
     return out;
 }
