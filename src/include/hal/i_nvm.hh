@@ -16,11 +16,13 @@ public:
     {
         static_assert(sizeof(T) <= sizeof(uint32_t), "T must fit in a uint32_t");
 
-        if (auto value = GetUint32_t(key))
+        if (auto raw = GetUint32_t(key); raw)
         {
-            auto raw = *value;
+            T value = {};
 
-            return *reinterpret_cast<T*>(&raw);
+            memcpy(&value, &*raw, sizeof(T));
+
+            return value;
         }
 
         return std::nullopt;
@@ -31,7 +33,9 @@ public:
     {
         static_assert(sizeof(T) <= sizeof(uint32_t), "T must fit in a uint32_t");
 
-        auto raw = *reinterpret_cast<uint32_t*>(&value);
+        uint32_t raw = 0;
+
+        memcpy(&raw, &value, sizeof(T));
 
         SetUint32_t(key, raw);
     }
