@@ -35,6 +35,20 @@ UserInterface::UserInterface(ApplicationState& application_state,
     m_position = {9210, 6000};
 }
 
+void
+UserInterface::StaticLvglFlushCallback(lv_display_t* display,
+                                       const lv_area_t* area,
+                                       uint8_t* px_map)
+{
+    if (lv_display_flush_is_last(display))
+    {
+        auto p = reinterpret_cast<UserInterface*>(lv_display_get_user_data(display));
+
+        p->m_display.Flip();
+        lv_display_flush_ready(display);
+    }
+}
+
 
 void
 UserInterface::OnStartup()
@@ -54,6 +68,7 @@ UserInterface::OnStartup()
                            sizeof(uint16_t) * hal::kDisplayWidth * hal::kDisplayHeight,
                            lv_display_render_mode_t::LV_DISPLAY_RENDER_MODE_FULL);
     lv_display_set_user_data(m_lvgl_display, this);
+    lv_display_set_flush_cb(m_lvgl_display, StaticLvglFlushCallback);
 
 
     m_lvgl_input_dev = lv_indev_create();
@@ -139,10 +154,6 @@ UserInterface::OnActivation()
     m_map_screen->Update();
 
     auto delay = lv_timer_handler();
-
-    // Display the frame buffer and let LVGL know that it's done
-    m_display.Flip();
-    lv_display_flush_ready(m_lvgl_display);
 
     return milliseconds(delay);
 }

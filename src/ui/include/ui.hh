@@ -74,7 +74,9 @@ private:
 
     void OnInput(const hal::IInput::Event& event) final;
 
+
     static void StaticLvglEncoderRead(lv_indev_t* indev, lv_indev_data_t* data);
+    static void StaticLvglFlushCallback(lv_display_t * display, const lv_area_t * area, uint8_t * px_map);
 
 
     void EnterMenu();
