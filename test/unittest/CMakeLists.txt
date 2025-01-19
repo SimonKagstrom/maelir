@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.21)
 project (maelir_unittest LANGUAGES CXX C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 # Enable sanitizers in debug builds
 add_compile_options(-fsanitize=address,undefined -g)

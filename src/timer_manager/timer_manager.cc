@@ -6,69 +6,31 @@ using namespace os;
 class TimerManager::TimerImpl : public ITimer
 {
 public:
-    TimerImpl(TimerManager* parent,
-              milliseconds timeout,
-              std::function<std::optional<milliseconds>()> on_timeout)
-        : m_parent(parent)
-        , m_timeout(timeout)
-        , m_on_timeout(on_timeout)
+    TimerImpl(TimerManager& manager, uint8_t entry_index)
+        : m_manager(manager)
+        , m_entry_index(entry_index)
     {
-        m_parent->m_timers.push_back(this);
     }
 
     ~TimerImpl()
     {
-        if (auto it = std::ranges::find(m_parent->m_timers, this); it != m_parent->m_timers.end())
-        {
-            m_parent->m_timers.erase(it);
-        }
-    }
-
-    static std::optional<milliseconds> Update(TimerImpl* timer, milliseconds delta)
-    {
-        auto left = timer->m_timeout;
-
-        if (delta >= left)
-        {
-            timer->m_expired = true;
-            timer->m_timeout = 0ms;
-
-            // Might not be valid after the callback, i.e., the timer pointer might be dead
-            auto next = timer->m_on_timeout();
-            timer->m_parent->m_semaphore.release();
-            if (next)
-            {
-                // Reschedule
-                timer->m_timeout = *next;
-                return *next;
-            }
-
-            return std::nullopt;
-        }
-        else
-        {
-            left -= delta;
-            timer->m_timeout = left;
-        }
-
-        return left;
+        m_manager.EntryAt(m_entry_index).cookie = nullptr;
+        m_manager.m_pending_removals.push_back(m_entry_index);
     }
 
 private:
     bool IsExpired() const final
     {
-        return m_expired;
+        return m_manager.EntryAt(m_entry_index).expired;
     }
 
-    milliseconds TimeLeft() const
+    milliseconds TimeLeft() const final
     {
-        return m_timeout;
+        return m_manager.EntryAt(m_entry_index).timeout;
     }
 
-    TimerManager* m_parent;
-    milliseconds m_timeout;
-    std::function<std::optional<milliseconds>()> m_on_timeout;
-    bool m_expired {false};
+    TimerManager& m_manager;
+    const uint8_t m_entry_index;
 };
 
 
@@ -76,53 +38,111 @@ TimerManager::TimerManager(os::binary_semaphore& semaphore)
     : m_semaphore(semaphore)
     , m_last_expiery(os::GetTimeStamp())
 {
+    for (auto i = 0u; i < kMaxTimers; ++i)
+    {
+        m_timers[i].cookie = nullptr;
+        m_free_timers.push_back(i);
+    }
 }
 
 std::unique_ptr<ITimer>
 TimerManager::StartTimer(milliseconds timeout,
                          std::function<std::optional<milliseconds>()> on_timeout)
 {
-    if (m_timers.full())
-    {
-        return nullptr;
-    }
     // Run old timers before (also to update the last expiery)
     Expire();
 
-    return std::unique_ptr<ITimer>(new TimerImpl(this, timeout, on_timeout));
+    if (m_free_timers.empty())
+    {
+        return nullptr;
+    }
+
+    auto index = m_free_timers.back();
+    m_free_timers.pop_back();
+    m_active_timers.push_back(index);
+
+    auto cookie = new TimerImpl(*this, index);
+
+    auto& timer = m_timers[index];
+
+    timer.timeout = timeout;
+    timer.on_timeout = std::move(on_timeout);
+    timer.expired = false;
+    timer.cookie = cookie;
+
+    return std::unique_ptr<ITimer>(cookie);
 }
 
 std::optional<milliseconds>
 TimerManager::Expire()
 {
-    etl::vector<TimerImpl*, kMaxTimers> expired;
-    std::optional<milliseconds> next_wakeup;
+    constexpr auto kForever = milliseconds::max();
 
     auto now = os::GetTimeStamp();
     auto delta = now - m_last_expiery;
 
-    for (auto timer : m_timers)
+    auto next_wakeup = kForever;
+
+    for (auto& timer_index : m_active_timers)
     {
-        auto next = TimerImpl::Update(timer, delta);
-        if (next == std::nullopt)
+        auto& timer = m_timers[timer_index];
+
+        if (!timer.cookie)
         {
-            expired.push_back(timer);
+            // Deleted: Remove this timer
+            continue;
+        }
+
+        if (timer.expired)
+        {
+            continue;
+        }
+
+        if (delta >= timer.timeout)
+        {
+            auto next = timer.on_timeout();
+
+            if (next)
+            {
+                timer.timeout = *next;
+            }
+            else
+            {
+                timer.expired = true;
+                timer.timeout = 0ms;
+            }
         }
         else
         {
-            if (!next_wakeup || *next < *next_wakeup)
-            {
-                next_wakeup = next;
-            }
+            timer.timeout -= delta;
+        }
+
+
+        if (timer.expired == false && timer.timeout < next_wakeup)
+        {
+            next_wakeup = timer.timeout;
         }
     }
 
-    for (auto expired : expired)
+    for (auto index : m_pending_removals)
     {
-        m_timers.erase(std::ranges::find(m_timers, expired));
+        auto it = std::find(m_active_timers.begin(), m_active_timers.end(), index);
+
+        if (it != m_active_timers.end())
+        {
+            m_active_timers.erase(it);
+        }
+
+        m_free_timers.push_back(index);
     }
+    m_pending_removals.clear();
 
     m_last_expiery = now;
+
+    if (next_wakeup == kForever)
+    {
+        return std::nullopt;
+    }
 
     return next_wakeup;
 }

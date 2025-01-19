@@ -127,7 +127,7 @@ TEST_CASE_FIXTURE(Fixture, "a single shot timer is created")
             REQUIRE(timer->IsExpired());
         }
 
-        AND_THEN("since this is a single-shot timer, not more expirey")
+        AND_THEN("since this is a single-shot timer, no more expirey")
         {
             REQUIRE(expire_time == std::nullopt);
         }
@@ -212,6 +212,7 @@ TEST_CASE_FIXTURE(Fixture, "a single shot timer is recreated after timeout")
             THEN("it also expires after a while")
             {
                 AdvanceTime(100ms);
+
                 REQUIRE(manager.Expire() == 100ms);
                 REQUIRE_CALL(cb, OnTimeout());
                 AdvanceTime(100ms);
@@ -320,4 +321,23 @@ TEST_CASE_FIXTURE(Fixture, "multiple timers are used")
             }
         }
     }
+}
+
+
+TEST_CASE_FIXTURE(Fixture, "a timer is released from its own callback")
+{
+    TimerManager manager(m_sem);
+
+    std::unique_ptr<ITimer> timer;
+
+    timer = manager.StartTimer(1s, [&timer]() {
+        REQUIRE(timer);
+        timer = nullptr;
+        return std::nullopt;
+    });
+    REQUIRE(timer);
+
+    AdvanceTime(1s);
+    auto expire_time = manager.Expire();
+    REQUIRE(expire_time == std::nullopt);
 }

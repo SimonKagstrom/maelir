@@ -3,6 +3,7 @@
 #include "semaphore.hh"
 #include "time.hh"
 
+#include <array>
 #include <etl/vector.h>
 #include <functional>
 #include <optional>
@@ -35,9 +36,29 @@ public:
 private:
     class TimerImpl;
 
+    struct Entry
+    {
+        milliseconds timeout;
+        std::function<std::optional<milliseconds>()> on_timeout;
+        TimerImpl* cookie;
+        bool expired;
+    };
+
+    Entry &EntryAt(uint8_t index)
+    {
+        return m_timers[index];
+    }
+
     os::binary_semaphore& m_semaphore;
 
-    etl::vector<TimerImpl*, kMaxTimers> m_timers;
+    std::array<Entry, kMaxTimers> m_timers {};
+
+
+    etl::vector<uint8_t, kMaxTimers> m_pending_removals;
+    etl::vector<uint8_t, kMaxTimers> m_active_timers;
+    etl::vector<uint8_t, kMaxTimers> m_free_timers;
+
+
     milliseconds m_last_expiery;
 };
 
