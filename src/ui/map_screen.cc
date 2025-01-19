@@ -383,7 +383,7 @@ UserInterface::MapScreen::DrawRoute()
         return;
     }
 
-    auto index = 1;
+    auto index = 0;
     auto route_iterator = RouteIterator(m_parent.m_route, m_parent.m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
@@ -391,11 +391,6 @@ UserInterface::MapScreen::DrawRoute()
     {
         // Should be impossible, but anyway
         return;
-    }
-
-    if (PointClipsDisplay(*last_point))
-    {
-        AddRoutePoint(0, *last_point);
     }
 
     while (auto cur_point = route_iterator.Next())
@@ -418,10 +413,10 @@ UserInterface::MapScreen::DrawRoute()
             index++;
             continue;
         }
-        AddRoutePoint(index, *cur_point);
+        AddRoutePoint(index++, *last_point);
+        AddRoutePoint(index++, *cur_point);
 
         last_point = cur_point;
-        index++;
     }
 
     lv_line_set_points(m_route_line->lv_passed_line,
