@@ -81,6 +81,7 @@ main(int argc, char* argv[])
                                               *producer,
                                               window.GetDisplay(),
                                               window,
+                                              *route_service,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 

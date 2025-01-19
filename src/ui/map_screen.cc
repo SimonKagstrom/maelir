@@ -229,6 +229,11 @@ UserInterface::MapScreen::RunStateMachine()
                 // Boat outside the visible area
                 m_state = State::kInitialOverviewMap;
             }
+
+            if (m_parent.m_select_position == std::nullopt)
+            {
+                m_state = State::kDestinationSelected;
+            }
             break;
 
         case State::kDestinationSelected:
@@ -236,6 +241,8 @@ UserInterface::MapScreen::RunStateMachine()
             m_crosshair_position = Point {0, 0};
             lv_obj_remove_flag(m_route_line->lv_line, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(m_boat, LV_OBJ_FLAG_HIDDEN);
+
+            m_state = State::kMap;
             break;
 
         case State::kValueCount:
@@ -548,12 +555,11 @@ UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
                 m_parent.m_application_state.Checkout()->home_position =
                     PointToLandIndex(m_crosshair_position, m_parent.m_land_mask_row_size);
             }
+            else if (m_parent.m_select_position == PositionSelection::kNewRoute)
+            {
+                m_parent.m_route_service.RequestRoute(m_parent.m_position, m_crosshair_position);
+            }
 
-            //m_selected_position = m_crosshair_position;
-            m_mode = Mode::kMap;
-            m_crosshair_position = Point {0, 0};
-            lv_obj_remove_flag(m_route_line->lv_line, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_remove_flag(m_boat, LV_OBJ_FLAG_HIDDEN);
             m_parent.m_select_position = std::nullopt;
         }
         break;

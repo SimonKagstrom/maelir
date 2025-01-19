@@ -70,6 +70,7 @@ app_main(void)
                                               *producer,
                                               *display,
                                               *encoder_input,
+                                              *route_service,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 

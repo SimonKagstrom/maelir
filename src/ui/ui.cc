@@ -16,6 +16,7 @@ UserInterface::UserInterface(ApplicationState& application_state,
                              TileProducer& tile_producer,
                              hal::IDisplay& display,
                              hal::IInput& input,
+                             RouteService& route_service,
                              std::unique_ptr<IGpsPort> gps_port,
                              std::unique_ptr<IRouteListener> route_listener)
     : m_tile_rows(metadata.tile_rows)
@@ -26,6 +27,7 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_tile_producer(tile_producer)
     , m_display(display)
     , m_input(input)
+    , m_route_service(route_service)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
 {

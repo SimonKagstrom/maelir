@@ -37,7 +37,13 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     // TODO: If a home position is set
     AddEntry(main_page, "Navigate home", [this](auto) { printf("New route\n"); });
-    AddEntry(main_page, "New route", [this](auto) { printf("New route\n"); });
+    AddEntry(main_page, "New route", [this](auto) {
+        // Disable demo mode in this case
+        m_parent.m_application_state.Checkout()->demo_mode = false;
+
+        m_parent.SelectPosition(PositionSelection::kNewRoute);
+        m_on_close();
+    });
     AddEntryToSubPage(main_page, "Recall route", sub_page);
 
     AddSeparator(main_page);

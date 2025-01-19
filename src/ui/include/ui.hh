@@ -55,6 +55,7 @@ public:
                   TileProducer& tile_producer,
                   hal::IDisplay& display,
                   hal::IInput& input,
+                  RouteService &route_service,
                   std::unique_ptr<IGpsPort> gps_port,
                   std::unique_ptr<IRouteListener> route_listener);
 
@@ -93,6 +94,8 @@ private:
 
     hal::IDisplay& m_display;
     hal::IInput& m_input;
+    RouteService &m_route_service;
+
     lv_display_t* m_lvgl_display {nullptr};
     lv_indev_t* m_lvgl_input_dev {nullptr};
 

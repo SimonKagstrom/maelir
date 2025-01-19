@@ -94,6 +94,13 @@ EncoderInput::AttachListener(IListener* listener)
     m_listener = listener;
 }
 
+IInput::State
+EncoderInput::GetState()
+{
+    // NYI
+    return IInput::State(0);
+}
+
 void
 EncoderInput::PcntOnReach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t* edata)
 {

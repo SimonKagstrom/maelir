@@ -13,6 +13,7 @@ public:
 
 private:
     void AttachListener(hal::IInput::IListener* listener) final;
+    State GetState() final;
 
     void PcntOnReach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t* edata);
     static bool StaticPcntOnReach(pcnt_unit_handle_t unit,
