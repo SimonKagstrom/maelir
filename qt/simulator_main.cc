@@ -99,13 +99,5 @@ main(int argc, char* argv[])
     //route_service->RequestRoute({8735,6117}, {9771, 6493});
     auto out = QApplication::exec();
 
-    // Stop to avoid the destructor accessing the thread
-    ui->Stop();
-    route_service->Stop();
-    producer->Stop();
-    gps_reader->Stop();
-    gps_simulator->Stop();
-    storage->Stop();
-
     return out;
 }

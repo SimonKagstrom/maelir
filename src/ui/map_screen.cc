@@ -420,12 +420,6 @@ UserInterface::MapScreen::DrawRoute()
             index++;
             continue;
         }
-
-
-        auto color = m_parent.m_passed_route_index && index < *m_parent.m_passed_route_index
-                         ? 0x7BEF
-                         : 0x07E0; // Green in RGB565
-
         AddRoutePoint(index, *cur_point);
 
         last_point = cur_point;
