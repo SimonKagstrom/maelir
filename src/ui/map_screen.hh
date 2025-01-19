@@ -39,12 +39,15 @@ private:
     struct RouteLine
     {
         RouteLine(lv_obj_t* parent)
-            : lv_line(lv_line_create(parent))
+            : lv_passed_line(lv_line_create(parent))
+            , lv_remaining_line(lv_line_create(parent))
         {
         }
 
-        lv_obj_t* lv_line;
-        std::vector<lv_point_precise_t> points;
+        lv_obj_t* lv_passed_line;
+        lv_obj_t* lv_remaining_line;
+        std::vector<lv_point_precise_t> passed_points;
+        std::vector<lv_point_precise_t> remaining_points;
     };
 
     Point PositionToMapCenter(const Point& pixel_position) const;
@@ -55,9 +58,9 @@ private:
     void DrawRoute();
     void DrawDestinationCrosshair();
 
-    void AddRoutePoint(const Point& point);
-    bool PointClipsDisplay(const Point& point);
-    bool LineClipsDisplay(const Point& from, const Point &to);
+    void AddRoutePoint(unsigned index, const Point& point) const;
+    bool PointClipsDisplay(const Point& point) const;
+    bool LineClipsDisplay(const Point& from, const Point& to) const;
 
     void PrepareInitialZoomedOutMap();
     void FillZoomedOutMap();

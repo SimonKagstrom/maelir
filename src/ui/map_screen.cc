@@ -31,15 +31,24 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
 
 
     /* Create line style */
-    static lv_style_t style_line;
-    lv_style_init(&style_line);
-    lv_style_set_line_width(&style_line, 8);
-    lv_style_set_line_color(&style_line, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
-    lv_style_set_line_rounded(&style_line, true);
+    static lv_style_t style_passed_line;
+    static lv_style_t style_remaining_line;
+
+    lv_style_init(&style_passed_line);
+    lv_style_init(&style_remaining_line);
+
+    lv_style_set_line_width(&style_passed_line, 8);
+    lv_style_set_line_color(&style_passed_line, lv_palette_main(LV_PALETTE_GREY));
+    lv_style_set_line_rounded(&style_passed_line, true);
+
+    lv_style_set_line_width(&style_remaining_line, 8);
+    lv_style_set_line_color(&style_remaining_line, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
+    lv_style_set_line_rounded(&style_remaining_line, true);
 
     m_route_line = std::make_unique<RouteLine>(m_screen);
 
-    lv_obj_add_style(m_route_line->lv_line, &style_line, 0);
+    lv_obj_add_style(m_route_line->lv_remaining_line, &style_remaining_line, 0);
+    lv_obj_add_style(m_route_line->lv_passed_line, &style_passed_line, 0);
 
     m_speedometer_arc = lv_arc_create(m_screen);
     lv_obj_set_size(m_speedometer_arc, lv_pct(100), lv_pct(100));
@@ -106,7 +115,8 @@ UserInterface::MapScreen::Update()
 
     if (m_state == State::kSelectDestination)
     {
-        lv_obj_add_flag(m_route_line->lv_line, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(m_route_line->lv_passed_line, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
 
         show_speedometer = false;
@@ -239,7 +249,8 @@ UserInterface::MapScreen::RunStateMachine()
         case State::kDestinationSelected:
             m_mode = Mode::kMap;
             m_crosshair_position = Point {0, 0};
-            lv_obj_remove_flag(m_route_line->lv_line, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(m_route_line->lv_passed_line, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(m_boat, LV_OBJ_FLAG_HIDDEN);
 
             m_state = State::kMap;
@@ -297,21 +308,40 @@ UserInterface::MapScreen::DrawSpeedometer()
 }
 
 void
-UserInterface::MapScreen::AddRoutePoint(const Point& point)
+UserInterface::MapScreen::AddRoutePoint(unsigned index, const Point& point) const
 {
+    auto has_passed_index = m_parent.m_passed_route_index && index < *m_parent.m_passed_route_index;
+    auto passing_index = m_parent.m_passed_route_index && index == *m_parent.m_passed_route_index;
+
+    lv_point_precise_t lv_point;
+
     if (m_state == State::kMap)
     {
-        m_route_line->points.push_back({point.x - m_map_position.x, point.y - m_map_position.y});
+        lv_point = {point.x - m_map_position.x, point.y - m_map_position.y};
     }
     else
     {
-        m_route_line->points.push_back({(point.x - m_map_position_zoomed_out.x) / m_zoom_level,
-                                        (point.y - m_map_position_zoomed_out.y) / m_zoom_level});
+        lv_point = {(point.x - m_map_position_zoomed_out.x) / m_zoom_level,
+                    (point.y - m_map_position_zoomed_out.y) / m_zoom_level};
+    }
+
+    if (has_passed_index)
+    {
+        m_route_line->passed_points.push_back(lv_point);
+    }
+    else if (passing_index)
+    {
+        m_route_line->passed_points.push_back(lv_point);
+        m_route_line->remaining_points.push_back(lv_point);
+    }
+    else
+    {
+        m_route_line->remaining_points.push_back(lv_point);
     }
 }
 
 bool
-UserInterface::MapScreen::PointClipsDisplay(const Point& point)
+UserInterface::MapScreen::PointClipsDisplay(const Point& point) const
 {
     if (m_state == State::kMap)
     {
@@ -325,7 +355,7 @@ UserInterface::MapScreen::PointClipsDisplay(const Point& point)
 }
 
 bool
-UserInterface::MapScreen::LineClipsDisplay(const Point& from, const Point& to)
+UserInterface::MapScreen::LineClipsDisplay(const Point& from, const Point& to) const
 {
     if (m_state == State::kMap)
     {
@@ -346,14 +376,16 @@ UserInterface::MapScreen::LineClipsDisplay(const Point& from, const Point& to)
 void
 UserInterface::MapScreen::DrawRoute()
 {
-    m_route_line->points.clear();
-    lv_line_set_points(m_route_line->lv_line, {}, 0);
+    m_route_line->passed_points.clear();
+    m_route_line->remaining_points.clear();
+    lv_line_set_points(m_route_line->lv_passed_line, {}, 0);
+    lv_line_set_points(m_route_line->lv_remaining_line, {}, 0);
     if (m_parent.m_route.empty())
     {
         return;
     }
 
-    auto index = 0;
+    auto index = 1;
     auto route_iterator = RouteIterator(m_parent.m_route, m_parent.m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
@@ -365,7 +397,7 @@ UserInterface::MapScreen::DrawRoute()
 
     if (PointClipsDisplay(*last_point))
     {
-        AddRoutePoint(*last_point);
+        AddRoutePoint(0, *last_point);
     }
 
     while (auto cur_point = route_iterator.Next())
@@ -389,18 +421,23 @@ UserInterface::MapScreen::DrawRoute()
             continue;
         }
 
+
         auto color = m_parent.m_passed_route_index && index < *m_parent.m_passed_route_index
                          ? 0x7BEF
                          : 0x07E0; // Green in RGB565
 
-        AddRoutePoint(*cur_point);
+        AddRoutePoint(index, *cur_point);
 
         last_point = cur_point;
         index++;
     }
 
-    lv_line_set_points(
-        m_route_line->lv_line, m_route_line->points.data(), m_route_line->points.size());
+    lv_line_set_points(m_route_line->lv_passed_line,
+                       m_route_line->passed_points.data(),
+                       m_route_line->passed_points.size());
+    lv_line_set_points(m_route_line->lv_remaining_line,
+                       m_route_line->remaining_points.data(),
+                       m_route_line->remaining_points.size());
 }
 
 void
