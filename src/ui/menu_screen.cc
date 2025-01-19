@@ -1,5 +1,6 @@
 #include "menu_screen.hh"
 
+#include "painter.hh"
 #include "route_utils.hh"
 
 #include <fmt/format.h>
@@ -9,6 +10,10 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     , m_on_close(on_close)
 
 {
+    m_thumbnail_buffer =
+        std::make_unique<uint8_t[]>((kTileSize / 3) * (kTileSize / 3) * sizeof(uint16_t) *
+                                    ApplicationState::kMaxStoredPositions);
+
     auto state = m_parent.m_application_state.CheckoutReadonly();
 
     // Create a style for the selected state
@@ -61,9 +66,13 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     for (auto i = 0u; i < state->stored_positions.size(); i++)
     {
         auto point = LandIndexToPoint(state->stored_positions[i], m_parent.m_land_mask_row_size);
+        auto buffer =
+            m_thumbnail_buffer.get() + i * (kTileSize / 3) * (kTileSize / 3) * sizeof(uint16_t);
 
-        AddEntry(
+        AddMapEntry(
             sub_page,
+            point,
+            buffer,
             "Route to " + std::to_string(point.x) + "," + std::to_string(point.y),
             [this, i](auto) {
                 auto state = m_parent.m_application_state.Checkout();
@@ -132,10 +141,37 @@ UserInterface::MenuScreen::AddEntry(lv_obj_t* page,
     lv_label_set_text(label, text.c_str());
     lv_group_add_obj(m_input_group, cont);
     lv_obj_add_style(cont, &m_style_selected, LV_STATE_FOCUSED);
+    lv_obj_set_flex_grow(label, 1);
 
     m_event_listeners.push_back(LvEventListener::Create(cont, LV_EVENT_CLICKED, on_click));
 
     return cont;
+}
+
+lv_obj_t*
+UserInterface::MenuScreen::AddMapEntry(lv_obj_t* page,
+                                       const Point& point,
+                                       uint8_t* buffer,
+                                       const std::string& text,
+                                       std::function<void(lv_event_t*)> on_click)
+{
+    auto obj = AddEntry(page, text, on_click);
+    auto tile = m_parent.m_tile_producer.LockTile(point);
+    if (tile)
+    {
+        painter::ZoomedBlit(
+            reinterpret_cast<uint16_t*>(buffer), kTileSize / 3, tile->GetImage(), 3, {0, 0});
+
+        m_thumbnails.push_back(Image {
+            std::span<const uint8_t> {buffer, (kTileSize / 3) * (kTileSize / 3) * sizeof(uint16_t)},
+            kTileSize / 3,
+            kTileSize / 3});
+
+        lv_obj_t* thumbnail = lv_image_create(obj);
+        lv_image_set_src(thumbnail, &m_thumbnails.back().lv_image_dsc);
+    }
+
+    return obj;
 }
 
 lv_obj_t*

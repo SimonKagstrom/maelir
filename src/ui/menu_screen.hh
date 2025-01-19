@@ -1,8 +1,10 @@
 #pragma once
 
+#include "application_state.hh"
 #include "lv_event_listener.hh"
 #include "ui.hh"
 
+#include <etl/vector.h>
 #include <functional>
 #include <string>
 #include <vector>
@@ -21,6 +23,12 @@ private:
     lv_obj_t*
     AddEntry(lv_obj_t* page, const std::string& text, std::function<void(lv_event_t*)> on_click);
 
+    lv_obj_t* AddMapEntry(lv_obj_t* page,
+                          const Point& where,
+                          uint8_t *buffer,
+                          const std::string& text,
+                          std::function<void(lv_event_t*)> on_click);
+
     lv_obj_t* AddEntryToSubPage(lv_obj_t* page, const char* text, lv_obj_t* subpage);
 
     void AddSeparator(lv_obj_t* page);
@@ -38,4 +46,7 @@ private:
     lv_group_t* m_input_group;
 
     std::vector<std::unique_ptr<LvEventListener>> m_event_listeners;
+
+    std::unique_ptr<uint8_t[]> m_thumbnail_buffer;
+    etl::vector<Image, ApplicationState::kMaxStoredPositions> m_thumbnails;
 };

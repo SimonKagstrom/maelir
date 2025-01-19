@@ -70,7 +70,7 @@ Blit(uint16_t* frame_buffer, const Image& image, Rect to)
 }
 
 void
-ZoomedBlit(uint16_t* frame_buffer, const Image& image, unsigned factor, Rect to)
+ZoomedBlit(uint16_t* frame_buffer, uint32_t buffer_width, const Image& image, unsigned factor, Rect to)
 {
     auto [height, width, from_y, from_x, row_length] = Prepare(image, to);
 
@@ -89,7 +89,7 @@ ZoomedBlit(uint16_t* frame_buffer, const Image& image, unsigned factor, Rect to)
             auto src_x = from_x + x;
             auto src_y = from_y + y;
 
-            if (dst_x < 0 || dst_x >= hal::kDisplayWidth)
+            if (dst_x < 0 || dst_x >= buffer_width)
             {
                 continue;
             }
@@ -99,7 +99,7 @@ ZoomedBlit(uint16_t* frame_buffer, const Image& image, unsigned factor, Rect to)
             }
 
             auto src_color = image.Data16()[src_y * image.Width() + src_x];
-            frame_buffer[dst_y * hal::kDisplayWidth + dst_x] = src_color;
+            frame_buffer[dst_y * buffer_width + dst_x] = src_color;
         }
     }
 }

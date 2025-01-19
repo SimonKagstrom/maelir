@@ -555,6 +555,7 @@ UserInterface::MapScreen::DrawZoomedTile(const Point& position)
         auto dst = Point {position.x - m_map_position_zoomed_out.x,
                           position.y - m_map_position_zoomed_out.y};
         painter::ZoomedBlit(reinterpret_cast<uint16_t*>(m_static_map_buffer.get()),
+                            hal::kDisplayWidth,
                             tile->GetImage(),
                             m_zoom_level,
                             {dst.x / m_zoom_level, dst.y / m_zoom_level});
