@@ -1,10 +1,10 @@
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
+#include "nvm_host.hh"
 #include "route_service.hh"
 #include "simulator_mainwindow.hh"
-#include "tile_producer.hh"
-#include "nvm_host.hh"
 #include "storage.hh"
+#include "tile_producer.hh"
 #include "time.hh"
 #include "ui.hh"
 
@@ -70,9 +70,9 @@ main(int argc, char* argv[])
                map_metadata->lowest_longitude,
                map_metadata->highest_longitude);
 
-    auto storage = std::make_unique<Storage>(*nvm, state);
-    auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto route_service = std::make_unique<RouteService>(*map_metadata);
+    auto storage = std::make_unique<Storage>(*nvm, state, route_service->AttachListener());
+    auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_simulator);
 
@@ -87,6 +87,10 @@ main(int argc, char* argv[])
 
 
     storage->Start();
+
+    // Hack to make sure storage has started (not needed with FreeRTOS)
+    os::Sleep(10ms);
+
     gps_simulator->Start();
     gps_reader->Start();
     producer->Start();
@@ -98,6 +102,9 @@ main(int argc, char* argv[])
     //    route_service->RequestRoute({2592, 7032}, {16008, 4728});
     //route_service->RequestRoute({8735,6117}, {9771, 6493});
     auto out = QApplication::exec();
+
+    // Workaround a hang on exit. The target application never exits
+    exit(0);
 
     return out;
 }

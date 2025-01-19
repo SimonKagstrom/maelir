@@ -4,9 +4,9 @@
 #include "gps_simulator.hh"
 #include "route_service.hh"
 #include "sdkconfig.h"
-#include "target_nvm.hh"
 #include "storage.hh"
 #include "target_display.hh"
+#include "target_nvm.hh"
 #include "tile_producer.hh"
 #include "uart_gps.hh"
 #include "ui.hh"
@@ -56,9 +56,9 @@ app_main(void)
 
 
     // Threads
-    auto storage = std::make_unique<Storage>(*target_nvm, state);
-    auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto route_service = std::make_unique<RouteService>(*map_metadata);
+    auto storage = std::make_unique<Storage>(*target_nvm, state, route_service->AttachListener());
+    auto producer = std::make_unique<TileProducer>(*map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
 
     // Selects between the real and demo GPS

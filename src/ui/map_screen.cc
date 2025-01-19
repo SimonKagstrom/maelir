@@ -193,9 +193,7 @@ UserInterface::MapScreen::RunStateMachine()
             }
             else if (m_zoomed_out_map_tiles.empty())
             {
-                {
-                    m_state = State::kOverviewMap;
-                }
+                m_state = State::kOverviewMap;
             }
             else if (m_mode == Mode::kMap)
             {

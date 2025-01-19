@@ -4,6 +4,7 @@
 #include "ui.hh"
 
 #include <functional>
+#include <string>
 #include <vector>
 
 class UserInterface::MenuScreen : public ScreenBase
@@ -17,9 +18,10 @@ public:
 
 private:
     // Return the container object
-    lv_obj_t* AddEntry(lv_obj_t* page, const char* text, std::function<void(lv_event_t*)> on_click);
+    lv_obj_t*
+    AddEntry(lv_obj_t* page, const std::string& text, std::function<void(lv_event_t*)> on_click);
 
-    lv_obj_t* AddEntryToSubPage(lv_obj_t* page, const char* text, lv_obj_t *subpage);
+    lv_obj_t* AddEntryToSubPage(lv_obj_t* page, const char* text, lv_obj_t* subpage);
 
     void AddSeparator(lv_obj_t* page);
 

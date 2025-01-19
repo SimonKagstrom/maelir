@@ -11,4 +11,5 @@ target_link_libraries(storage
 PUBLIC
     maelir_interface
     application_state
+    route_service
 )

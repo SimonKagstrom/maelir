@@ -9,7 +9,7 @@ namespace hal
 class IInput
 {
 public:
-    enum class EventType: uint8_t
+    enum class EventType : uint8_t
     {
         kButtonDown,
         kButtonUp,

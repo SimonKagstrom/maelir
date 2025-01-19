@@ -1,5 +1,9 @@
 #include "menu_screen.hh"
 
+#include "route_utils.hh"
+
+#include <fmt/format.h>
+
 UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void()> on_close)
     : m_parent(parent)
     , m_on_close(on_close)
@@ -45,6 +49,24 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
         m_on_close();
     });
     AddEntryToSubPage(main_page, "Recall route", sub_page);
+
+    for (auto i = 0u; i < state->stored_positions.size(); i++)
+    {
+        auto point = LandIndexToPoint(state->stored_positions[i], m_parent.m_land_mask_row_size);
+
+        AddEntry(
+            sub_page,
+            "Route to " + std::to_string(point.x) + "," + std::to_string(point.y),
+            [this, i](auto) {
+                auto state = m_parent.m_application_state.Checkout();
+                state->demo_mode = false;
+
+                m_parent.m_route_service.RequestRoute(
+                    m_parent.m_position,
+                    LandIndexToPoint(state->stored_positions[i], m_parent.m_land_mask_row_size));
+                m_on_close();
+            });
+    }
 
     AddSeparator(main_page);
 
@@ -93,13 +115,13 @@ UserInterface::MenuScreen::Update()
 
 lv_obj_t*
 UserInterface::MenuScreen::AddEntry(lv_obj_t* page,
-                                    const char* text,
+                                    const std::string& text,
                                     std::function<void(lv_event_t*)> on_click)
 {
     auto cont = lv_menu_cont_create(page);
     auto label = lv_label_create(cont);
 
-    lv_label_set_text(label, text);
+    lv_label_set_text(label, text.c_str());
     lv_group_add_obj(m_input_group, cont);
     lv_obj_add_style(cont, &m_style_selected, LV_STATE_FOCUSED);
 
