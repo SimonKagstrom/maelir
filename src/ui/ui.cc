@@ -34,8 +34,6 @@ UserInterface::UserInterface(ApplicationState& application_state,
     input.AttachListener(this);
     m_gps_port->AwakeOn(GetSemaphore());
     m_route_listener->AwakeOn(GetSemaphore());
-
-    m_position = {9210, 6000};
 }
 
 void
@@ -57,6 +55,9 @@ void
 UserInterface::OnStartup()
 {
     assert(m_lvgl_display == nullptr);
+
+    m_position = LandIndexToPoint(m_application_state.CheckoutReadonly()->home_position,
+                                  m_land_mask_row_size);
 
     lv_init();
     lv_tick_set_cb(os::GetTimeStampRaw);

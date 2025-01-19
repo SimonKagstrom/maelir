@@ -137,8 +137,8 @@ UserInterface::MapScreen::RunStateMachine()
     auto before = m_state;
 
     auto zoom_mismatch = [this]() {
-        return m_parent.m_zoom_level == 2 && m_mode == Mode::kZoom4 ||
-               m_parent.m_zoom_level == 4 && m_mode == Mode::kZoom2;
+        return m_zoom_level == 2 && m_mode == Mode::kZoom4 ||
+               m_zoom_level == 4 && m_mode == Mode::kZoom2;
     };
 
     do
@@ -148,7 +148,7 @@ UserInterface::MapScreen::RunStateMachine()
         switch (m_state)
         {
         case State::kMap:
-            m_parent.m_zoom_level = 1;
+            m_zoom_level = 1;
             DrawMapTiles(m_map_position);
 
             if (m_parent.m_select_position)
@@ -165,7 +165,7 @@ UserInterface::MapScreen::RunStateMachine()
             break;
 
         case State::kInitialOverviewMap:
-            m_parent.m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 4;
+            m_zoom_level = m_mode == Mode::kZoom2 ? 2 : 4;
             PrepareInitialZoomedOutMap();
 
             m_state = State::kFillOverviewMapTiles;
@@ -208,10 +208,10 @@ UserInterface::MapScreen::RunStateMachine()
             }
             else if (m_parent.m_position.x < m_map_position_zoomed_out.x + 30 ||
                      m_parent.m_position.y < m_map_position_zoomed_out.y + 30 ||
-                     m_parent.m_position.x > m_map_position_zoomed_out.x +
-                                                 hal::kDisplayWidth * m_parent.m_zoom_level - 30 ||
-                     m_parent.m_position.y > m_map_position_zoomed_out.y +
-                                                 hal::kDisplayHeight * m_parent.m_zoom_level - 30)
+                     m_parent.m_position.x >
+                         m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - 30 ||
+                     m_parent.m_position.y >
+                         m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - 30)
             {
                 // Boat outside the visible area
                 m_state = State::kInitialOverviewMap;
@@ -222,9 +222,9 @@ UserInterface::MapScreen::RunStateMachine()
             if (m_crosshair_position.x < m_map_position_zoomed_out.x + 60 ||
                 m_crosshair_position.y < m_map_position_zoomed_out.y + 60 ||
                 m_crosshair_position.x >
-                    m_map_position_zoomed_out.x + hal::kDisplayWidth * m_parent.m_zoom_level - 60 ||
+                    m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - 60 ||
                 m_crosshair_position.y >
-                    m_map_position_zoomed_out.y + hal::kDisplayHeight * m_parent.m_zoom_level - 60)
+                    m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - 60)
             {
                 // Boat outside the visible area
                 m_state = State::kInitialOverviewMap;
@@ -264,8 +264,8 @@ UserInterface::MapScreen::DrawBoat()
     }
     else
     {
-        x = (m_parent.m_position.x - m_map_position_zoomed_out.x) / m_parent.m_zoom_level;
-        y = (m_parent.m_position.y - m_map_position_zoomed_out.y) / m_parent.m_zoom_level;
+        x = (m_parent.m_position.x - m_map_position_zoomed_out.x) / m_zoom_level;
+        y = (m_parent.m_position.y - m_map_position_zoomed_out.y) / m_zoom_level;
     }
 
     lv_obj_align(
@@ -275,8 +275,8 @@ UserInterface::MapScreen::DrawBoat()
 void
 UserInterface::MapScreen::DrawDestinationCrosshair()
 {
-    auto x = (m_crosshair_position.x - m_map_position_zoomed_out.x) / m_parent.m_zoom_level;
-    auto y = (m_crosshair_position.y - m_map_position_zoomed_out.y) / m_parent.m_zoom_level;
+    auto x = (m_crosshair_position.x - m_map_position_zoomed_out.x) / m_zoom_level;
+    auto y = (m_crosshair_position.y - m_map_position_zoomed_out.y) / m_zoom_level;
 
     lv_obj_align(m_crosshair,
                  LV_ALIGN_TOP_LEFT,
@@ -297,6 +297,53 @@ UserInterface::MapScreen::DrawSpeedometer()
 }
 
 void
+UserInterface::MapScreen::AddRoutePoint(const Point& point)
+{
+    if (m_state == State::kMap)
+    {
+        m_route_line->points.push_back({point.x - m_map_position.x, point.y - m_map_position.y});
+    }
+    else
+    {
+        m_route_line->points.push_back({(point.x - m_map_position_zoomed_out.x) / m_zoom_level,
+                                        (point.y - m_map_position_zoomed_out.y) / m_zoom_level});
+    }
+}
+
+bool
+UserInterface::MapScreen::PointClipsDisplay(const Point& point)
+{
+    if (m_state == State::kMap)
+    {
+        return cs::PointClipsDisplay(point.x - m_map_position.x, point.y - m_map_position.y);
+    }
+    else
+    {
+        return cs::PointClipsDisplay((point.x - m_map_position_zoomed_out.x) / m_zoom_level,
+                                     (point.y - m_map_position_zoomed_out.y) / m_zoom_level);
+    }
+}
+
+bool
+UserInterface::MapScreen::LineClipsDisplay(const Point& from, const Point& to)
+{
+    if (m_state == State::kMap)
+    {
+        return cs::LineClipsDisplay(from.x - m_map_position.x,
+                                    from.y - m_map_position.y,
+                                    to.x - m_map_position.x,
+                                    to.y - m_map_position.y);
+    }
+    else
+    {
+        return cs::LineClipsDisplay((from.x - m_map_position_zoomed_out.x) / m_zoom_level,
+                                    (from.y - m_map_position_zoomed_out.y) / m_zoom_level,
+                                    (to.x - m_map_position_zoomed_out.x) / m_zoom_level,
+                                    (to.y - m_map_position_zoomed_out.y) / m_zoom_level);
+    }
+}
+
+void
 UserInterface::MapScreen::DrawRoute()
 {
     m_route_line->points.clear();
@@ -310,10 +357,15 @@ UserInterface::MapScreen::DrawRoute()
     auto route_iterator = RouteIterator(m_parent.m_route, m_parent.m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
-    if (cs::PointClipsDisplay(last_point->x - m_map_position.x, last_point->y - m_map_position.y))
+    if (!last_point)
     {
-        m_route_line->points.push_back(
-            {last_point->x - m_map_position.x, last_point->y - m_map_position.y});
+        // Should be impossible, but anyway
+        return;
+    }
+
+    if (PointClipsDisplay(*last_point))
+    {
+        AddRoutePoint(*last_point);
     }
 
     while (auto cur_point = route_iterator.Next())
@@ -330,10 +382,7 @@ UserInterface::MapScreen::DrawRoute()
             }
         }
 
-        if (!cs::LineClipsDisplay(last_point->x - m_map_position.x,
-                                  last_point->y - m_map_position.y,
-                                  cur_point->x - m_map_position.x,
-                                  cur_point->y - m_map_position.y))
+        if (!LineClipsDisplay(*last_point, *cur_point))
         {
             last_point = cur_point;
             index++;
@@ -344,17 +393,7 @@ UserInterface::MapScreen::DrawRoute()
                          ? 0x7BEF
                          : 0x07E0; // Green in RGB565
 
-        if (m_state == State::kMap)
-        {
-            m_route_line->points.push_back(
-                {cur_point->x - m_map_position.x, cur_point->y - m_map_position.y});
-        }
-        else
-        {
-            m_route_line->points.push_back(
-                {(cur_point->x - m_map_position_zoomed_out.x) / m_parent.m_zoom_level,
-                 (cur_point->y - m_map_position_zoomed_out.y) / m_parent.m_zoom_level});
-        }
+        AddRoutePoint(*cur_point);
 
         last_point = cur_point;
         index++;
@@ -427,14 +466,14 @@ UserInterface::MapScreen::PrepareInitialZoomedOutMap()
                          m_crosshair_position.y - m_crosshair_position.y % kTileSize};
     }
 
-    const auto offset_x = std::max(static_cast<int32_t>(0),
-                                   aligned.x - (m_parent.m_zoom_level * hal::kDisplayWidth) / 2);
-    const auto offset_y = std::max(static_cast<int32_t>(0),
-                                   aligned.y - (m_parent.m_zoom_level * hal::kDisplayHeight) / 2);
+    const auto offset_x =
+        std::max(static_cast<int32_t>(0), aligned.x - (m_zoom_level * hal::kDisplayWidth) / 2);
+    const auto offset_y =
+        std::max(static_cast<int32_t>(0), aligned.y - (m_zoom_level * hal::kDisplayHeight) / 2);
     m_map_position_zoomed_out = Point {offset_x, offset_y};
 
-    auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_parent.m_zoom_level);
-    auto num_tiles_y = hal::kDisplayHeight / (kTileSize / m_parent.m_zoom_level);
+    auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
+    auto num_tiles_y = hal::kDisplayHeight / (kTileSize / m_zoom_level);
 
     constexpr auto kVisibleTiles = hal::kDisplayWidth / kTileSize;
     etl::vector<Point, kVisibleTiles * kVisibleTiles> cached_tiles;
@@ -467,7 +506,7 @@ UserInterface::MapScreen::PrepareInitialZoomedOutMap()
 void
 UserInterface::MapScreen::FillZoomedOutMap()
 {
-    const auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_parent.m_zoom_level);
+    const auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
     for (auto i = 0; i < num_tiles_x; i++)
     {
         if (m_zoomed_out_map_tiles.empty())
@@ -493,8 +532,8 @@ UserInterface::MapScreen::DrawZoomedTile(const Point& position)
                           position.y - m_map_position_zoomed_out.y};
         painter::ZoomedBlit(reinterpret_cast<uint16_t*>(m_static_map_buffer.get()),
                             tile->GetImage(),
-                            m_parent.m_zoom_level,
-                            {dst.x / m_parent.m_zoom_level, dst.y / m_parent.m_zoom_level});
+                            m_zoom_level,
+                            {dst.x / m_zoom_level, dst.y / m_zoom_level});
     }
 }
 
@@ -523,6 +562,10 @@ UserInterface::MapScreen::OnInputViewMap(hal::IInput::Event event)
         m_parent.EnterMenu();
         break;
     case hal::IInput::EventType::kLeft:
+        if (mode == 0)
+        {
+            mode = std::to_underlying(Mode::kValueCount);
+        }
         mode--;
         break;
     case hal::IInput::EventType::kRight:
@@ -532,8 +575,8 @@ UserInterface::MapScreen::OnInputViewMap(hal::IInput::Event event)
         break;
     }
 
-    printf("Event: %d. State now %d\n", (int)event.type, (int)mode);
     m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
+    printf("Event: %d. State now %d\n", (int)event.type, (int)m_mode);
 }
 
 void

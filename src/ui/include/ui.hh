@@ -117,11 +117,6 @@ private:
     std::unique_ptr<ScreenBase> m_map_screen;
     std::unique_ptr<ScreenBase> m_menu_screen;
 
-    etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
-        m_zoomed_out_map_tiles;
-
-    int32_t m_zoom_level {1};
-
     int16_t m_enc_diff {0};
     lv_indev_state_t m_button_state {LV_INDEV_STATE_RELEASED};
 

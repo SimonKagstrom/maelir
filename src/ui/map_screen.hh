@@ -55,6 +55,10 @@ private:
     void DrawRoute();
     void DrawDestinationCrosshair();
 
+    void AddRoutePoint(const Point& point);
+    bool PointClipsDisplay(const Point& point);
+    bool LineClipsDisplay(const Point& from, const Point &to);
+
     void PrepareInitialZoomedOutMap();
     void FillZoomedOutMap();
     void DrawZoomedTile(const Point& position);
@@ -81,6 +85,7 @@ private:
     Point m_map_position {0, 0};
     Point m_map_position_zoomed_out {0, 0};
     State m_state {State::kMap};
+    int32_t m_zoom_level {1};
 
     etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
         m_zoomed_out_map_tiles;
