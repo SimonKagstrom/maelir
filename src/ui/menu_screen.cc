@@ -159,8 +159,30 @@ UserInterface::MenuScreen::AddMapEntry(lv_obj_t* page,
     auto tile = m_parent.m_tile_producer.LockTile(point);
     if (tile)
     {
-        painter::ZoomedBlit(
-            reinterpret_cast<uint16_t*>(buffer), kTileSize / 3, tile->GetImage(), 3, {0, 0});
+        auto p_16 = reinterpret_cast<uint16_t*>(buffer);
+        auto x_offset = (point.x % kTileSize) / 3;
+        auto y_offset = (point.y % kTileSize) / 3;
+        printf("x_offset: %d, y_offset: %d\n", x_offset, y_offset);
+
+        painter::ZoomedBlit(p_16, kTileSize / 3, tile->GetImage(), 3, {0, 0});
+
+        // Mark as green
+        for (auto x = -2; x < 2; x++)
+        {
+            for (auto y = -2; y < 2; y++)
+            {
+                auto dst_y = y_offset + y;
+                auto dst_x = x_offset + x;
+
+                if (dst_y < 0 || dst_y >= kTileSize / 3 || dst_x < 0 || dst_x >= kTileSize / 3)
+                {
+                    continue;
+                }
+
+                // Orange in rgb565
+                p_16[dst_y * (kTileSize / 3) + dst_x] = 0xFBE4;
+            }
+        }
 
         m_thumbnails.push_back(Image {
             std::span<const uint8_t> {buffer, (kTileSize / 3) * (kTileSize / 3) * sizeof(uint16_t)},
