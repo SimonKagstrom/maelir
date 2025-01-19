@@ -532,6 +532,10 @@ UserInterface::MapScreen::OnInputViewMap(hal::IInput::Event event)
 void
 UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
 {
+    auto is_vertical = m_parent.m_input.GetState().IsActive(hal::IInput::StateType::kSwitchUp);
+    auto x_diff = is_vertical ? 0 : kPathFinderTileSize;
+    auto y_diff = is_vertical ? kPathFinderTileSize : 0;
+
     switch (event.type)
     {
     case hal::IInput::EventType::kButtonDown:
@@ -555,11 +559,11 @@ UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
         break;
     case hal::IInput::EventType::kLeft:
         m_crosshair_position =
-            Point {m_crosshair_position.x - kPathFinderTileSize, m_crosshair_position.y};
+            Point {m_crosshair_position.x - x_diff, m_crosshair_position.y - y_diff};
         break;
     case hal::IInput::EventType::kRight:
         m_crosshair_position =
-            Point {m_crosshair_position.x + kPathFinderTileSize, m_crosshair_position.y};
+            Point {m_crosshair_position.x + x_diff, m_crosshair_position.y + y_diff};
         break;
     default:
         break;

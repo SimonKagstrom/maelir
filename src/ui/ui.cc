@@ -25,6 +25,7 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_application_state(application_state)
     , m_tile_producer(tile_producer)
     , m_display(display)
+    , m_input(input)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
 {
@@ -113,7 +114,7 @@ UserInterface::OnActivation()
         case hal::IInput::EventType::kRight:
             m_enc_diff = 1;
             break;
-        case hal::IInput::EventType::kValueCount:
+        default:
             break;
         }
 

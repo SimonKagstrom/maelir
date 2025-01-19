@@ -92,6 +92,7 @@ private:
     TileProducer& m_tile_producer;
 
     hal::IDisplay& m_display;
+    hal::IInput& m_input;
     lv_display_t* m_lvgl_display {nullptr};
     lv_indev_t* m_lvgl_input_dev {nullptr};
 

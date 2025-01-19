@@ -27,7 +27,9 @@ private slots:
 
 
 private:
+    // From IInput
     void AttachListener(hal::IInput::IListener* listener) final;
+    State GetState() final;
 
     void ButtonEvent(hal::IInput::EventType type);
 
@@ -36,4 +38,6 @@ private:
     std::unique_ptr<QGraphicsScene> m_scene;
     std::unique_ptr<DisplayQt> m_display;
     hal::IInput::IListener* m_input_listener {nullptr};
+
+    uint8_t m_state {0};
 };

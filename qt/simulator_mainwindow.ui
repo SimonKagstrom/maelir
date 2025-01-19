@@ -78,6 +78,66 @@
      <string>Right</string>
     </property>
    </widget>
+   <widget class="QRadioButton" name="switchUp">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>70</y>
+      <width>99</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>switch up</string>
+    </property>
+    <property name="shortcut">
+     <string>Q</string>
+    </property>
+    <attribute name="buttonGroup">
+     <string notr="true">switchGroup</string>
+    </attribute>
+   </widget>
+   <widget class="QRadioButton" name="switchNeutral">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>90</y>
+      <width>99</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>neutral</string>
+    </property>
+    <property name="shortcut">
+     <string>A</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+    <attribute name="buttonGroup">
+     <string notr="true">switchGroup</string>
+    </attribute>
+   </widget>
+   <widget class="QRadioButton" name="switchDown">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>110</y>
+      <width>99</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>switch down</string>
+    </property>
+    <property name="shortcut">
+     <string>Z</string>
+    </property>
+    <attribute name="buttonGroup">
+     <string notr="true">switchGroup</string>
+    </attribute>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -93,4 +153,7 @@
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="switchGroup"/>
+ </buttongroups>
 </ui>

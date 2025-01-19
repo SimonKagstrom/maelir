@@ -21,6 +21,14 @@ MainWindow::MainWindow(QWidget* parent)
     connect(m_ui->centerButton, &QPushButton::released, [this]() {
         ButtonEvent(EventType::kButtonUp);
     });
+    connect(
+        m_ui->switchUp, &QRadioButton::clicked, [this]() { ButtonEvent(EventType::kSwitchUp); });
+    connect(m_ui->switchNeutral, &QRadioButton::clicked, [this]() {
+        ButtonEvent(EventType::kSwitchNeutral);
+    });
+    connect(m_ui->switchDown, &QRadioButton::clicked, [this]() {
+        ButtonEvent(EventType::kSwitchDown);
+    });
 }
 
 MainWindow::~MainWindow()
@@ -40,12 +48,48 @@ MainWindow::AttachListener(hal::IInput::IListener* listener)
     m_input_listener = listener;
 }
 
+hal::IInput::State
+MainWindow::GetState()
+{
+    return State(m_state);
+}
+
 void
 MainWindow::ButtonEvent(hal::IInput::EventType type)
 {
     Event event;
     event.button = 0;
     event.type = type;
+
+    using Ev = hal::IInput::EventType;
+    using State = hal::IInput::StateType;
+
+    // Real hardware should handle this via reads of the pin
+    switch (type)
+    {
+    case Ev::kButtonDown:
+        m_state |= std::to_underlying(State::kButtonDown);
+        break;
+    case Ev::kButtonUp:
+        m_state &= ~std::to_underlying(State::kButtonDown);
+        break;
+    case Ev::kSwitchDown:
+        m_state |= std::to_underlying(State::kSwitchDown);
+        m_state &= ~std::to_underlying(State::kSwitchUp);
+        break;
+    case Ev::kSwitchNeutral:
+        m_state &= ~std::to_underlying(State::kSwitchUp);
+        m_state &= ~std::to_underlying(State::kSwitchDown);
+        break;
+    case Ev::kSwitchUp:
+        m_state |= std::to_underlying(State::kSwitchUp);
+
+        m_state &= ~std::to_underlying(State::kSwitchDown);
+        break;
+
+    default:
+        break;
+    }
 
     assert(m_input_listener);
     m_input_listener->OnInput(event);
