@@ -40,7 +40,15 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_obj_t* main_page = lv_menu_page_create(m_menu, NULL);
 
     // TODO: If a home position is set
-    AddEntry(main_page, "Navigate home", [this](auto) { printf("New route\n"); });
+    AddEntry(main_page, "Navigate home", [this](auto) {
+        auto state = m_parent.m_application_state.Checkout();
+        state->demo_mode = false;
+
+        m_parent.m_route_service.RequestRoute(
+            m_parent.m_position,
+            LandIndexToPoint(state->home_position, m_parent.m_land_mask_row_size));
+        m_on_close();
+    });
     AddEntry(main_page, "New route", [this](auto) {
         // Disable demo mode in this case
         m_parent.m_application_state.Checkout()->demo_mode = false;
