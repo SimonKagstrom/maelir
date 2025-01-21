@@ -41,6 +41,11 @@ Prepare(const auto& image, auto& to)
         row_length = width;
     }
 
+    if (to.y + height > hal::kDisplayHeight)
+    {
+        height = hal::kDisplayHeight - to.y;
+    }
+
     return std::array {height, width, from_y, from_x, row_length};
 }
 
@@ -54,23 +59,22 @@ Blit(uint16_t* frame_buffer, const Image& image, Rect to)
 {
     auto [height, width, from_y, from_x, row_length] = Prepare(image, to);
 
+    auto src_buffer = image.Data16().data();
+    auto image_width = image.Width();
+
     for (int y = 0; y < height; ++y)
     {
-        auto dst_y = to.y + y;
-
-        if (dst_y < 0 || dst_y >= hal::kDisplayHeight)
-        {
-            continue;
-        }
+        uint32_t dst_y = to.y + y;
 
         memcpy(&frame_buffer[dst_y * hal::kDisplayWidth + to.x],
-               &image.Data16()[(from_y + y) * image.Width() + from_x],
+               &src_buffer[(from_y + y) * image_width + from_x],
                row_length * sizeof(uint16_t));
     }
 }
 
 void
-ZoomedBlit(uint16_t* frame_buffer, uint32_t buffer_width, const Image& image, unsigned factor, Rect to)
+ZoomedBlit(
+    uint16_t* frame_buffer, uint32_t buffer_width, const Image& image, unsigned factor, Rect to)
 {
     auto [height, width, from_y, from_x, row_length] = Prepare(image, to);
 
