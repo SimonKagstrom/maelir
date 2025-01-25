@@ -7,9 +7,21 @@
 namespace
 {
 
-float
-ToDegrees(auto nmea)
+std::optional<float>
+ToDegrees(auto word)
 {
+    if (word.empty())
+    {
+        return std::nullopt;
+    }
+
+    char* end = nullptr;
+    auto nmea = std::strtod(word.data(), &end);
+    if (end == nullptr)
+    {
+        return std::nullopt;
+    }
+
     int deg = static_cast<int>(nmea) / 100;
     float min = nmea - (deg * 100);
     nmea = deg + min / 60.0f;
@@ -105,41 +117,57 @@ NmeaParser::ParseGppgaData(std::string_view line)
     std::optional<float> latitude;
     std::optional<float> longitude;
 
-    // time      latitude  N/S longitude E/W fix sat hdop altitude M height M time diff
+    // time      latitude  N/S longitude E/W fix sat hdop altitude M height M time checksum
     // 174558.00,5917.60788,N,01757.40192,E,1,08,1.08,48.3,M,24.6,M,,*69
+    constexpr auto kTimeIndex = 0;
+    constexpr auto kLatitudeIndex = 1;
+    constexpr auto kLatitudeDirectionIndex = 2;
+    constexpr auto kLongitudeIndex = 3;
+    constexpr auto kLongitudeDirectionIndex = 4;
+    constexpr auto kFixIndex = 5;
+    constexpr auto kSatIndex = 6;
+    constexpr auto kHdopIndex = 7;
+    constexpr auto kAltitudeIndex = 8;
+    constexpr auto kHeightIndex = 10;
+    constexpr auto kTimeSinceLastDgpsUpdateIndex = 12;
+    constexpr auto kChecksumIndex = 13;
+
+    auto valid = false;
     for (const auto sub_range : std::views::split(line, ','))
     {
         const auto word = std::string_view(sub_range.begin(), sub_range.end());
 
-        if (index == 1)
+        switch (index)
         {
-            char* end;
-            latitude = ToDegrees(std::strtod(word.data(), &end));
-        }
-        else if (index == 2)
-        {
+        case kLatitudeIndex:
+            latitude = ToDegrees(word);
+            break;
+        case kLatitudeDirectionIndex:
             if (word == "S")
             {
                 latitude = -latitude.value();
             }
-        }
-
-        if (index == 3)
-        {
-            char* end;
-            longitude = ToDegrees(std::strtod(word.data(), &end));
-        }
-        else if (index == 4)
-        {
+            break;
+        case kLongitudeIndex:
+            longitude = ToDegrees(word);
+            break;
+        case kLongitudeDirectionIndex:
             if (word == "W")
             {
                 longitude = -longitude.value();
             }
+            break;
+        case kFixIndex:
+            valid = word == "1" || word == "2";
+            break;
+        default:
+            break;
         }
+
         index++;
     }
 
-    if (latitude && longitude)
+    if (valid && latitude && longitude)
     {
         hal::RawGpsData cur;
 
