@@ -3,6 +3,7 @@
 #include "application_state.hh"
 #include "base_thread.hh"
 #include "gps_port.hh"
+#include "timer_manager.hh"
 #include "hal/i_display.hh"
 #include "hal/i_input.hh"
 #include "route_service.hh"
@@ -108,6 +109,12 @@ private:
     // Current speed in knots
     float m_speed {0};
 
+    // Icon states
+    bool m_calculating_route {false};
+    bool m_gps_position_valid {false};
+    std::unique_ptr<os::ITimer> m_gps_position_timer;
+
+
     std::vector<IndexType> m_route;
     std::optional<unsigned> m_passed_route_index;
 
@@ -119,7 +126,6 @@ private:
 
     int16_t m_enc_diff {0};
     lv_indev_state_t m_button_state {LV_INDEV_STATE_RELEASED};
-
 
     // Position selection data
     std::optional<UserInterface::PositionSelection> m_select_position;

@@ -97,6 +97,22 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     lv_image_set_src(m_crosshair, &m_crosshair_data->lv_image_dsc);
     lv_obj_center(m_crosshair);
     lv_obj_add_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
+
+    static lv_style_t style_white_text;
+    lv_style_init(&style_white_text);
+    lv_style_set_text_color(&style_white_text, lv_palette_main(LV_PALETTE_LIGHT_BLUE));
+
+    static lv_style_t style_text_shadow;
+    lv_style_init(&style_text_shadow);
+    lv_style_set_text_color(&style_text_shadow, lv_color_black());
+
+    m_indicators_shadow = lv_label_create(m_screen);
+    m_indicators = lv_label_create(m_screen);
+
+    lv_obj_add_style(m_indicators, &style_white_text, 0);
+    lv_obj_add_style(m_indicators_shadow, &style_text_shadow, 0);
+
+    lv_obj_align(m_indicators, LV_ALIGN_BOTTOM_MID, 0, -1);
 }
 
 void
@@ -132,6 +148,28 @@ UserInterface::MapScreen::Update()
     {
         lv_obj_add_flag(m_speedometer_scale, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(m_speedometer_arc, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    if (m_parent.m_gps_position_valid == false && m_parent.m_calculating_route == false)
+    {
+        lv_obj_add_flag(m_indicators_shadow, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(m_indicators, LV_OBJ_FLAG_HIDDEN);
+    }
+    else
+    {
+        char buf[32];
+
+        snprintf(buf,
+                 sizeof(buf),
+                 "%s%s%s",
+                 m_parent.m_gps_position_valid ? LV_SYMBOL_GPS : "",
+                 m_parent.m_calculating_route ? " " : "",
+                 m_parent.m_calculating_route ? LV_SYMBOL_LOOP : "");
+        lv_label_set_text(m_indicators, buf);
+        lv_label_set_text(m_indicators_shadow, buf);
+        lv_obj_align_to(m_indicators_shadow, m_indicators, LV_ALIGN_TOP_LEFT, 2, 2);
+        lv_obj_remove_flag(m_indicators_shadow, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(m_indicators, LV_OBJ_FLAG_HIDDEN);
     }
 
     RunStateMachine();

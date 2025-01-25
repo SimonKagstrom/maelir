@@ -30,6 +30,7 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_route_service(route_service)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
+    , m_gps_position_timer(StartTimer(0ms)) // Timeout directly, but always valid
 {
     input.AttachListener(this);
     m_gps_port->AwakeOn(GetSemaphore());
@@ -139,9 +140,13 @@ UserInterface::OnActivation()
         {
             m_route.clear();
             std::ranges::copy(route->route, std::back_inserter(m_route));
+            m_calculating_route = false;
         }
         else
         {
+            // For now always
+            m_calculating_route = route->type == IRouteListener::EventType::kCalculating;
+
             m_route.clear();
             m_passed_route_index = std::nullopt;
         }
@@ -152,8 +157,11 @@ UserInterface::OnActivation()
         m_position = position->pixel_position;
         m_speed = position->speed;
 
+        m_gps_position_timer = StartTimer(5s);
+
         m_map_screen->OnPosition(*position);
     }
+    m_gps_position_valid = !m_gps_position_timer->IsExpired();
 
     m_map_screen->Update();
 

@@ -162,7 +162,6 @@ UserInterface::MenuScreen::AddMapEntry(lv_obj_t* page,
         auto p_16 = reinterpret_cast<uint16_t*>(buffer);
         auto x_offset = (point.x % kTileSize) / 3;
         auto y_offset = (point.y % kTileSize) / 3;
-        printf("x_offset: %d, y_offset: %d\n", x_offset, y_offset);
 
         painter::ZoomedBlit(p_16, kTileSize / 3, tile->GetImage(), 3, {0, 0});
 

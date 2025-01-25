@@ -84,6 +84,9 @@ private:
     lv_obj_t* m_speedometer_arc;
     lv_obj_t* m_crosshair;
 
+    lv_obj_t* m_indicators;
+    lv_obj_t* m_indicators_shadow;
+
     // Global pixel position of the left corner of the map
     Point m_map_position {0, 0};
     Point m_map_position_zoomed_out {0, 0};
