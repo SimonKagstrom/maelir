@@ -60,7 +60,7 @@ OnVsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t* edat
 
 // Define the TL028WVC01_init_operations list (from Arduino, mapped to st7701_lcd_init_cmd_t)
 const st7701_lcd_init_cmd_t TL028WVC01_init_operations[] = {
-    {0x01, NULL, 0, 120}, // Reset
+    {0x01, NULL, 0, 60}, // Reset
     {0xFF, (uint8_t[]) {0x77, 0x01, 0x00, 0x00, 0x13}, 5, 0},
     {0xEF, (uint8_t[]) {0x08}, 1, 0},
     {0xFF, (uint8_t[]) {0x77, 0x01, 0x00, 0x00, 0x10}, 5, 0},
