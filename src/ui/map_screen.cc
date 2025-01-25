@@ -8,6 +8,9 @@
 
 #include <fmt/format.h>
 
+constexpr auto kMaxKnots = 30;
+constexpr auto kSpeedometerMaxAngle = 202;
+
 UserInterface::MapScreen::MapScreen(UserInterface& parent)
     : m_parent(parent)
     , m_boat_data(DecodePngMask(boat_data, 0))
@@ -54,10 +57,8 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     lv_obj_set_size(m_speedometer_arc, lv_pct(100), lv_pct(100));
     lv_obj_remove_style(m_speedometer_arc, NULL, LV_PART_KNOB);
     lv_obj_remove_flag(m_speedometer_arc, LV_OBJ_FLAG_CLICKABLE);
-    //    lv_obj_set_style_arc_color(m_speedometer_arc,
-    //                               lv_color_t {.red = 50, .blue = 155, .green = 255},
-    //                               LV_PART_INDICATOR);
-    lv_obj_set_style_arc_width(m_speedometer_arc, 30, LV_PART_INDICATOR);
+
+    lv_obj_set_style_arc_width(m_speedometer_arc, 22, LV_PART_INDICATOR);
     lv_obj_set_style_arc_rounded(m_speedometer_arc, false, LV_PART_INDICATOR);
     lv_arc_set_rotation(m_speedometer_arc, 135);
     lv_arc_set_value(m_speedometer_arc, 100);
@@ -76,16 +77,16 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
 
     lv_scale_set_label_show(m_speedometer_scale, true);
 
-    lv_scale_set_total_tick_count(m_speedometer_scale, 41);
+    lv_scale_set_total_tick_count(m_speedometer_scale, kMaxKnots + 1);
     lv_scale_set_major_tick_every(m_speedometer_scale, 5);
 
     lv_obj_set_style_length(m_speedometer_scale, 10, LV_PART_ITEMS);
     lv_obj_set_style_length(m_speedometer_scale, 20, LV_PART_INDICATOR);
     lv_obj_set_style_width(m_speedometer_scale, 2, LV_PART_ITEMS);
     lv_obj_set_style_width(m_speedometer_scale, 2, LV_PART_INDICATOR);
-    lv_scale_set_range(m_speedometer_scale, 0, 40);
+    lv_scale_set_range(m_speedometer_scale, 0, kMaxKnots);
 
-    lv_scale_set_angle_range(m_speedometer_scale, 270);
+    lv_scale_set_angle_range(m_speedometer_scale, kSpeedometerMaxAngle);
     lv_scale_set_rotation(m_speedometer_scale, 135);
 
     m_boat = lv_image_create(m_screen);
@@ -296,11 +297,10 @@ UserInterface::MapScreen::DrawDestinationCrosshair()
 void
 UserInterface::MapScreen::DrawSpeedometer()
 {
-    constexpr auto max_speed = 40.0f;
-    constexpr auto max_angle = 270.0f;
-    auto speed = std::min(m_parent.m_speed, max_speed);
+    constexpr float max_angle = kSpeedometerMaxAngle;
+    auto speed = std::clamp(m_parent.m_speed, 0.0f, static_cast<float>(kMaxKnots));
 
-    auto angle = speed * max_angle / max_speed;
+    auto angle = speed * max_angle / kMaxKnots;
 
     lv_arc_set_bg_angles(m_speedometer_arc, 0, angle);
 }
