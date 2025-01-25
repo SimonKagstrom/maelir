@@ -80,6 +80,9 @@ app_main(void)
     gps_reader->Start(1);
     producer->Start(0, os::ThreadPriority::kHigh);
     route_service->Start(1, os::ThreadPriority::kNormal, 5000);
+
+    // Time for the storage to read the home position
+    os::Sleep(10ms);
     ui->Start(0, os::ThreadPriority::kHigh, 8192);
 
     while (true)
