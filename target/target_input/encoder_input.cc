@@ -29,8 +29,9 @@ DummyListener g_dummy_listener;
 } // namespace
 
 
-EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button)
+EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button, uint8_t switch_up_pin)
     : m_pin_button(static_cast<gpio_num_t>(pin_button))
+    , m_pin_switch_up(static_cast<gpio_num_t>(switch_up_pin))
     , m_listener(&g_dummy_listener)
     , m_button_timestamp(os::GetTimeStamp())
 {
@@ -97,8 +98,21 @@ EncoderInput::AttachListener(IListener* listener)
 IInput::State
 EncoderInput::GetState()
 {
-    // NYI
-    return IInput::State(0);
+    auto switch_up_active = gpio_get_level(m_pin_switch_up);
+    auto button = gpio_get_level(m_pin_button);
+
+    uint8_t state = 0;
+
+    if (switch_up_active)
+    {
+        state |= std::to_underlying(IInput::StateType::kSwitchUp);
+    }
+    if (button)
+    {
+        state |= std::to_underlying(IInput::StateType::kButtonDown);
+    }
+
+    return IInput::State(state);
 }
 
 void

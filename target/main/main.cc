@@ -46,13 +46,14 @@ app_main(void)
     //state.Checkout()->demo_mode = false;
     state.Checkout()->demo_mode = true;
 
-    auto encoder_input = std::make_unique<EncoderInput>(6,  // Pin A -> 6 (MISO)
-                                                        7,  // Pin B -> 7 (MOSI)
-                                                        5); // Button -> 5(SCK)
+    auto encoder_input = std::make_unique<EncoderInput>(6,   // Pin A -> 6 (MISO)
+                                                        7,   // Pin B -> 7 (MOSI)
+                                                        5,   // Button -> 5(SCK)
+                                                        16); // Switch up -> 16 (A1)
     auto display = std::make_unique<DisplayTarget>();
     auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,
-                                              17,  // RX -> A0
-                                              16); // TX -> A1
+                                              17, // RX -> A0
+                                              8); // TX -> CS (not used)
 
 
     // Threads
