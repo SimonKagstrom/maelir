@@ -53,6 +53,7 @@ private:
 
     void SortActiveTimers();
     milliseconds ActivatePendingTimers();
+    void RemoveDeletedTimers();
 
     os::binary_semaphore& m_semaphore;
 

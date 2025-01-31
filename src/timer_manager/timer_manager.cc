@@ -42,7 +42,6 @@ TimerManager::TimerManager(os::binary_semaphore& semaphore)
 {
     for (auto i = 0u; i < kMaxTimers; ++i)
     {
-        m_timers[i].cookie = nullptr;
         m_free_timers.push_back(i);
     }
 }
@@ -72,6 +71,7 @@ TimerManager::StartTimer(milliseconds timeout,
 
     if (m_in_expire)
     {
+        // Starting the timer from the callback of another: Add to pending for later processing
         m_pending_additions.push_back(index);
     }
     else
@@ -108,10 +108,27 @@ TimerManager::ActivatePendingTimers()
 
         next_wakeup = std::min(next_wakeup, timer.timeout);
     }
-    SortActiveTimers();
     m_pending_additions.clear();
 
     return next_wakeup;
+}
+
+void
+TimerManager::RemoveDeletedTimers()
+{
+    for (auto index : m_pending_removals)
+    {
+        auto it = std::find(m_active_timers.begin(), m_active_timers.end(), index);
+
+        if (it != m_active_timers.end())
+        {
+            m_active_timers.erase(it);
+        }
+
+        m_free_timers.push_back(index);
+    }
+
+    m_pending_removals.clear();
 }
 
 void
@@ -124,14 +141,7 @@ TimerManager::BumpTime()
     {
         auto& timer = m_timers[timer_index];
 
-        if (delta >= timer.timeout)
-        {
-            timer.timeout = 0ms;
-        }
-        else
-        {
-            timer.timeout -= delta;
-        }
+        timer.timeout -= std::min(delta, timer.timeout);
     }
 
     m_last_expiery = now;
@@ -154,36 +164,24 @@ TimerManager::Expire()
     {
         auto& timer = m_timers[timer_index];
 
-        if (!timer.cookie)
+        if (!timer.cookie || timer.expired)
         {
-            // Deleted: Remove this timer
+            // Deleted or expired timer, ignore until deleted
             continue;
         }
 
-        if (timer.expired)
-        {
-            continue;
-        }
-
-        if (delta >= timer.timeout)
+        timer.timeout -= std::min(delta, timer.timeout);
+        if (timer.timeout == 0ms)
         {
             auto next = timer.on_timeout();
 
+            timer.expired = !next;
             if (next)
             {
+                // Periodic timer: Set the next timeout
                 timer.timeout = *next;
             }
-            else
-            {
-                timer.expired = true;
-                timer.timeout = 0ms;
-            }
         }
-        else
-        {
-            timer.timeout -= delta;
-        }
-
 
         if (timer.expired == false && timer.timeout < next_wakeup)
         {
@@ -191,21 +189,10 @@ TimerManager::Expire()
         }
     }
 
-    for (auto index : m_pending_removals)
-    {
-        auto it = std::find(m_active_timers.begin(), m_active_timers.end(), index);
-
-        if (it != m_active_timers.end())
-        {
-            m_active_timers.erase(it);
-        }
-
-        m_free_timers.push_back(index);
-    }
-    m_pending_removals.clear();
-
     auto pending_wakeup = ActivatePendingTimers();
     next_wakeup = std::min(next_wakeup, pending_wakeup);
+
+    RemoveDeletedTimers();
 
     m_last_expiery = now;
     m_in_expire = false;
