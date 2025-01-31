@@ -2,6 +2,8 @@
 
 using namespace os;
 
+constexpr auto kForever = milliseconds::max();
+
 
 class TimerManager::TimerImpl : public ITimer
 {
@@ -45,13 +47,21 @@ TimerManager::TimerManager(os::binary_semaphore& semaphore)
     }
 }
 
+void
+TimerManager::SortActiveTimers()
+{
+    std::ranges::sort(m_active_timers, [this](auto a, auto b) {
+        const auto& timer_a = m_timers[a];
+        const auto& timer_b = m_timers[b];
+
+        return timer_a.timeout < timer_b.timeout;
+    });
+}
+
 std::unique_ptr<ITimer>
 TimerManager::StartTimer(milliseconds timeout,
                          std::function<std::optional<milliseconds>()> on_timeout)
 {
-    // Run old timers before (also to update the last expiery)
-    Expire();
-
     if (m_free_timers.empty())
     {
         return nullptr;
@@ -59,7 +69,16 @@ TimerManager::StartTimer(milliseconds timeout,
 
     auto index = m_free_timers.back();
     m_free_timers.pop_back();
-    m_active_timers.push_back(index);
+
+    if (m_in_expire)
+    {
+        m_pending_additions.push_back(index);
+    }
+    else
+    {
+        BumpTime();
+        m_active_timers.push_back(index);
+    }
 
     auto cookie = new TimerImpl(*this, index);
 
@@ -73,17 +92,65 @@ TimerManager::StartTimer(milliseconds timeout,
     return std::unique_ptr<ITimer>(cookie);
 }
 
+milliseconds
+TimerManager::ActivatePendingTimers()
+{
+    auto next_wakeup = kForever;
+    if (m_pending_additions.empty())
+    {
+        return next_wakeup;
+    }
+
+    for (auto index : m_pending_additions)
+    {
+        m_active_timers.push_back(index);
+        const auto& timer = m_timers[index];
+
+        next_wakeup = std::min(next_wakeup, timer.timeout);
+    }
+    SortActiveTimers();
+    m_pending_additions.clear();
+
+    return next_wakeup;
+}
+
+void
+TimerManager::BumpTime()
+{
+    auto now = os::GetTimeStamp();
+    auto delta = now - m_last_expiery;
+
+    for (auto timer_index : m_active_timers)
+    {
+        auto& timer = m_timers[timer_index];
+
+        if (delta >= timer.timeout)
+        {
+            timer.timeout = 0ms;
+        }
+        else
+        {
+            timer.timeout -= delta;
+        }
+    }
+
+    m_last_expiery = now;
+}
+
 std::optional<milliseconds>
 TimerManager::Expire()
 {
-    constexpr auto kForever = milliseconds::max();
+    m_in_expire = true;
 
     auto now = os::GetTimeStamp();
     auto delta = now - m_last_expiery;
 
     auto next_wakeup = kForever;
 
-    for (auto& timer_index : m_active_timers)
+    // Make sure timers are sorted by expiery time
+    SortActiveTimers();
+
+    for (auto timer_index : m_active_timers)
     {
         auto& timer = m_timers[timer_index];
 
@@ -137,7 +204,11 @@ TimerManager::Expire()
     }
     m_pending_removals.clear();
 
+    auto pending_wakeup = ActivatePendingTimers();
+    next_wakeup = std::min(next_wakeup, pending_wakeup);
+
     m_last_expiery = now;
+    m_in_expire = false;
 
     if (next_wakeup == kForever)
     {

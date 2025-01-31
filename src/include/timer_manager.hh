@@ -44,10 +44,15 @@ private:
         bool expired;
     };
 
-    Entry &EntryAt(uint8_t index)
+    Entry& EntryAt(uint8_t index)
     {
         return m_timers[index];
     }
+
+    void BumpTime();
+
+    void SortActiveTimers();
+    milliseconds ActivatePendingTimers();
 
     os::binary_semaphore& m_semaphore;
 
@@ -55,9 +60,11 @@ private:
 
 
     etl::vector<uint8_t, kMaxTimers> m_pending_removals;
+    etl::vector<uint8_t, kMaxTimers> m_pending_additions;
     etl::vector<uint8_t, kMaxTimers> m_active_timers;
     etl::vector<uint8_t, kMaxTimers> m_free_timers;
 
+    bool m_in_expire {false};
 
     milliseconds m_last_expiery;
 };

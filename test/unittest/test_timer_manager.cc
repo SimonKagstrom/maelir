@@ -195,6 +195,7 @@ TEST_CASE_FIXTURE(Fixture, "a single shot timer is recreated after timeout")
         {
             REQUIRE(r_cb);
             REQUIRE(timer->IsExpired());
+            REQUIRE(expire_time == std::nullopt);
         }
         timer = nullptr;
 
@@ -340,4 +341,143 @@ TEST_CASE_FIXTURE(Fixture, "a timer is released from its own callback")
     AdvanceTime(1s);
     auto expire_time = manager.Expire();
     REQUIRE(expire_time == std::nullopt);
+}
+
+TEST_CASE_FIXTURE(Fixture, "timers are expired in order")
+{
+    TimerManager manager(m_sem);
+
+    unsigned t10_0_order = 0;
+    unsigned t20_0_order = 0;
+
+    unsigned t20_1_order = 0;
+    unsigned t10_1_order = 0;
+    unsigned t15_periodic_order = 0;
+    unsigned t20_then_10_periodic_order = 0;
+
+    unsigned order = 1;
+
+    auto t10_0 = manager.StartTimer(10ms, [&order, &t10_0_order]() {
+        t10_0_order = order++;
+        return std::nullopt;
+    });
+    auto t20_0 = manager.StartTimer(20ms, [&order, &t20_0_order]() {
+        t20_0_order = order++;
+        return std::nullopt;
+    });
+
+    auto expire_time = manager.Expire();
+    REQUIRE(expire_time == 10ms);
+
+    auto t20_periodic = manager.StartTimer(20ms, [&order, &t20_then_10_periodic_order]() {
+        t20_then_10_periodic_order = order++;
+
+        // First 20ms, then 10ms
+        return 10ms;
+    });
+
+    auto t15_periodic = manager.StartTimer(15ms, [&order, &t15_periodic_order]() {
+        t15_periodic_order = order++;
+        return 15ms;
+    });
+
+    auto t20_1 = manager.StartTimer(20ms, [&order, &t20_1_order]() {
+        t20_1_order = order++;
+        return std::nullopt;
+    });
+    auto t10_1 = manager.StartTimer(10ms, [&order, &t10_1_order]() {
+        t10_1_order = order++;
+        return std::nullopt;
+    });
+
+    WHEN("time advances past the expiery times")
+    {
+        // The periodic timer should expire once
+        AdvanceTime(25ms);
+        expire_time = manager.Expire();
+
+        THEN("all timers expire")
+        {
+            REQUIRE(expire_time == 10ms);
+        }
+
+        AND_THEN("the timers are expired in order")
+        {
+            REQUIRE(t10_0_order < t20_0_order);
+            REQUIRE(t10_0_order < t20_1_order);
+
+            REQUIRE(t10_1_order < t20_0_order);
+            REQUIRE(t10_1_order < t20_1_order);
+
+            REQUIRE(t10_0_order < t15_periodic_order);
+            REQUIRE(t10_1_order < t15_periodic_order);
+
+            REQUIRE(t15_periodic_order < t20_0_order);
+            REQUIRE(t15_periodic_order < t20_1_order);
+        }
+
+        AND_WHEN("only perodic timers remain")
+        {
+            auto t15_before = t15_periodic_order;
+            auto t20_then_10_before = t20_then_10_periodic_order;
+
+            AdvanceTime(15ms);
+            expire_time = manager.Expire();
+
+            THEN("they also expire in order")
+            {
+                REQUIRE(t15_periodic_order > t15_before);
+                REQUIRE(t20_then_10_periodic_order > t20_then_10_before);
+
+                REQUIRE(t20_then_10_periodic_order < t15_periodic_order);
+            }
+        }
+    }
+}
+
+
+TEST_CASE_FIXTURE(Fixture, "a new timer can be started from the timer callback")
+{
+    TimerManager manager(m_sem);
+    MockCallback cb0, cb1;
+
+    std::unique_ptr<ITimer> timer1;
+
+    auto timer0 = manager.StartTimer(30ms, [&cb0, &cb1, &timer1, &manager]() {
+        cb0.OnTimeout();
+
+        timer1 = manager.StartTimer(20ms, [&cb1]() {
+            cb1.OnTimeout();
+            return std::nullopt;
+        });
+
+        return 30ms;
+    });
+
+
+    WHEN("the first timer expires")
+    {
+        REQUIRE_CALL(cb0, OnTimeout());
+        AdvanceTime(30ms);
+        auto expire_time = manager.Expire();
+
+        THEN("the second timer is started")
+        {
+            REQUIRE(timer1);
+            REQUIRE(expire_time == 20ms);
+        }
+
+        AND_WHEN("the new timer expires")
+        {
+            auto r_cb = NAMED_REQUIRE_CALL(cb1, OnTimeout());
+            AdvanceTime(20ms);
+            expire_time = manager.Expire();
+
+            THEN("the new timer is invoked")
+            {
+                REQUIRE(r_cb);
+                REQUIRE(expire_time == 10ms);
+            }
+        }
+    }
 }
