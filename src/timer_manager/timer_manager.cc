@@ -17,7 +17,7 @@ public:
     ~TimerImpl()
     {
         m_manager.EntryAt(m_entry_index).cookie = nullptr;
-        m_manager.m_pending_removals.push_back(m_entry_index);
+        m_manager.m_pending_removals[m_entry_index] = true;
     }
 
 private:
@@ -40,10 +40,7 @@ TimerManager::TimerManager(os::binary_semaphore& semaphore)
     : m_semaphore(semaphore)
     , m_last_expiery(os::GetTimeStamp())
 {
-    for (auto i = 0u; i < kMaxTimers; ++i)
-    {
-        m_free_timers.push_back(i);
-    }
+    m_free_timers.set();
 }
 
 void
@@ -61,18 +58,18 @@ std::unique_ptr<ITimer>
 TimerManager::StartTimer(milliseconds timeout,
                          std::function<std::optional<milliseconds>()> on_timeout)
 {
-    if (m_free_timers.empty())
+    if (m_free_timers.none())
     {
         return nullptr;
     }
 
-    auto index = m_free_timers.back();
-    m_free_timers.pop_back();
+    auto index = m_free_timers.find_first(true);
+    m_free_timers[index] = false;
 
     if (m_in_expire)
     {
         // Starting the timer from the callback of another: Add to pending for later processing
-        m_pending_additions.push_back(index);
+        m_pending_additions[index] = true;
     }
     else
     {
@@ -96,19 +93,20 @@ milliseconds
 TimerManager::ActivatePendingTimers()
 {
     auto next_wakeup = kForever;
-    if (m_pending_additions.empty())
+    if (m_pending_additions.none())
     {
         return next_wakeup;
     }
 
-    for (auto index : m_pending_additions)
+    for (auto index = m_pending_additions.find_first(true); index != m_pending_additions.npos;
+         index = m_pending_additions.find_next(true, index + 1))
     {
         m_active_timers.push_back(index);
         const auto& timer = m_timers[index];
 
         next_wakeup = std::min(next_wakeup, timer.timeout);
     }
-    m_pending_additions.clear();
+    m_pending_additions.reset();
 
     return next_wakeup;
 }
@@ -116,7 +114,8 @@ TimerManager::ActivatePendingTimers()
 void
 TimerManager::RemoveDeletedTimers()
 {
-    for (auto index : m_pending_removals)
+    for (auto index = m_pending_removals.find_first(true); index != m_pending_removals.npos;
+         index = m_pending_removals.find_next(true, index + 1))
     {
         auto it = std::find(m_active_timers.begin(), m_active_timers.end(), index);
 
@@ -125,10 +124,10 @@ TimerManager::RemoveDeletedTimers()
             m_active_timers.erase(it);
         }
 
-        m_free_timers.push_back(index);
+        m_free_timers[index] = true;
     }
 
-    m_pending_removals.clear();
+    m_pending_removals.reset();
 }
 
 void

@@ -7,6 +7,7 @@
 #include <etl/vector.h>
 #include <functional>
 #include <optional>
+#include <etl/bitset.h>
 
 namespace os
 {
@@ -55,19 +56,18 @@ private:
     milliseconds ActivatePendingTimers();
     void RemoveDeletedTimers();
 
-    os::binary_semaphore& m_semaphore;
-
     std::array<Entry, kMaxTimers> m_timers {};
-
-
-    etl::vector<uint8_t, kMaxTimers> m_pending_removals;
-    etl::vector<uint8_t, kMaxTimers> m_pending_additions;
     etl::vector<uint8_t, kMaxTimers> m_active_timers;
-    etl::vector<uint8_t, kMaxTimers> m_free_timers;
-
-    bool m_in_expire {false};
 
     milliseconds m_last_expiery;
+
+
+    os::binary_semaphore& m_semaphore;
+
+    etl::bitset<kMaxTimers, uint8_t> m_pending_removals;
+    etl::bitset<kMaxTimers, uint8_t> m_pending_additions;
+    etl::bitset<kMaxTimers, uint8_t> m_free_timers;
+    bool m_in_expire {false};
 };
 
 }; // namespace os
