@@ -174,6 +174,9 @@ TimerManager::Expire()
         {
             auto next = timer.on_timeout();
 
+            // Wake up the task if something expires
+            m_semaphore.release();
+
             timer.expired = !next;
             if (next)
             {

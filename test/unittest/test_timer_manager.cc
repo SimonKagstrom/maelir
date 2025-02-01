@@ -137,6 +137,7 @@ TEST_CASE_FIXTURE(Fixture, "a single shot timer is created")
         THEN("no more expiery")
         {
             REQUIRE(manager.Expire() == std::nullopt);
+            REQUIRE_FALSE(m_sem.try_acquire());
         }
     }
 
@@ -145,6 +146,7 @@ TEST_CASE_FIXTURE(Fixture, "a single shot timer is created")
         auto r_cb = NAMED_REQUIRE_CALL(cb, OnTimeout());
 
         AdvanceTime(1s);
+        REQUIRE_FALSE(m_sem.try_acquire());
         auto expire_time = manager.Expire();
         THEN("the timer is invoked")
         {
@@ -153,6 +155,10 @@ TEST_CASE_FIXTURE(Fixture, "a single shot timer is created")
         AND_THEN("the timer is expired")
         {
             REQUIRE(timer->IsExpired());
+        }
+        AND_THEN("the task is woke")
+        {
+            REQUIRE(m_sem.try_acquire());
         }
 
         AND_THEN("since this is a single-shot timer, no more expirey")
