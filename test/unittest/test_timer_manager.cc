@@ -85,6 +85,34 @@ TEST_CASE_FIXTURE(Fixture, "the timer manager is empty by default")
     REQUIRE(manager.Expire() == std::nullopt);
 }
 
+TEST_CASE_FIXTURE(Fixture, "the timer manager can be filled without adverse effects")
+{
+    TimerManager manager(m_sem);
+
+    std::vector<std::unique_ptr<ITimer>> timers;
+
+    for (auto i = 0; i < kMaxTimers; i++)
+    {
+        auto t = manager.StartTimer(milliseconds(i + 1), []() { return std::nullopt; });
+        REQUIRE(t);
+
+        timers.push_back(std::move(t));
+    }
+    REQUIRE(manager.Expire() == 1ms);
+
+    auto next = manager.StartTimer(1s, []() { return std::nullopt; });
+    REQUIRE(next == nullptr);
+    REQUIRE(manager.Expire() == 1ms);
+
+    // Remove one, and make sure it's garbage collected
+    timers.pop_back();
+    manager.Expire();
+
+    // Then a new one can be added
+    next = manager.StartTimer(1s, []() { return std::nullopt; });
+    REQUIRE(next);
+}
+
 TEST_CASE_FIXTURE(Fixture, "a single shot timer is created")
 {
     TimerManager manager(m_sem);
