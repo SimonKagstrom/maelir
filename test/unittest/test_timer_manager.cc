@@ -365,16 +365,43 @@ TEST_CASE_FIXTURE(Fixture, "a timer is released from its own callback")
 
     std::unique_ptr<ITimer> timer;
 
-    timer = manager.StartTimer(1s, [&timer]() {
+    WHEN("a single-shot timer is released from it's callback")
+    {
+        timer = manager.StartTimer(1s, [&timer]() {
+            REQUIRE(timer);
+            timer = nullptr;
+            return std::nullopt;
+        });
         REQUIRE(timer);
-        timer = nullptr;
-        return std::nullopt;
-    });
-    REQUIRE(timer);
 
-    AdvanceTime(1s);
-    auto expire_time = manager.Expire();
-    REQUIRE(expire_time == std::nullopt);
+        AdvanceTime(1s);
+        auto expire_time = manager.Expire();
+        THEN("nothing ill happens")
+        {
+            REQUIRE(expire_time == std::nullopt);
+            REQUIRE_FALSE(timer);
+            REQUIRE(manager.Expire() == std::nullopt);
+        }
+    }
+
+    WHEN("a periodic timer is released from it's callback")
+    {
+        timer = manager.StartTimer(1s, [&timer]() {
+            timer = nullptr;
+            return 10ms;
+        });
+        REQUIRE(timer);
+
+        AdvanceTime(1s);
+        auto expire_time = manager.Expire();
+        THEN("nothing ill happens")
+        {
+            REQUIRE(expire_time == std::nullopt);
+            REQUIRE_FALSE(timer);
+            // Now no timers should be active
+            REQUIRE(manager.Expire() == std::nullopt);
+        }
+    }
 }
 
 TEST_CASE_FIXTURE(Fixture, "timers are expired in order")

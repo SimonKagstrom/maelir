@@ -185,7 +185,8 @@ TimerManager::Expire()
             }
         }
 
-        if (timer.expired == false && timer.timeout < next_wakeup)
+        // Update the wakeup time if this is a valid (non-expired, non-deleted) timer
+        if (timer.expired == false && timer.cookie && timer.timeout < next_wakeup)
         {
             next_wakeup = timer.timeout;
         }
