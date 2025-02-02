@@ -1,9 +1,20 @@
 #pragma once
 
-#include "gps_data.hh"
+#include "hal/i_gps.hh"
 #include "semaphore.hh"
 
 #include <optional>
+
+struct GpsData
+{
+    GpsPosition position;
+    Point pixel_position;
+
+    float speed;
+    float heading;
+
+    // Add time, height, etc.
+};
 
 class IGpsPort
 {

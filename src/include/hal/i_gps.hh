@@ -1,9 +1,20 @@
 #pragma once
 
-#include "gps_data.hh"
 #include "semaphore.hh"
+#include "tile.hh"
 
+#include <cstdint>
 #include <memory>
+#include <optional>
+
+struct GpsPosition
+{
+    float latitude;
+    float longitude;
+
+    bool operator==(const GpsPosition& other) const = default;
+};
+static_assert(sizeof(GpsPosition) == 8);
 
 namespace hal
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gps_data.hh"
+#include "hal/i_gps.hh"
 #include "tile.hh"
 
 namespace gps

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "generated_tiles.hh"
-#include "gps_data.hh"
 #include "hal/i_display.hh"
+#include "hal/i_gps.hh"
 #include "tile.hh"
 
 #include <optional>
