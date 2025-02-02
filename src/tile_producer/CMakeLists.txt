@@ -9,7 +9,7 @@ PUBLIC
 
 target_link_libraries(tile_producer
 PUBLIC
-    maelir_interface
+    painter
     gps_reader
 PRIVATE
     pngdec

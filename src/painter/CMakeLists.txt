@@ -5,6 +5,7 @@ add_library(painter EXCLUDE_FROM_ALL
 target_link_libraries(painter
 PUBLIC
     maelir_interface
+    lvgl
 )
 
 target_include_directories(painter
