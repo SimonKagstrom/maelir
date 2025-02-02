@@ -6,3 +6,8 @@ target_link_libraries(nmea_parser
 PUBLIC
     maelir_interface
 )
+
+target_include_directories(nmea_parser
+PUBLIC
+    include
+)
