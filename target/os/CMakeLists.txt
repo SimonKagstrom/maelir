@@ -6,6 +6,6 @@ add_library(target_os EXCLUDE_FROM_ALL
 target_link_libraries(target_os
 PUBLIC
     idf::freertos
-    maelir_interface
+    base_thread
     timer_manager
 )

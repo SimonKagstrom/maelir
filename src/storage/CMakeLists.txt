@@ -9,7 +9,7 @@ PUBLIC
 
 target_link_libraries(storage
 PUBLIC
-    maelir_interface
+    base_thread
     application_state
     route_service
 )

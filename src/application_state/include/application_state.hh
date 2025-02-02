@@ -1,13 +1,13 @@
 #pragma once
 
-#include "base_thread.hh"
+#include "semaphore.hh"
 #include "tile.hh"
 
 #include <array>
 #include <atomic>
+#include <etl/deque.h>
 #include <etl/mutex.h>
 #include <etl/vector.h>
-#include <etl/deque.h>
 
 class ApplicationState
 {

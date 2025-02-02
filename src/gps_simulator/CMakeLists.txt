@@ -9,7 +9,7 @@ PUBLIC
 
 target_link_libraries(gps_simulator
 PUBLIC
-    maelir_interface
+    base_thread
     route_service
     application_state
 PRIVATE

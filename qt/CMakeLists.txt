@@ -45,11 +45,11 @@ add_library(os_qt EXCLUDE_FROM_ALL
 )
 
 target_link_libraries(os_qt
-    PUBLIC
+PUBLIC
     Qt6::Widgets
     fmt::fmt
     timer_manager
-    maelir_interface
+    base_thread
 )
 
 add_executable(maelir_qt
