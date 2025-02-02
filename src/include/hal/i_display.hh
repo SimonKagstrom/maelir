@@ -1,9 +1,6 @@
 #pragma once
 
-#include "image.hh"
-#include "rect.hh"
-#include "tile.hh"
-
+#include <cstdint>
 #include <optional>
 
 namespace hal

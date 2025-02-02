@@ -1,11 +1,19 @@
 #pragma once
 
 #include "image.hh"
-#include "rect.hh"
 #include "tile.hh"
 
 namespace painter
 {
+
+struct Rect
+{
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
+};
+
 
 void Blit(uint16_t* frame_buffer, const Image& image, Rect to);
 
