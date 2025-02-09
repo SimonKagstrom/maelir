@@ -253,15 +253,20 @@ UserInterface::MapScreen::RunStateMachine()
             {
                 m_state = State::kInitialOverviewMap;
             }
-            else if (m_parent.m_position.x < m_map_position_zoomed_out.x + 30 ||
-                     m_parent.m_position.y < m_map_position_zoomed_out.y + 30 ||
-                     m_parent.m_position.x >
-                         m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - 30 ||
-                     m_parent.m_position.y >
-                         m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - 30)
+            else
             {
-                // Boat outside the visible area
-                m_state = State::kInitialOverviewMap;
+                const auto limit = 30 * m_zoom_level;
+
+                if (m_parent.m_position.x < m_map_position_zoomed_out.x + limit ||
+                    m_parent.m_position.y < m_map_position_zoomed_out.y + limit ||
+                    m_parent.m_position.x >
+                        m_map_position_zoomed_out.x + hal::kDisplayWidth * m_zoom_level - limit ||
+                    m_parent.m_position.y >
+                        m_map_position_zoomed_out.y + hal::kDisplayHeight * m_zoom_level - limit)
+                {
+                    // Boat outside the visible area
+                    m_state = State::kInitialOverviewMap;
+                }
             }
             break;
 
