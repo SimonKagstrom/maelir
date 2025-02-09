@@ -129,6 +129,8 @@ UserInterface::OnActivation()
         }
         else
         {
+            // Also ugly
+            m_menu_screen->Update();
             lv_indev_read(m_lvgl_input_dev);
         }
     }

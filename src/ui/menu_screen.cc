@@ -111,6 +111,8 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     lv_menu_set_page(m_menu, main_page);
     lv_indev_set_group(m_parent.m_lvgl_input_dev, m_input_group);
+
+    Update();
 }
 
 UserInterface::MenuScreen::~MenuScreen()
@@ -127,6 +129,10 @@ UserInterface::MenuScreen::~MenuScreen()
 void
 UserInterface::MenuScreen::Update()
 {
+    m_exit_timer = m_parent.StartTimer(10s, [this]() {
+        m_on_close();
+        return std::nullopt;
+    });
 }
 
 

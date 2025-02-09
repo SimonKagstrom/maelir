@@ -49,4 +49,6 @@ private:
 
     std::unique_ptr<uint8_t[]> m_thumbnail_buffer;
     etl::vector<Image, ApplicationState::kMaxStoredPositions> m_thumbnails;
+
+    os::TimerHandle m_exit_timer;
 };
