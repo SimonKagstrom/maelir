@@ -93,7 +93,8 @@ private:
     State m_state {State::kMap};
     int32_t m_zoom_level {1};
 
-    etl::vector<Point, ((hal::kDisplayWidth * hal::kDisplayHeight) / kTileSize) * 4>
+    // Enough space for all tiles at zoom level 4, offset
+    etl::vector<Point, (hal::kDisplayWidth / kTileSize) * 4 * (hal::kDisplayHeight / kTileSize) * 4>
         m_zoomed_out_map_tiles;
 
     std::unique_ptr<uint8_t[]> m_static_map_buffer;

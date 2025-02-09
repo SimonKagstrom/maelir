@@ -537,8 +537,7 @@ UserInterface::MapScreen::PrepareInitialZoomedOutMap()
     auto num_tiles_x = hal::kDisplayWidth / (kTileSize / m_zoom_level);
     auto num_tiles_y = hal::kDisplayHeight / (kTileSize / m_zoom_level);
 
-    constexpr auto kVisibleTiles = hal::kDisplayWidth / kTileSize;
-    etl::vector<Point, kVisibleTiles * kVisibleTiles> cached_tiles;
+    etl::vector<Point, kTileCacheSize> cached_tiles;
 
     for (auto y = 0; y < num_tiles_y; y++)
     {
