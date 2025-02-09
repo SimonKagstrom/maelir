@@ -89,7 +89,7 @@ TEST_CASE_FIXTURE(Fixture, "the timer manager can be filled without adverse effe
 {
     TimerManager manager(m_sem);
 
-    std::vector<std::unique_ptr<ITimer>> timers;
+    std::vector<TimerHandle> timers;
 
     for (auto i = 0; i < kMaxTimers; i++)
     {
@@ -363,7 +363,7 @@ TEST_CASE_FIXTURE(Fixture, "a timer is released from its own callback")
 {
     TimerManager manager(m_sem);
 
-    std::unique_ptr<ITimer> timer;
+    TimerHandle timer;
 
     WHEN("a single-shot timer is released from it's callback")
     {
@@ -502,7 +502,7 @@ TEST_CASE_FIXTURE(Fixture, "a new timer can be started from the timer callback")
     TimerManager manager(m_sem);
     MockCallback cb0, cb1;
 
-    std::unique_ptr<ITimer> timer1;
+    TimerHandle timer1;
 
     auto timer0 = manager.StartTimer(30ms, [&cb0, &cb1, &timer1, &manager]() {
         cb0.OnTimeout();

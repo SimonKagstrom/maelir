@@ -4,10 +4,10 @@
 #include "time.hh"
 
 #include <array>
+#include <etl/bitset.h>
 #include <etl/vector.h>
 #include <functional>
 #include <optional>
-#include <etl/bitset.h>
 
 namespace os
 {
@@ -24,13 +24,15 @@ public:
     virtual milliseconds TimeLeft() const = 0;
 };
 
+using TimerHandle = std::unique_ptr<ITimer>;
+
 class TimerManager
 {
 public:
     TimerManager(os::binary_semaphore& semaphore);
 
-    std::unique_ptr<ITimer> StartTimer(milliseconds timeout,
-                                       std::function<std::optional<milliseconds>()> on_timeout);
+    TimerHandle StartTimer(milliseconds timeout,
+                           std::function<std::optional<milliseconds>()> on_timeout);
 
     std::optional<milliseconds> Expire();
 

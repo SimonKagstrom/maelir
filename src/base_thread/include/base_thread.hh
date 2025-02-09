@@ -48,7 +48,7 @@ protected:
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
 
-    std::unique_ptr<ITimer> StartTimer(
+    TimerHandle StartTimer(
         milliseconds timeout, std::function<std::optional<milliseconds>()> on_timeout = []() {
             return std::optional<milliseconds>();
         })

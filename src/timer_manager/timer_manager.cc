@@ -54,7 +54,7 @@ TimerManager::SortActiveTimers()
     });
 }
 
-std::unique_ptr<ITimer>
+TimerHandle
 TimerManager::StartTimer(milliseconds timeout,
                          std::function<std::optional<milliseconds>()> on_timeout)
 {
@@ -86,7 +86,7 @@ TimerManager::StartTimer(milliseconds timeout,
     timer.expired = false;
     timer.cookie = cookie;
 
-    return std::unique_ptr<ITimer>(cookie);
+    return TimerHandle(cookie);
 }
 
 milliseconds
