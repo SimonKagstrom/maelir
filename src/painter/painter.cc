@@ -76,28 +76,29 @@ void
 ZoomedBlit(
     uint16_t* frame_buffer, uint32_t buffer_width, const Image& image, unsigned factor, Rect to)
 {
-    auto [height, width, from_y, from_x, row_length] = Prepare(image, to);
+    // height and width are unused
+    auto [_0, _1, from_y, from_x, row_length] = Prepare(image, to);
 
-    for (auto y = 0; y < height; y += factor)
+    for (auto y = 0; y < image.Height(); y += factor)
     {
-        auto dst_y = to.y + y / factor;
+        uint32_t dst_y = to.y + y / factor;
 
-        if (dst_y < 0 || dst_y >= hal::kDisplayHeight)
+        if (dst_y >= hal::kDisplayHeight)
         {
             continue;
         }
 
         for (auto x = 0; x < row_length * factor; x += factor)
         {
-            auto dst_x = to.x + x / factor;
-            auto src_x = from_x + x;
-            auto src_y = from_y + y;
+            uint32_t dst_x = to.x + x / factor;
+            uint32_t src_x = from_x + x;
+            uint32_t src_y = from_y + y;
 
-            if (dst_x < 0 || dst_x >= buffer_width)
+            if (dst_x >= buffer_width)
             {
                 continue;
             }
-            if (src_x < 0 || src_x >= image.Width() || src_y < 0 || src_y >= image.Height())
+            if (src_x >= image.Width() || src_y >= image.Height())
             {
                 continue;
             }
