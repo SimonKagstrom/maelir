@@ -16,6 +16,7 @@ template <size_t CACHE_SIZE>
 class Router
 {
     static_assert(CACHE_SIZE <= std::numeric_limits<uint16_t>::max());
+
 public:
     struct Stats
     {
@@ -50,6 +51,12 @@ private:
         kUnknown,
         kOpen,
         kClosed,
+    };
+
+    enum class NeighborType : uint8_t
+    {
+        kIgnoreLand,
+        kAll,
     };
 
     struct Node
@@ -101,11 +108,13 @@ private:
 
     Node* GetNode(IndexType index);
 
-    etl::vector<IndexType, 8> Neighbors(IndexType index) const;
+    etl::vector<IndexType, 8> Neighbors(IndexType index, NeighborType include_neighbors) const;
 
     CostType Heuristic(IndexType from, IndexType to);
 
     void ProduceResult(const Node* cur);
+
+    bool AdjacentToLand(const Node* node) const;
 
     const std::span<const uint32_t> m_land_mask;
     const unsigned m_height;

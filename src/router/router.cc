@@ -2,6 +2,8 @@
 
 #include "route_utils.hh"
 
+#include <fmt/format.h>
+
 template <size_t CACHE_SIZE>
 Router<CACHE_SIZE>::Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width)
     : m_land_mask(land_mask)
@@ -52,6 +54,7 @@ Router<CACHE_SIZE>::CalculateRoute(IndexType from, IndexType to)
                 }
                 m_result.push_back(*rit);
             }
+
             if (rc == Router::AstarResult::kPathFound)
             {
                 return m_result;
@@ -100,7 +103,7 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
         }
 
         /* Iterate over UP, DOWN, LEFT and RIGHT */
-        for (auto neighbor_index : Neighbors(cur->index))
+        for (auto neighbor_index : Neighbors(cur->index, NeighborType::kIgnoreLand))
         {
             auto neighbor_node = GetNode(neighbor_index);
 
@@ -113,16 +116,14 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
             }
 
             const auto direction = IndexPairToDirection(cur->index, neighbor_index, m_width);
-            const auto next_neighbor =
-                PointToLandIndex(LandIndexToPoint(neighbor_index, m_width) + direction, m_width);
             const auto is_diagonal = (neighbor_index % m_width != cur->index % m_width) &&
                                      (neighbor_index / m_width != cur->index / m_width);
             auto cost = is_diagonal ? 3 : 2;
 
             // If there's land in this direction, add an extra cost to it to keep the path from land
-            if (!IsWater(m_land_mask, next_neighbor))
+            if (AdjacentToLand(neighbor_node))
             {
-                cost += 2;
+                cost += 4;
             }
             auto newg = cur->g + cost;
 
@@ -178,7 +179,7 @@ Router<CACHE_SIZE>::GetNode(IndexType index)
 
 template <size_t CACHE_SIZE>
 etl::vector<IndexType, 8>
-Router<CACHE_SIZE>::Neighbors(IndexType index) const
+Router<CACHE_SIZE>::Neighbors(IndexType index, NeighborType include_neighbors) const
 {
     etl::vector<IndexType, 8> neighbors;
 
@@ -204,7 +205,14 @@ Router<CACHE_SIZE>::Neighbors(IndexType index) const
             }
 
             auto neighbor = ny * m_width + nx;
-            if (IsWater(m_land_mask, neighbor))
+            if (include_neighbors == NeighborType::kIgnoreLand)
+            {
+                if (IsWater(m_land_mask, neighbor))
+                {
+                    neighbors.push_back(neighbor);
+                }
+            }
+            else
             {
                 neighbors.push_back(neighbor);
             }
@@ -213,6 +221,7 @@ Router<CACHE_SIZE>::Neighbors(IndexType index) const
 
     return neighbors;
 }
+
 
 template <size_t CACHE_SIZE>
 CostType
@@ -231,6 +240,20 @@ Router<CACHE_SIZE>::Heuristic(IndexType from, IndexType to)
     return std::abs(from_x - to_x) + std::abs(from_y - to_y);
 }
 
+template <size_t CACHE_SIZE>
+bool
+Router<CACHE_SIZE>::AdjacentToLand(const Node* node) const
+{
+    for (auto neighbor_index : Neighbors(node->index, NeighborType::kAll))
+    {
+        if (!IsWater(m_land_mask, neighbor_index))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 template <size_t CACHE_SIZE>
 void
