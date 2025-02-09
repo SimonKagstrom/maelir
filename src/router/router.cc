@@ -102,6 +102,13 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
             return Router::AstarResult::kPathFound;
         }
 
+        auto parent_direction = Vector::Standstill();
+
+        if (cur->parent)
+        {
+            parent_direction = IndexPairToDirection(cur->parent->index, cur->index, m_width);
+        }
+
         /* Iterate over UP, DOWN, LEFT and RIGHT */
         for (auto neighbor_index : Neighbors(cur->index, NeighborType::kIgnoreLand))
         {
@@ -118,12 +125,18 @@ Router<CACHE_SIZE>::RunAstar(IndexType from, IndexType to)
             const auto direction = IndexPairToDirection(cur->index, neighbor_index, m_width);
             const auto is_diagonal = (neighbor_index % m_width != cur->index % m_width) &&
                                      (neighbor_index / m_width != cur->index / m_width);
-            auto cost = is_diagonal ? 3 : 2;
+            auto cost = is_diagonal ? 6 : 4;
+
+            if (direction == parent_direction)
+            {
+                // Favor straight lines
+                cost -= 1;
+            }
 
             // If there's land in this direction, add an extra cost to it to keep the path from land
             if (AdjacentToLand(neighbor_node))
             {
-                cost += 4;
+                cost += 8;
             }
             auto newg = cur->g + cost;
 
