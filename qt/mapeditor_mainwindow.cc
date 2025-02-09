@@ -196,9 +196,13 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     auto action_add_extra_land = contextMenu.addAction("Mark this route tile as land");
     auto action_add_extra_water = contextMenu.addAction("Mark this route tile as water");
     auto action_skip_tile = contextMenu.addAction("Don't use this image tile for generation");
+
     // Add delimiter
     contextMenu.addSeparator();
     auto action_route_add_point = contextMenu.addAction("Add route point");
+    auto action_route_navigate_from_uppsala =
+        contextMenu.addAction("Navigate from Uppsala to Kolbäck");
+
     // .. and here
     contextMenu.addSeparator();
     auto action_add_land_color = contextMenu.addAction("Add land color for this point");
@@ -274,6 +278,33 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
                            to.y,
                            stats.nodes_expanded);
             }
+        }
+    }
+    else if (selectedAction == action_route_navigate_from_uppsala)
+    {
+        auto from = Point {12436, 2390};
+        auto to = Point {3265, 5951};
+
+        m_current_route = m_router->CalculateRoute(from, to);
+        auto stats = m_router->GetStats();
+        if (!m_current_route.empty())
+        {
+            fmt::print("Route from {},{} to {},{} with {} expanded nodes for {} partial paths\n",
+                       from.x,
+                       from.y,
+                       to.x,
+                       to.y,
+                       stats.nodes_expanded,
+                       stats.partial_paths);
+        }
+        else
+        {
+            fmt::print("No route found between {},{} and {},{} with {} expanded nodes\n",
+                       from.x,
+                       from.y,
+                       to.x,
+                       to.y,
+                       stats.nodes_expanded);
         }
     }
     else if (selectedAction == action_home_position)

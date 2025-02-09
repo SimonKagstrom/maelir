@@ -60,6 +60,7 @@ Router<CACHE_SIZE>::CalculateRoute(IndexType from, IndexType to)
             {
                 from = m_current_result.front();
             }
+            m_current_result.clear();
         }
 
         m_stats.partial_paths++;

@@ -8,13 +8,14 @@
 #include <queue>
 #include <span>
 
-constexpr auto kTargetCacheSize = 16384;
+constexpr auto kTargetCacheSize = 65535;
 constexpr auto kUnitTestCacheSize = 24;
 constexpr IndexType kInvalidIndex = std::numeric_limits<IndexType>::max();
 
 template <size_t CACHE_SIZE>
 class Router
 {
+    static_assert(CACHE_SIZE <= std::numeric_limits<uint16_t>::max());
 public:
     struct Stats
     {
