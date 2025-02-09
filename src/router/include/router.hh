@@ -116,6 +116,8 @@ private:
 
     bool AdjacentToLand(const Node* node) const;
 
+    IndexType FindNearestWater(IndexType from) const;
+
     const std::span<const uint32_t> m_land_mask;
     const unsigned m_height;
     const unsigned m_width;

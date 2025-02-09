@@ -26,6 +26,15 @@ template <size_t CACHE_SIZE>
 std::span<const IndexType>
 Router<CACHE_SIZE>::CalculateRoute(IndexType from, IndexType to)
 {
+    if (!IsWater(m_land_mask, from))
+    {
+        from = FindNearestWater(from);
+    }
+    if (!IsWater(m_land_mask, to))
+    {
+        to = FindNearestWater(to);
+    }
+
     m_stats.Reset();
     m_result.clear();
 
@@ -266,6 +275,41 @@ Router<CACHE_SIZE>::AdjacentToLand(const Node* node) const
     }
 
     return false;
+}
+
+template <size_t CACHE_SIZE>
+IndexType
+Router<CACHE_SIZE>::FindNearestWater(IndexType from) const
+{
+    constexpr auto kLimit = 16;
+    auto point = LandIndexToPoint(from, m_width);
+
+    // Find land
+    for (auto dx = 0; dx < kLimit; dx++)
+    {
+        for (auto dy = 0; dy < kLimit; dy++)
+        {
+            auto nx = point.x + dx * kPathFinderTileSize;
+            auto ny = point.y + dy * kPathFinderTileSize;
+
+            auto bx = point.x - dx * kPathFinderTileSize;
+            auto by = point.y - dy * kPathFinderTileSize;
+
+            auto neighbor = PointToLandIndex({nx, ny}, m_width);
+            auto below_neighbor = PointToLandIndex({bx, by}, m_width);
+            if (IsWater(m_land_mask, neighbor))
+            {
+                return neighbor;
+            }
+            if (IsWater(m_land_mask, below_neighbor))
+            {
+                return below_neighbor;
+            }
+        }
+    }
+
+    // Give up
+    return from;
 }
 
 template <size_t CACHE_SIZE>
