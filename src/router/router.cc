@@ -259,7 +259,15 @@ Router<CACHE_SIZE>::Heuristic(IndexType from, IndexType to)
     //return std::sqrt(std::pow(from_x - to_x, 2) + std::pow(from_y - to_y, 2));
 
     // Manhattan distance
-    return std::abs(from_x - to_x) + std::abs(from_y - to_y);
+    //return std::abs(from_x - to_x) + std::abs(from_y - to_y);
+
+    // Diagonal distance
+    const auto D = 2;
+    const auto D2 = 3;
+    const auto dx = std::abs(from_x - to_x);
+    const auto dy = std::abs(from_y - to_y);
+
+    return D * (dx + dy) + (D2 - 2 * D) * std::min(dx, dy);
 }
 
 template <size_t CACHE_SIZE>
