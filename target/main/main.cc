@@ -2,6 +2,7 @@
 #include "gps_mux.hh"
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
+#include "i2c_gps.hh"
 #include "route_service.hh"
 #include "sdkconfig.h"
 #include "storage.hh"
@@ -50,9 +51,13 @@ app_main(void)
                                                         5,   // Button -> 5(SCK)
                                                         16); // Switch up -> 16 (A1)
     auto display = std::make_unique<DisplayTarget>();
-    auto gps_uart = std::make_unique<UartGps>(UART_NUM_1,
-                                              17, // RX -> A0
-                                              8); // TX -> CS (not used)
+    auto gps_device = std::make_unique<UartGps>(UART_NUM_1,
+                                                17, // RX -> A0
+                                                8); // TX -> CS (not used)
+
+    //    auto gps_device = std::make_unique<I2cGps>(
+    //            18, // SCL
+    //            8); // SDA
 
 
     // Threads
@@ -62,7 +67,7 @@ app_main(void)
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
 
     // Selects between the real and demo GPS
-    auto gps_mux = std::make_unique<GpsMux>(state, *gps_uart, *gps_simulator);
+    auto gps_mux = std::make_unique<GpsMux>(state, *gps_device, *gps_simulator);
 
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_mux);
     auto ui = std::make_unique<UserInterface>(state,

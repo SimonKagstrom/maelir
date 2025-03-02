@@ -16,4 +16,5 @@ target_link_libraries(${COMPONENT_TARGET}
     target_nvm
     storage
     uart_gps
+    i2c_gps
 )

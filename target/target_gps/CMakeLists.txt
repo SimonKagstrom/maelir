@@ -15,3 +15,21 @@ PUBLIC
     maelir_interface
     nmea_parser
 )
+
+
+add_library(i2c_gps EXCLUDE_FROM_ALL
+    i2c_gps.cc
+)
+
+target_include_directories(i2c_gps
+PUBLIC
+    include
+)
+
+target_link_libraries(i2c_gps
+PUBLIC
+    idf::freertos
+    idf::esp_driver_i2c
+    maelir_interface
+    nmea_parser
+)
