@@ -90,9 +90,8 @@ TimerManager::StartTimer(milliseconds timeout,
 }
 
 milliseconds
-TimerManager::ActivatePendingTimers()
+TimerManager::ActivatePendingTimers(milliseconds next_wakeup)
 {
-    auto next_wakeup = kForever;
     if (m_pending_additions.none())
     {
         return next_wakeup;
@@ -192,8 +191,7 @@ TimerManager::Expire()
         }
     }
 
-    auto pending_wakeup = ActivatePendingTimers();
-    next_wakeup = std::min(next_wakeup, pending_wakeup);
+    next_wakeup = ActivatePendingTimers(next_wakeup);
 
     RemoveDeletedTimers();
 

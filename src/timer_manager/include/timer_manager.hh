@@ -55,7 +55,7 @@ private:
     void BumpTime();
 
     void SortActiveTimers();
-    milliseconds ActivatePendingTimers();
+    milliseconds ActivatePendingTimers(milliseconds next_wakeup);
     void RemoveDeletedTimers();
 
     std::array<Entry, kMaxTimers> m_timers {};
