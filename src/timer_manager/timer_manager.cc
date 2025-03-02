@@ -3,7 +3,7 @@
 using namespace os;
 
 constexpr auto kForever = milliseconds::max();
-
+constexpr uint8_t kDetachedTimer = 0xff;
 
 class TimerManager::TimerImpl : public ITimer
 {
@@ -16,23 +16,39 @@ public:
 
     ~TimerImpl()
     {
+        if (!IsExpired())
+        {
+            Detach();
+        }
+    }
+
+    // Detach an expired timer (allow reusing it's index)
+    void Detach()
+    {
         m_manager.EntryAt(m_entry_index).cookie = nullptr;
         m_manager.m_pending_removals[m_entry_index] = true;
+
+        m_entry_index = kDetachedTimer;
     }
 
 private:
     bool IsExpired() const final
     {
-        return m_manager.EntryAt(m_entry_index).expired;
+        return m_entry_index == kDetachedTimer;
     }
 
     milliseconds TimeLeft() const final
     {
+        if (IsExpired())
+        {
+            return 0ms;
+        }
+
         return m_manager.EntryAt(m_entry_index).timeout;
     }
 
     TimerManager& m_manager;
-    const uint8_t m_entry_index;
+    uint8_t m_entry_index;
 };
 
 
@@ -83,7 +99,6 @@ TimerManager::StartTimer(milliseconds timeout,
 
     timer.timeout = timeout;
     timer.on_timeout = std::move(on_timeout);
-    timer.expired = false;
     timer.cookie = cookie;
 
     return TimerHandle(cookie);
@@ -162,7 +177,7 @@ TimerManager::Expire()
     {
         auto& timer = m_timers[timer_index];
 
-        if (!timer.cookie || timer.expired)
+        if (!timer.cookie)
         {
             // Deleted or expired timer, ignore until deleted
             continue;
@@ -176,16 +191,20 @@ TimerManager::Expire()
             // Wake up the task if something expires
             m_semaphore.release();
 
-            timer.expired = !next;
             if (next)
             {
                 // Periodic timer: Set the next timeout
                 timer.timeout = *next;
             }
+            else if (timer.cookie)
+            {
+                // Expired, so detach unless it was released by the callback
+                timer.cookie->Detach();
+            }
         }
 
         // Update the wakeup time if this is a valid (non-expired, non-deleted) timer
-        if (timer.expired == false && timer.cookie && timer.timeout < next_wakeup)
+        if (timer.cookie && timer.timeout < next_wakeup)
         {
             next_wakeup = timer.timeout;
         }

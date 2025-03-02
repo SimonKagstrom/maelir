@@ -105,12 +105,30 @@ TEST_CASE_FIXTURE(Fixture, "the timer manager can be filled without adverse effe
     REQUIRE(manager.Expire() == 1ms);
 
     // Remove one, and make sure it's garbage collected
-    timers.pop_back();
-    manager.Expire();
+    WHEN("a timer is removed")
+    {
+        timers.pop_back();
+        manager.Expire();
 
-    // Then a new one can be added
-    next = manager.StartTimer(1s, []() { return std::nullopt; });
-    REQUIRE(next);
+        THEN("a new one can be added")
+        {
+            // Then a new one can be added
+            next = manager.StartTimer(1s, []() { return std::nullopt; });
+            REQUIRE(next);
+        }
+    }
+
+    WHEN("the first timer expires")
+    {
+        AdvanceTime(1ms);
+        manager.Expire();
+
+        THEN("a new one can be added")
+        {
+            next = manager.StartTimer(1s, []() { return std::nullopt; });
+            REQUIRE(next);
+        }
+    }
 }
 
 TEST_CASE_FIXTURE(Fixture, "a single shot timer is created")

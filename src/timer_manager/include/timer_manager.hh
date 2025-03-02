@@ -31,6 +31,16 @@ class TimerManager
 public:
     TimerManager(os::binary_semaphore& semaphore);
 
+    /**
+     * @brief Start a timer
+     *
+     * Single-shot timers return std::nullopt from the timeout function, periodic timers
+     * return the next timeout.
+     *
+     * @param timeout the timeout of the timer
+     * @param on_timeout the function to call when the timer expires
+     * @return A handle to the timer. Releasing the handle will cancel the timer
+     */
     TimerHandle StartTimer(milliseconds timeout,
                            std::function<std::optional<milliseconds>()> on_timeout);
 
@@ -41,10 +51,9 @@ private:
 
     struct Entry
     {
-        milliseconds timeout;
         std::function<std::optional<milliseconds>()> on_timeout;
+        milliseconds timeout;
         TimerImpl* cookie;
-        bool expired;
     };
 
     Entry& EntryAt(uint8_t index)
