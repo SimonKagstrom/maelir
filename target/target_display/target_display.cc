@@ -200,15 +200,18 @@ const st7701_lcd_init_cmd_t TL028WVC01_init_operations[] = {
 DisplayTarget::DisplayTarget()
 {
     m_frame_buffers[0] = static_cast<uint16_t*>(
-        heap_caps_malloc(hal::kDisplayWidth * hal::kDisplayHeight * 2, MALLOC_CAP_SPIRAM));
+        heap_caps_aligned_calloc(64,
+                                 1,
+                                 hal::kDisplayWidth * hal::kDisplayHeight * 2,
+                                 MALLOC_CAP_SPIRAM | MALLOC_CAP_CACHE_ALIGNED));
     m_frame_buffers[1] = static_cast<uint16_t*>(
-        heap_caps_malloc(hal::kDisplayWidth * hal::kDisplayHeight * 2, MALLOC_CAP_SPIRAM));
+        heap_caps_aligned_calloc(64,
+                                 1,
+                                 hal::kDisplayWidth * hal::kDisplayHeight * 2,
+                                 MALLOC_CAP_SPIRAM | MALLOC_CAP_CACHE_ALIGNED));
 
     assert(m_frame_buffers[0]);
     assert(m_frame_buffers[1]);
-
-    memset(m_frame_buffers[0], 0xff, hal::kDisplayWidth * hal::kDisplayHeight * 2);
-    memset(m_frame_buffers[1], 0xff, hal::kDisplayWidth * hal::kDisplayHeight * 2);
 
     i2c_master_bus_handle_t bus_handle = nullptr;
     esp_io_expander_handle_t expander_handle = nullptr;
