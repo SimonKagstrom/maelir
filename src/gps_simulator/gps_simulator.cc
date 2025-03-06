@@ -4,7 +4,6 @@
 #include "route_utils.hh"
 
 #include <cstdlib>
-#include <fmt/format.h>
 
 GpsSimulator::GpsSimulator(const MapMetadata& metadata,
                            ApplicationState& application_state,

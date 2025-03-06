@@ -1,6 +1,6 @@
 add_subdirectory(lvgl)
 
-if (NOT "${TARGET_TYPE}" STREQUAL "esp32")
+if ("${IDF_TARGET}" STREQUAL "")
     # Build as shared for host, since this otherwise conflicts with libz
     set(LIB_TYPE SHARED)
     message("Building pngdec_zlib as shared library, to avoid host conflicts")

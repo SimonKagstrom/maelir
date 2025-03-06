@@ -7,7 +7,6 @@
 #include "time.hh"
 
 #include <cmath>
-#include <fmt/format.h>
 #include <numbers>
 
 

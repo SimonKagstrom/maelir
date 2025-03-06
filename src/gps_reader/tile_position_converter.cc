@@ -1,7 +1,6 @@
 #include "position_converter.hh"
 
 #include <cassert>
-#include <fmt/format.h>
 #include <span>
 
 namespace
@@ -139,18 +138,6 @@ PointToPosition(const MapMetadata& metadata, const Point& pixel_position)
     auto longitude = pos.longitude + (pos.longitude_offset * x_offset) / kGpsPositionSize;
     auto latitude = pos.latitude + (pos.latitude_offset * y_offset) / kGpsPositionSize;
 
-    //    fmt::print("PTP: idx {} ({}x{}), which is {},{}..{},{}. {},{} -> {},{}\n",
-    //               index,
-    //               index % metadata.gps_data_row_size,
-    //               index / metadata.gps_data_row_size,
-    //               pos.latitude,
-    //               pos.longitude,
-    //               pos.latitude + pos.latitude_offset,
-    //               pos.longitude + pos.longitude_offset,
-    //               x,
-    //               y,
-    //               latitude,
-    //               longitude);
     return GpsPosition {.latitude = latitude, .longitude = longitude};
 }
 

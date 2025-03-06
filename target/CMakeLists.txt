@@ -13,7 +13,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 
 find_package(etl REQUIRED)
-find_package(mp-units REQUIRED)
 
 add_subdirectory(.. maelir)
 add_subdirectory(target_display)

@@ -2,8 +2,6 @@
 
 #include "route_utils.hh"
 
-#include <fmt/format.h>
-
 template <size_t CACHE_SIZE>
 Router<CACHE_SIZE>::Router(std::span<const uint32_t> land_mask, unsigned height, unsigned width)
     : m_land_mask(land_mask)

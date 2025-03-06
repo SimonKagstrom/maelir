@@ -22,6 +22,4 @@ target_include_directories(maelir_interface INTERFACE
 
 target_link_libraries(maelir_interface INTERFACE
     etl::etl
-    fmt::fmt
-    lvgl
 )

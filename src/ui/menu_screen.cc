@@ -3,8 +3,6 @@
 #include "painter.hh"
 #include "route_utils.hh"
 
-#include <fmt/format.h>
-
 UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void()> on_close)
     : m_parent(parent)
     , m_on_close(on_close)

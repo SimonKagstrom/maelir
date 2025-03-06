@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <etl/queue_spsc_atomic.h>
-#include <fmt/format.h>
 #include <span>
 
 class GpsReader::GpsPortImpl : public IGpsPort

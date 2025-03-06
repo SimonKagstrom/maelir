@@ -6,8 +6,6 @@
 #include "painter.hh"
 #include "route_utils.hh"
 
-#include <fmt/format.h>
-
 constexpr auto kMaxKnots = 30;
 constexpr auto kSpeedometerMaxAngle = 202;
 
