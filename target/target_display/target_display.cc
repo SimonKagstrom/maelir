@@ -217,6 +217,9 @@ DisplayTarget::DisplayTarget()
     esp_io_expander_handle_t expander_handle = nullptr;
     esp_lcd_panel_io_handle_t panel_io = nullptr;
 
+    constexpr async_memcpy_config_t async_mem_cfg = {
+        .backlog = 16, .sram_trans_align = 64, .psram_trans_align = 64, .flags = 0};
+    esp_async_memcpy_install(&async_mem_cfg, &m_async_mem_handle);
 
     const i2c_master_bus_config_t i2c_master_config = {.i2c_port = kI2cBus,
                                                        .sda_io_num = kI2cSdaPin,
@@ -272,7 +275,7 @@ DisplayTarget::DisplayTarget()
 
 
     esp_lcd_rgb_panel_config_t rgb_config = {
-        .clk_src = LCD_CLK_SRC_DEFAULT,
+        .clk_src = LCD_CLK_SRC_PLL240M,
         .timings =
             {
                 .pclk_hz = 17 * 1000 * 1000,
@@ -294,8 +297,8 @@ DisplayTarget::DisplayTarget()
             },
         .data_width = 16,
         .bits_per_pixel = 16,
-        .bounce_buffer_size_px = hal::kDisplayWidth * 8,
-        .psram_trans_align = 64,
+        .bounce_buffer_size_px = hal::kDisplayWidth * 10,
+        .dma_burst_size = 64,
         .hsync_gpio_num = TFT_HSYNC,
         .vsync_gpio_num = TFT_VSYNC,
         .de_gpio_num = TFT_DE,
@@ -384,9 +387,12 @@ void IRAM_ATTR
 DisplayTarget::OnBounceBufferFill(void* bounce_buf, int pos_px, int len_bytes)
 {
     // Fill bounce buffer with the frame buffer data
-    memcpy(bounce_buf,
-           reinterpret_cast<const uint8_t*>(m_frame_buffers[!m_current_update_frame] + pos_px),
-           len_bytes);
+    esp_async_memcpy(m_async_mem_handle,
+                     bounce_buf,
+                     reinterpret_cast<void*>(m_frame_buffers[!m_current_update_frame] + pos_px),
+                     len_bytes,
+                     nullptr,
+                     nullptr);
 }
 
 void IRAM_ATTR

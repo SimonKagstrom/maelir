@@ -3,6 +3,7 @@
 #include "semaphore.hh"
 
 #include <atomic>
+#include <esp_async_memcpy.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_rgb.h>
 
@@ -30,6 +31,7 @@ private:
                                            const esp_lcd_rgb_panel_event_data_t* edata,
                                            void* user_ctx);
 
+    async_memcpy_t m_async_mem_handle;
     esp_lcd_panel_handle_t m_panel_handle {nullptr};
     uint16_t* m_frame_buffers[2] {nullptr, nullptr};
     uint8_t m_current_update_frame {0};
