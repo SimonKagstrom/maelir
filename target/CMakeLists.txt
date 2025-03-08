@@ -1,7 +1,6 @@
-include_directories(lvgl_setup)
-add_compile_definitions(LV_CONF_INCLUDE_SIMPLE=1)
-
 find_package(etl REQUIRED)
+
+add_compile_options(-Wdouble-promotion)
 
 add_subdirectory(.. maelir)
 add_subdirectory(target_display)
