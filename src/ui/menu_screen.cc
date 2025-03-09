@@ -43,6 +43,11 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_obj_t* color_mode_page = lv_menu_page_create(m_menu, NULL);
     lv_obj_t* main_page = lv_menu_page_create(m_menu, NULL);
 
+    lv_obj_set_scrollbar_mode(main_page, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(route_page, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(color_mode_page, LV_SCROLLBAR_MODE_OFF);
+
+
     // TODO: If a home position is set
     AddEntry(main_page, "Navigate home", [this](auto) {
         auto state = m_parent.m_application_state.Checkout();
