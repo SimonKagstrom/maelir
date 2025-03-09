@@ -39,5 +39,6 @@ target_link_libraries(ut
     gps_reader
     doctest::doctest
     trompeloeil::trompeloeil
+    fmt::fmt
 )
 add_test(NAME unittest COMMAND ut)

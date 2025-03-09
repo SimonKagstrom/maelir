@@ -5,6 +5,14 @@ conan install -of maelir --build=missing -s build_type=Debug ~/projects/maelir/c
 cmake -B maelir -GNinja -DCMAKE_PREFIX_PATH="`pwd`/maelir/build/Debug/generators/" -DCMAKE_BUILD_TYPE=Debug ~/projects/maelir/qt/
 ```
 
+Unittest:
+
+```
+conan install -of maelir_unittest --build=missing -s build_type=Debug ~/projects/maelir/conanfile.txt
+cmake -B maelir_unittest -GNinja -DCMAKE_PREFIX_PATH="`pwd`/maelir_unittest/build/Debug/generators/" -DCMAKE_BUILD_TYPE=Debug ~/projects/maelir/test/unittest
+```
+
+
 Target:
 
 ```

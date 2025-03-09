@@ -61,3 +61,21 @@ TEST_CASE("no change to the application state doesn't wake up listeners")
 
     REQUIRE(sem_a.try_acquire() == false);
 }
+
+TEST_CASE("two application state writers can modify separate parts of the state")
+{
+    ApplicationState state;
+
+    auto s0 = state.Checkout();
+    auto s1 = state.Checkout();
+
+    s0->show_speedometer = false;
+    s1->color_mode = ApplicationState::ColorMode::kBlackRed;
+
+    s0 = nullptr;
+    // Written last, but should not overwrite s0 changes
+    s1 = nullptr;
+
+    REQUIRE(state.CheckoutReadonly()->color_mode == ApplicationState::ColorMode::kBlackRed);
+    REQUIRE(state.CheckoutReadonly()->show_speedometer == false);
+}
