@@ -139,17 +139,16 @@ PngDrawGrayscale(PNGDRAW* pDraw)
         const auto pixel = helper->line_buffer[x];
 
         // https://stackoverflow.com/a/71086522, rgb565 to grayscale
-        auto r = (pixel >> 10) & 0x3E; /* 6-bit Red Component. */
-        auto g = (pixel >> 5) & 0x3F;  /* 6-bit Green Component. */
-        auto b = (pixel << 1) & 0x3E;  /* 6-bit Blue Component. */
-        // Wx * 1024 / 10000, to avoid floating point math. Ignore the green channel to make land stand out
-        //        auto luma = (r * 218) + (b * 732) + (b * 74);
-        auto luma = (r * 218) + (g * 732) + (b * 74); /* Wx*1024/10000. */
+        auto r = (pixel >> 10) & 0x3E; // 6-bit Red Component
+        auto g = (pixel >> 5) & 0x3F;  // 6-bit Green Component
+        auto b = (pixel << 1) & 0x3E;  // 6-bit Blue Component
 
-        luma = (luma >> 10) + ((luma >> 9) & 1); /* 6-bit Luminance value. */
+        auto luma = (r * 218) + (g * 732) + (b * 74); // Wx*1024/10000.
+        luma = (luma >> 10) + ((luma >> 9) & 1);      // 6-bit Luminance value.
 
-        auto color = ((luma & 0x3E) << 10) | (luma << 5) | (luma >> 1); /* RGB565 */
+        auto color = ((luma & 0x3E) << 10) | (luma << 5) | (luma >> 1);
 
+        // Right-slant the land color
         if (pixel == kLandColor && (x + y) % 6 == 0)
         {
             color = helper->land_slant_color;
