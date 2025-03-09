@@ -35,6 +35,8 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     static lv_style_t style_passed_line;
     static lv_style_t style_remaining_line;
 
+    lv_obj_clear_flag(m_screen, LV_OBJ_FLAG_SCROLLABLE);
+
     lv_style_init(&style_passed_line);
     lv_style_init(&style_remaining_line);
 

@@ -25,7 +25,7 @@ private:
 
     lv_obj_t* AddMapEntry(lv_obj_t* page,
                           const Point& where,
-                          uint8_t *buffer,
+                          uint8_t* buffer,
                           const std::string& text,
                           std::function<void(lv_event_t*)> on_click);
 

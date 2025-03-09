@@ -1,5 +1,6 @@
 #pragma once
 
+#include "application_state.hh"
 #include "base_thread.hh"
 #include "hal/i_display.hh"
 #include "image.hh"
@@ -46,7 +47,7 @@ public:
 class TileProducer : public os::BaseThread
 {
 public:
-    TileProducer(const MapMetadata& flash_tile_data);
+    TileProducer(ApplicationState& application_state, const MapMetadata& flash_tile_data);
 
     // Context: Another thread
     std::unique_ptr<ITileHandle> LockTile(const Point& point);
@@ -69,6 +70,9 @@ private:
     const uint32_t m_tile_row_size;
     const uint32_t m_tile_rows;
 
+    ApplicationState &m_application_state;
+    std::unique_ptr<ApplicationState::IListener> m_state_listener;
+
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     etl::list<uint32_t, kTileCacheSize> m_tile_request_order;
     std::atomic<uint32_t> m_locked_cache_entries {0};
@@ -76,6 +80,9 @@ private:
 
     etl::queue_spsc_atomic<uint32_t, kTileCacheSize> m_tile_requests;
     os::binary_semaphore m_tile_request_semaphore {0};
+
+    // Invalid to start with
+    ApplicationState::ColorMode m_color_mode {ApplicationState::ColorMode::kValueCount};
 
     mutable etl::mutex m_mutex;
 };

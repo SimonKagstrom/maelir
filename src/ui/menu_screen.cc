@@ -39,7 +39,8 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_obj_add_state(back_button, LV_STATE_FOCUS_KEY);
 
 
-    lv_obj_t* sub_page = lv_menu_page_create(m_menu, NULL);
+    lv_obj_t* route_page = lv_menu_page_create(m_menu, NULL);
+    lv_obj_t* color_mode_page = lv_menu_page_create(m_menu, NULL);
     lv_obj_t* main_page = lv_menu_page_create(m_menu, NULL);
 
     // TODO: If a home position is set
@@ -59,7 +60,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
         m_parent.SelectPosition(PositionSelection::kNewRoute);
         m_on_close();
     });
-    AddEntryToSubPage(main_page, "Recall route", sub_page);
+    AddEntryToSubPage(main_page, "Recall route", route_page);
 
     for (auto i = 0u; i < state->stored_positions.size(); i++)
     {
@@ -68,7 +69,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
             m_thumbnail_buffer.get() + i * (kTileSize / 3) * (kTileSize / 3) * sizeof(uint16_t);
 
         AddMapEntry(
-            sub_page,
+            route_page,
             point,
             buffer,
             "Route to " + std::to_string(point.x) + "," + std::to_string(point.y),
@@ -92,6 +93,26 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     AddBooleanEntry(main_page, "Show speedometer", state->show_speedometer, [this](auto) {
         auto state = m_parent.m_application_state.Checkout();
         state->show_speedometer = !state->show_speedometer;
+    });
+
+    AddEntryToSubPage(main_page, "Map color mode", color_mode_page);
+
+    auto on_color_mode = [this](auto wanted) {
+        auto state = m_parent.m_application_state.Checkout();
+
+        state->color_mode = wanted;
+
+        m_on_close();
+    };
+
+    AddEntry(color_mode_page, "Color", [on_color_mode](auto) {
+        on_color_mode(ApplicationState::ColorMode::kColor);
+    });
+    AddEntry(color_mode_page, "Black/white", [on_color_mode](auto) {
+        on_color_mode(ApplicationState::ColorMode::kBlackWhite);
+    });
+    AddEntry(color_mode_page, "Black/white + red", [on_color_mode](auto) {
+        on_color_mode(ApplicationState::ColorMode::kBlackRed);
     });
 
     AddBooleanEntry(main_page, "Demo mode", state->demo_mode, [this](auto) {
@@ -200,7 +221,7 @@ UserInterface::MenuScreen::AddMapEntry(lv_obj_t* page,
 }
 
 lv_obj_t*
-UserInterface::MenuScreen::AddEntryToSubPage(lv_obj_t* page, const char* text, lv_obj_t* sub_page)
+UserInterface::MenuScreen::AddEntryToSubPage(lv_obj_t* page, const char* text, lv_obj_t* route_page)
 {
     auto cont = lv_menu_cont_create(page);
     auto label = lv_label_create(cont);
@@ -209,7 +230,7 @@ UserInterface::MenuScreen::AddEntryToSubPage(lv_obj_t* page, const char* text, l
     lv_group_add_obj(m_input_group, cont);
     lv_obj_add_style(cont, &m_style_selected, LV_STATE_FOCUSED);
 
-    lv_menu_set_load_page_event(m_menu, cont, sub_page);
+    lv_menu_set_load_page_event(m_menu, cont, route_page);
 
     return cont;
 }

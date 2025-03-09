@@ -32,25 +32,37 @@ struct DecodeHelper
     size_t offset;
 };
 
-struct DecodeHelperMask
+struct DecodeHelperMask : DecodeHelper
 {
-    DecodeHelperMask(PNG& png, std::optional<uint16_t> mask_color, uint8_t* dst)
-        : png(png)
+    DecodeHelperMask(PNG& png, std::optional<uint16_t> mask_color, uint16_t* dst)
+        : DecodeHelper(png, dst)
         , mask_color(mask_color)
-        , dst(dst)
-        , offset(0)
         , line_buffer(std::make_unique<uint16_t[]>(png.getWidth()))
     {
     }
 
     DecodeHelperMask() = delete;
 
-    PNG& png;
     std::optional<uint16_t> mask_color;
-    uint8_t* dst;
-    size_t offset;
 
     std::unique_ptr<uint16_t[]> line_buffer;
+};
+
+struct DecodeHelperGrayscale : DecodeHelper
+{
+    DecodeHelperGrayscale(PNG& png, uint16_t* dst, uint16_t land_slant_color)
+        : DecodeHelper(png, dst)
+        , line_buffer(std::make_unique<uint16_t[]>(png.getWidth()))
+        , line_number(0)
+        , land_slant_color(land_slant_color)
+    {
+    }
+
+    DecodeHelperGrayscale() = delete;
+
+    std::unique_ptr<uint16_t[]> line_buffer;
+    uint16_t line_number;
+    const uint16_t land_slant_color;
 };
 
 class StandaloneImage : public Image
@@ -90,6 +102,7 @@ PngDrawMask(PNGDRAW* pDraw)
 
     helper->png.getLineAsRGB565(
         pDraw, helper->line_buffer.get(), PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
+    auto dst = reinterpret_cast<uint8_t*>(helper->dst);
 
     for (auto i = 0; i < pDraw->iWidth; i++)
     {
@@ -101,11 +114,51 @@ PngDrawMask(PNGDRAW* pDraw)
         auto r = pixel & 0x1f;
 
         // RGB565 -> ARGB888
-        helper->dst[helper->offset++] = (r * 255) / 31;
-        helper->dst[helper->offset++] = (g * 255) / 63;
-        helper->dst[helper->offset++] = (b * 255) / 31;
-        helper->dst[helper->offset++] = alpha_value;
+        dst[helper->offset++] = (r * 255) / 31;
+        dst[helper->offset++] = (g * 255) / 63;
+        dst[helper->offset++] = (b * 255) / 31;
+        dst[helper->offset++] = alpha_value;
     }
+}
+
+void
+PngDrawGrayscale(PNGDRAW* pDraw)
+{
+    auto helper = static_cast<DecodeHelperGrayscale*>(pDraw->pUser);
+
+    helper->png.getLineAsRGB565(
+        pDraw, helper->line_buffer.get(), PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
+
+
+    // r: 254, g: 242, b: 203 in rgb565 (after pillow + png conversion). TODO: Don't hardcode
+    const uint16_t kLandColor = 0xff99;
+
+    const auto y = helper->line_number;
+    for (auto x = 0; x < pDraw->iWidth; x++)
+    {
+        const auto pixel = helper->line_buffer[x];
+
+        // https://stackoverflow.com/a/71086522, rgb565 to grayscale
+        auto r = (pixel >> 10) & 0x3E; /* 6-bit Red Component. */
+        auto g = (pixel >> 5) & 0x3F;  /* 6-bit Green Component. */
+        auto b = (pixel << 1) & 0x3E;  /* 6-bit Blue Component. */
+        // Wx * 1024 / 10000, to avoid floating point math. Ignore the green channel to make land stand out
+        //        auto luma = (r * 218) + (b * 732) + (b * 74);
+        auto luma = (r * 218) + (g * 732) + (b * 74); /* Wx*1024/10000. */
+
+        luma = (luma >> 10) + ((luma >> 9) & 1); /* 6-bit Luminance value. */
+
+        auto color = ((luma & 0x3E) << 10) | (luma << 5) | (luma >> 1); /* RGB565 */
+
+        if (pixel == kLandColor && (x + y) % 6 == 0)
+        {
+            color = helper->land_slant_color;
+        }
+
+        helper->dst[helper->offset++] = color;
+    }
+
+    helper->line_number++;
 }
 
 class TileHandle : public ITileHandle
@@ -141,13 +194,15 @@ private:
 } // namespace
 
 
-TileProducer::TileProducer(const MapMetadata& map_metadata)
+TileProducer::TileProducer(ApplicationState& application_state, const MapMetadata& map_metadata)
     : m_flash_start(reinterpret_cast<const uint8_t*>(&map_metadata))
     , m_flash_tile_data(
           reinterpret_cast<const FlashTile*>(m_flash_start + map_metadata.tile_data_offset))
     , m_tile_count(map_metadata.tile_count)
     , m_tile_row_size(map_metadata.tile_row_size)
     , m_tile_rows(map_metadata.tile_rows)
+    , m_application_state(application_state)
+    , m_state_listener(application_state.AttachListener(GetSemaphore()))
 {
     // Including the default land/empty tile
     assert(m_tile_count == m_tile_row_size * m_tile_rows + 1);
@@ -213,6 +268,20 @@ std::optional<milliseconds>
 TileProducer::OnActivation()
 {
     uint32_t requested_index = 0;
+
+    auto color_mode = m_application_state.CheckoutReadonly()->color_mode;
+    if (color_mode != m_color_mode)
+    {
+        m_color_mode = color_mode;
+
+        // Drop all cached data
+        std::scoped_lock lock(m_mutex);
+        m_tiles.clear();
+        m_tile_request_order.clear();
+        m_tile_index_to_cache.clear();
+        m_tile_index_to_cache.resize(m_tile_count);
+        std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
+    }
 
     while (m_tile_requests.pop(requested_index))
     {
@@ -312,7 +381,16 @@ TileProducer::DecodeTile(unsigned index)
     auto in_psram = std::make_unique<uint8_t[]>(tile_size);
     memcpy(in_psram.get(), flash_data, tile_size);
 
-    auto rc = png->openFLASH(in_psram.get(), tile_size, PngDraw);
+    int rc;
+
+    if (m_color_mode == ApplicationState::ColorMode::kColor)
+    {
+        rc = png->openFLASH(in_psram.get(), tile_size, PngDraw);
+    }
+    else
+    {
+        rc = png->openFLASH(in_psram.get(), tile_size, PngDrawGrayscale);
+    }
 
     if (rc != PNG_SUCCESS)
     {
@@ -320,9 +398,21 @@ TileProducer::DecodeTile(unsigned index)
     }
     auto img = std::make_unique<ImageImpl>(index);
 
-    DecodeHelper priv(*png, reinterpret_cast<uint16_t*>(img->rgb565_data.data()));
+    if (m_color_mode == ApplicationState::ColorMode::kColor)
+    {
+        DecodeHelper priv(*png, reinterpret_cast<uint16_t*>(img->rgb565_data.data()));
+        rc = png->decode((void*)&priv, 0);
+    }
+    else
+    {
+        DecodeHelperGrayscale priv(*png,
+                                   reinterpret_cast<uint16_t*>(img->rgb565_data.data()),
+                                   m_color_mode == ApplicationState::ColorMode::kBlackRed ? 0xf800
+                                                                                          : 0x0000);
 
-    rc = png->decode((void*)&priv, 0);
+        rc = png->decode((void*)&priv, 0);
+    }
+
     png->close();
     if (rc != PNG_SUCCESS)
     {
@@ -365,7 +455,7 @@ DecodePng(std::span<const uint8_t> data, std::optional<uint16_t> mask_color)
 
     if (mask_color)
     {
-        DecodeHelperMask priv(*png, mask_color, rgb565_data.get());
+        DecodeHelperMask priv(*png, mask_color, reinterpret_cast<uint16_t*>(rgb565_data.get()));
         rc = png->decode((void*)&priv, 0);
     }
     else

@@ -44,7 +44,7 @@ app_main(void)
 
     ApplicationState state;
 
-    state.Checkout()->demo_mode = false;
+    state.Checkout()->demo_mode = true;
 
     auto encoder_input = std::make_unique<EncoderInput>(6,   // Pin A -> 6 (MISO)
                                                         7,   // Pin B -> 7 (MOSI)
@@ -63,7 +63,7 @@ app_main(void)
     // Threads
     auto route_service = std::make_unique<RouteService>(*map_metadata);
     auto storage = std::make_unique<Storage>(*target_nvm, state, route_service->AttachListener());
-    auto producer = std::make_unique<TileProducer>(*map_metadata);
+    auto producer = std::make_unique<TileProducer>(state, *map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
 
     // Selects between the real and demo GPS

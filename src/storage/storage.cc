@@ -1,17 +1,13 @@
 #include "storage.hh"
 
 constexpr auto kHome = "H";
-
-constexpr auto kRoute0 = "R0";
-constexpr auto kRoute1 = "R1";
-constexpr auto kRoute2 = "R2";
-constexpr auto kRoute3 = "R3";
+constexpr auto kColorMode = "C";
 
 constexpr auto kRoutes = std::array {
-    kRoute0,
-    kRoute1,
-    kRoute2,
-    kRoute3,
+    "R0",
+    "R1",
+    "R2",
+    "R3",
 };
 static_assert(kRoutes.size() == ApplicationState::kMaxStoredPositions);
 
@@ -35,6 +31,12 @@ Storage::OnStartup()
         home_position)
     {
         state->home_position = *home_position;
+    }
+
+    if (auto color_mode = m_nvm.Get<decltype(ApplicationState::State::color_mode)>(kColorMode);
+        color_mode)
+    {
+        state->color_mode = *color_mode;
     }
 
     // Read the stored routes
@@ -98,6 +100,12 @@ Storage::OnActivation()
     if (current_state->home_position != m_stored_state.home_position)
     {
         m_nvm.Set(kHome, current_state->home_position);
+        schedule_commit = true;
+    }
+
+    if (current_state->color_mode != m_stored_state.color_mode)
+    {
+        m_nvm.Set(kColorMode, current_state->color_mode);
         schedule_commit = true;
     }
 

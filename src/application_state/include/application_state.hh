@@ -20,6 +20,15 @@ public:
         virtual ~IListener() = default;
     };
 
+    enum class ColorMode : uint8_t
+    {
+        kColor,
+        kBlackWhite,
+        kBlackRed,
+
+        kValueCount,
+    };
+
     struct State
     {
         virtual ~State() = default;
@@ -28,6 +37,7 @@ public:
         bool gps_connected {false};
         bool bluetooth_connected {false};
         bool show_speedometer {true};
+        ColorMode color_mode {ColorMode::kColor};
 
         IndexType home_position {0};
         etl::deque<IndexType, kMaxStoredPositions> stored_positions {};

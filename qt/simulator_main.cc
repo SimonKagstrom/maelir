@@ -72,7 +72,7 @@ main(int argc, char* argv[])
 
     auto route_service = std::make_unique<RouteService>(*map_metadata);
     auto storage = std::make_unique<Storage>(*nvm, state, route_service->AttachListener());
-    auto producer = std::make_unique<TileProducer>(*map_metadata);
+    auto producer = std::make_unique<TileProducer>(state, *map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_simulator);
 

@@ -11,6 +11,7 @@ target_link_libraries(tile_producer
 PUBLIC
     painter
     gps_reader
+    application_state
 PRIVATE
     pngdec
 )
