@@ -24,7 +24,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     m_input_group = lv_group_create();
     m_menu = lv_menu_create(m_screen);
 
-    lv_obj_set_size(m_menu, hal::kDisplayWidth * 0.72f, hal::kDisplayHeight * 0.72f);
+    lv_obj_set_size(m_menu, hal::kDisplayWidth * 0.68f, hal::kDisplayHeight * 0.80f);
     lv_obj_center(m_menu);
 
     lv_menu_set_mode_root_back_button(m_menu, LV_MENU_ROOT_BACK_BUTTON_ENABLED);
@@ -125,7 +125,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
         state->demo_mode = !state->demo_mode;
     });
 
-    m_event_listeners.push_back(LvEventListener::Create(m_menu, LV_EVENT_CLICKED, [this](auto e) {
+    m_event_listeners.push_back(LvEventListener::Create(m_menu, LV_EVENT_RELEASED, [this](auto e) {
         auto obj = static_cast<lv_obj_t*>(lv_event_get_target(e));
         if (lv_menu_back_button_is_root(m_menu, obj))
         {
