@@ -3,6 +3,7 @@
 #include <cstddef>
 
 constexpr auto kHome = "H";
+constexpr auto kSpeedometer = "S";
 constexpr auto kColorMode = "C";
 
 constexpr auto kRoutes = std::array {
@@ -57,6 +58,7 @@ Storage::OnStartup()
     auto state = m_application_state.Checkout();
 
     UpdateFromNvm(state.get(), kHome, &ApplicationState::State::home_position);
+    UpdateFromNvm(state.get(), kSpeedometer, &ApplicationState::State::show_speedometer);
     UpdateFromNvm(state.get(), kColorMode, &ApplicationState::State::color_mode);
 
     // Read the stored routes
@@ -119,6 +121,8 @@ Storage::OnActivation()
 
     schedule_commit |=
         WriteBack(current_state.get(), kHome, &ApplicationState::State::home_position);
+    schedule_commit |=
+        WriteBack(current_state.get(), kSpeedometer, &ApplicationState::State::show_speedometer);
     schedule_commit |=
         WriteBack(current_state.get(), kColorMode, &ApplicationState::State::color_mode);
 
