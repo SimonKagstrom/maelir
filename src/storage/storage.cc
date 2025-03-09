@@ -114,5 +114,8 @@ Storage::OnActivation()
         m_nvm.Commit();
     }
 
+    // The stored state is now written to flash
+    m_stored_state = *current_state;
+
     return std::nullopt;
 }
