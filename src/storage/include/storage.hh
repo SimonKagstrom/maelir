@@ -15,6 +15,18 @@ public:
 private:
     void OnStartup() final;
 
+    // Read a value from NVM
+    template <typename M>
+    void UpdateFromNvm(ApplicationState::State* current_state,
+                       const char* key,
+                       M ApplicationState::State::* member);
+
+    // Write back changes to the NVM
+    template <typename M>
+    bool WriteBack(const ApplicationState::State* current_state,
+                   const char* key,
+                   M ApplicationState::State::* member);
+
     std::optional<milliseconds> OnActivation() final;
 
     hal::INvm& m_nvm;

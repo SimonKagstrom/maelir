@@ -1,5 +1,7 @@
 #include "storage.hh"
 
+#include <cstddef>
+
 constexpr auto kHome = "H";
 constexpr auto kColorMode = "C";
 
@@ -22,22 +24,40 @@ Storage::Storage(hal::INvm& nvm,
     m_route_listener->AwakeOn(GetSemaphore());
 }
 
+template <typename M>
+void
+Storage::UpdateFromNvm(ApplicationState::State* current_state,
+                       const char* key,
+                       M ApplicationState::State::* member)
+{
+    if (auto value = m_nvm.Get<typeof(current_state->*member)>(key); value)
+    {
+        current_state->*member = *value;
+    }
+}
+
+template <typename M>
+bool
+Storage::WriteBack(const ApplicationState::State* current_state,
+                   const char* key,
+                   M ApplicationState::State::* member)
+{
+    if (current_state->*member != m_stored_state.*member)
+    {
+        m_nvm.Set(key, current_state->*member);
+        return true;
+    }
+
+    return false;
+}
+
 void
 Storage::OnStartup()
 {
     auto state = m_application_state.Checkout();
 
-    if (auto home_position = m_nvm.Get<decltype(ApplicationState::State::home_position)>(kHome);
-        home_position)
-    {
-        state->home_position = *home_position;
-    }
-
-    if (auto color_mode = m_nvm.Get<decltype(ApplicationState::State::color_mode)>(kColorMode);
-        color_mode)
-    {
-        state->color_mode = *color_mode;
-    }
+    UpdateFromNvm(state.get(), kHome, &ApplicationState::State::home_position);
+    UpdateFromNvm(state.get(), kColorMode, &ApplicationState::State::color_mode);
 
     // Read the stored routes
     for (auto i = 0u; i < kRoutes.size(); i++)
@@ -97,17 +117,10 @@ Storage::OnActivation()
         schedule_commit = true;
     }
 
-    if (current_state->home_position != m_stored_state.home_position)
-    {
-        m_nvm.Set(kHome, current_state->home_position);
-        schedule_commit = true;
-    }
-
-    if (current_state->color_mode != m_stored_state.color_mode)
-    {
-        m_nvm.Set(kColorMode, current_state->color_mode);
-        schedule_commit = true;
-    }
+    schedule_commit |=
+        WriteBack(current_state.get(), kHome, &ApplicationState::State::home_position);
+    schedule_commit |=
+        WriteBack(current_state.get(), kColorMode, &ApplicationState::State::color_mode);
 
     if (schedule_commit)
     {
