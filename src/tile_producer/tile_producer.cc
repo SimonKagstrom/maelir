@@ -149,7 +149,7 @@ PngDrawGrayscale(PNGDRAW* pDraw)
         auto color = ((luma & 0x3E) << 10) | (luma << 5) | (luma >> 1);
 
         // Right-slant the land color
-        if (pixel == kLandColor && (x + y) % 6 == 0)
+        if (pixel == kLandColor && (x + y) % 6 < 2)
         {
             color = helper->land_slant_color;
         }
