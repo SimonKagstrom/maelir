@@ -13,7 +13,7 @@ public:
 
     ~ListenerImpl() final
     {
-        //std::erase(m_parent.m_listeners.begin(), m_parent.m_listeners.end(), this);
+        // std::erase(m_parent.m_listeners.begin(), m_parent.m_listeners.end(), this);
     }
 
     void Awake()
@@ -32,6 +32,7 @@ struct ApplicationState::StateImpl : ApplicationState::State
         : m_parent(parent)
     {
         static_cast<State&>(*this) = parent.m_global_state;
+        m_shadow = parent.m_global_state;
     }
 
     ~StateImpl() final
@@ -40,6 +41,7 @@ struct ApplicationState::StateImpl : ApplicationState::State
     }
 
     ApplicationState& m_parent;
+    ApplicationState::State m_shadow;
 };
 
 
@@ -67,17 +69,42 @@ ApplicationState::CheckoutReadonly() const
     return &m_global_state;
 }
 
+
+template <typename M>
+bool
+ApplicationState::UpdateIfChanged(M ApplicationState::State::* member,
+                                  const ApplicationState::StateImpl* current_state,
+                                  ApplicationState::State* global_state)
+{
+    if (current_state->*member != current_state->m_shadow.*member)
+    {
+        global_state->*member = current_state->*member;
+        return true;
+    }
+
+    return false;
+}
+
 void
 ApplicationState::Commit(const ApplicationState::StateImpl* state)
 {
     std::lock_guard lock(m_mutex);
 
-    if (m_global_state == *state)
+    auto updated = false;
+
+    // Ugly, but reflection is not available
+    updated |= UpdateIfChanged(&ApplicationState::State::demo_mode, state, &m_global_state);
+    updated |= UpdateIfChanged(&ApplicationState::State::gps_connected, state, &m_global_state);
+    updated |= UpdateIfChanged(&ApplicationState::State::show_speedometer, state, &m_global_state);
+    updated |= UpdateIfChanged(&ApplicationState::State::color_mode, state, &m_global_state);
+    updated |= UpdateIfChanged(&ApplicationState::State::home_position, state, &m_global_state);
+    updated |= UpdateIfChanged(&ApplicationState::State::stored_positions, state, &m_global_state);
+
+    if (!updated)
     {
         return;
     }
 
-    m_global_state = *state;
     for (auto listener : m_listeners)
     {
         listener->Awake();

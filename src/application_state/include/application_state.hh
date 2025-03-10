@@ -35,7 +35,6 @@ public:
 
         bool demo_mode {false};
         bool gps_connected {false};
-        bool bluetooth_connected {false};
         bool show_speedometer {true};
         ColorMode color_mode {ColorMode::kColor};
 
@@ -56,6 +55,11 @@ public:
 private:
     class ListenerImpl;
     class StateImpl;
+
+    template <typename M>
+    bool UpdateIfChanged(M ApplicationState::State::* member,
+                         const ApplicationState::StateImpl* current_state,
+                         ApplicationState::State* global_state);
 
     void Commit(const StateImpl* state);
 

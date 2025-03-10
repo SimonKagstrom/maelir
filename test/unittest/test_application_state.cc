@@ -11,17 +11,17 @@ TEST_CASE("it's possible to commit to the application state")
     // Default values
     REQUIRE(s->demo_mode == false);
     REQUIRE(s->gps_connected == false);
-    REQUIRE(s->bluetooth_connected == false);
+    REQUIRE(s->color_mode == ApplicationState::ColorMode::kColor);
 
-    s->bluetooth_connected = true;
-    REQUIRE(ro->bluetooth_connected == false);
+    s->gps_connected = true;
+    REQUIRE(ro->gps_connected == false);
 
     // Commits
     s = nullptr;
-    REQUIRE(ro->bluetooth_connected == true);
+    REQUIRE(ro->gps_connected == true);
 
     auto s2 = state.Checkout();
-    REQUIRE(s2->bluetooth_connected == true);
+    REQUIRE(s2->gps_connected == true);
 }
 
 TEST_CASE("a change to the application state wakes up listeners")
