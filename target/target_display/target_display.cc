@@ -6,7 +6,6 @@
 #include <esp_attr.h>
 #include <esp_err.h>
 #include <esp_heap_caps.h>
-#include <esp_io_expander_tca9554.h>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_io_additions.h>
 #include <esp_lcd_panel_rgb.h>
@@ -17,49 +16,14 @@
 #include <hal/gpio_types.h>
 #include <utility>
 
-#define PCA_TFT_BACKLIGHT 4
-
-#define TFT_DE    2
-#define TFT_VSYNC 42
-#define TFT_HSYNC 41
-#define TFT_PCLK  1
-#define TFT_R1    11
-#define TFT_R2    10
-#define TFT_R3    9
-#define TFT_R4    46
-#define TFT_R5    3
-#define TFT_G0    48
-#define TFT_G1    47
-#define TFT_G2    21
-#define TFT_G3    14
-#define TFT_G4    13
-#define TFT_G5    12
-#define TFT_B1    40
-#define TFT_B2    39
-#define TFT_B3    38
-#define TFT_B4    0
-#define TFT_B5    45
-
-constexpr auto kI2cBus = I2C_NUM_0;
-constexpr auto kI2cSdaPin = GPIO_NUM_8;
-constexpr auto kI2cSclPin = GPIO_NUM_18;
-
-constexpr auto kI2cExpanderAddress = ESP_IO_EXPANDER_I2C_TCA9554A_ADDRESS_111;
-
-constexpr auto kExpanderTftReset = IO_EXPANDER_PIN_NUM_2;
-constexpr auto kExpanderTftCs = IO_EXPANDER_PIN_NUM_1;
-constexpr auto kExpanderTftBacklight = IO_EXPANDER_PIN_NUM_4;
-constexpr auto kExpanderTftSck = IO_EXPANDER_PIN_NUM_0;
-constexpr auto kExpanderTftMosi = IO_EXPANDER_PIN_NUM_7;
-
 constexpr auto kTag = "target_display";
 
 bool
 OnVsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t* edata, void* user_ctx);
 
 
-// Define the TL028WVC01_init_operations list (from Arduino, mapped to st7701_lcd_init_cmd_t)
-const st7701_lcd_init_cmd_t TL028WVC01_init_operations[] = {
+// Define the kSt7701InitOperations list (from Arduino, mapped to st7701_lcd_init_cmd_t)
+const st7701_lcd_init_cmd_t kSt7701InitOperations[] = {
     {0x01, NULL, 0, 60}, // Reset
     {0xFF, (uint8_t[]) {0x77, 0x01, 0x00, 0x00, 0x13}, 5, 0},
     {0xEF, (uint8_t[]) {0x08}, 1, 0},
@@ -197,7 +161,8 @@ const st7701_lcd_init_cmd_t TL028WVC01_init_operations[] = {
     {0x29, NULL, 0, 0},
 };
 
-DisplayTarget::DisplayTarget()
+DisplayTarget::DisplayTarget(const esp_lcd_panel_io_3wire_spi_config_t& io_config,
+                             const esp_lcd_rgb_panel_config_t& rgb_config)
 {
     m_frame_buffers[0] = static_cast<uint16_t*>(
         heap_caps_aligned_calloc(64,
@@ -213,124 +178,19 @@ DisplayTarget::DisplayTarget()
     assert(m_frame_buffers[0]);
     assert(m_frame_buffers[1]);
 
-    i2c_master_bus_handle_t bus_handle = nullptr;
-    esp_io_expander_handle_t expander_handle = nullptr;
-    esp_lcd_panel_io_handle_t panel_io = nullptr;
-
     constexpr async_memcpy_config_t async_mem_cfg = {
         .backlog = 16, .sram_trans_align = 64, .psram_trans_align = 64, .flags = 0};
     esp_async_memcpy_install(&async_mem_cfg, &m_async_mem_handle);
 
-    const i2c_master_bus_config_t i2c_master_config = {.i2c_port = kI2cBus,
-                                                       .sda_io_num = kI2cSdaPin,
-                                                       .scl_io_num = kI2cSclPin,
-                                                       .clk_source = I2C_CLK_SRC_DEFAULT,
-                                                       .glitch_ignore_cnt = 7,
-                                                       .trans_queue_depth = 0,
-                                                       .flags {.enable_internal_pullup = true}};
-    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_master_config, &bus_handle));
-
-    ESP_LOGI(kTag, "Create TCA9554 IO expander");
-    ESP_ERROR_CHECK(
-        esp_io_expander_new_i2c_tca9554(bus_handle, kI2cExpanderAddress, &expander_handle));
-
-    esp_io_expander_set_dir(expander_handle, kExpanderTftReset, IO_EXPANDER_OUTPUT);
-
-    esp_io_expander_set_dir(expander_handle, kExpanderTftCs, IO_EXPANDER_OUTPUT);
-    esp_io_expander_set_dir(expander_handle, kExpanderTftSck, IO_EXPANDER_OUTPUT);
-    esp_io_expander_set_dir(expander_handle, kExpanderTftMosi, IO_EXPANDER_OUTPUT);
-    esp_io_expander_set_dir(expander_handle, kExpanderTftBacklight, IO_EXPANDER_OUTPUT);
-
-    esp_io_expander_set_level(
-        expander_handle, kExpanderTftReset | kExpanderTftMosi | kExpanderTftCs, 1);
-
     // Turn on the backlight
-    ESP_LOGI(kTag, "Install 3-wire SPI panel IO");
-    spi_line_config_t line_config = {
-        .cs_io_type = IO_TYPE_EXPANDER,
-        .cs_gpio_num = kExpanderTftCs,
-        .scl_io_type = IO_TYPE_EXPANDER,
-        .scl_gpio_num = kExpanderTftSck,
-        .sda_io_type = IO_TYPE_EXPANDER,
-        .sda_gpio_num = kExpanderTftMosi,
-        .io_expander = expander_handle,
-    };
-    esp_lcd_panel_io_3wire_spi_config_t io_config = {
-        .line_config = line_config,
-        .expect_clk_speed = 500 * 1000U,
-        .spi_mode = 0,
-        .lcd_cmd_bytes = 1,
-        .lcd_param_bytes = 1,
-        .flags =
-            {
-                .use_dc_bit = 1,
-                .dc_zero_on_data = 0,
-                .lsb_first = 0,
-                .cs_high_active = 0,
-                .del_keep_cs_inactive = 1,
-            },
-    };
+    esp_lcd_panel_io_handle_t panel_io = nullptr;
+
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_3wire_spi(&io_config, &panel_io));
     ESP_LOGI(kTag, "Install ST7701 panel driver");
 
-
-    esp_lcd_rgb_panel_config_t rgb_config = {
-        .clk_src = LCD_CLK_SRC_PLL240M,
-        .timings =
-            {
-                .pclk_hz = 17 * 1000 * 1000,
-                .h_res = hal::kDisplayWidth,
-                .v_res = hal::kDisplayHeight,
-                .hsync_pulse_width = 2,
-                .hsync_back_porch = 44,
-                .hsync_front_porch = 50,
-                .vsync_pulse_width = 2,
-                .vsync_back_porch = 18,
-                .vsync_front_porch = 50,
-                .flags {
-                    .hsync_idle_low = false,
-                    .vsync_idle_low = false,
-                    .de_idle_high = false,
-                    .pclk_active_neg = false,
-                    .pclk_idle_high = false,
-                },
-            },
-        .data_width = 16,
-        .bits_per_pixel = 16,
-        .bounce_buffer_size_px = hal::kDisplayWidth * 10,
-        .dma_burst_size = 64,
-        .hsync_gpio_num = TFT_HSYNC,
-        .vsync_gpio_num = TFT_VSYNC,
-        .de_gpio_num = TFT_DE,
-        .pclk_gpio_num = TFT_PCLK,
-        .disp_gpio_num = GPIO_NUM_NC,
-        .data_gpio_nums =
-            {
-                TFT_B1,
-                TFT_B2,
-                TFT_B3,
-                TFT_B4,
-                TFT_B5,
-                TFT_G0,
-                TFT_G1,
-                TFT_G2,
-                TFT_G3,
-                TFT_G4,
-                TFT_G5,
-                TFT_R1,
-                TFT_R2,
-                TFT_R3,
-                TFT_R4,
-                TFT_R5,
-            },
-        .flags {
-            .no_fb = 1,
-            .bb_invalidate_cache = 0,
-        },
-    };
     st7701_vendor_config_t vendor_config = {
-        .init_cmds = TL028WVC01_init_operations,
-        .init_cmds_size = sizeof(TL028WVC01_init_operations) / sizeof(st7701_lcd_init_cmd_t),
+        .init_cmds = kSt7701InitOperations,
+        .init_cmds_size = sizeof(kSt7701InitOperations) / sizeof(st7701_lcd_init_cmd_t),
         .rgb_config = &rgb_config,
         .flags {.enable_io_multiplex = 0},
     };
@@ -354,13 +214,6 @@ DisplayTarget::DisplayTarget()
     ESP_ERROR_CHECK(esp_lcd_panel_reset(m_panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(m_panel_handle));
     ESP_LOGI(kTag, "Display init done");
-
-    // Turn on the backlight
-    esp_io_expander_set_level(expander_handle, kExpanderTftBacklight, 1);
-
-    // For now, maybe keep it in the future
-    esp_io_expander_del(expander_handle);
-    i2c_del_master_bus(bus_handle);
 }
 
 uint16_t*

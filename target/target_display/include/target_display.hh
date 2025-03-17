@@ -4,13 +4,16 @@
 
 #include <atomic>
 #include <esp_async_memcpy.h>
+#include <esp_lcd_panel_io.h>
+#include <esp_lcd_panel_io_additions.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_rgb.h>
 
 class DisplayTarget : public hal::IDisplay
 {
 public:
-    DisplayTarget();
+    DisplayTarget(const esp_lcd_panel_io_3wire_spi_config_t& io_config,
+                  const esp_lcd_rgb_panel_config_t& rgb_config);
 
     uint16_t* GetFrameBuffer(hal::IDisplay::Owner owner) final;
     void Flip() final;
