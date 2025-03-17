@@ -25,28 +25,26 @@ namespace
 {
 
 
-#define PCA_TFT_BACKLIGHT 4
-
-#define TFT_DE    2
-#define TFT_VSYNC 42
-#define TFT_HSYNC 41
-#define TFT_PCLK  1
-#define TFT_R1    11
-#define TFT_R2    10
-#define TFT_R3    9
-#define TFT_R4    46
-#define TFT_R5    3
-#define TFT_G0    48
-#define TFT_G1    47
-#define TFT_G2    21
-#define TFT_G3    14
-#define TFT_G4    13
-#define TFT_G5    12
-#define TFT_B1    40
-#define TFT_B2    39
-#define TFT_B3    38
-#define TFT_B4    0
-#define TFT_B5    45
+constexpr auto kTftDEPin = 2;
+constexpr auto kTftVSYNCPin = 42;
+constexpr auto kTftHSYNCPin = 41;
+constexpr auto kTftPCLKPin = 1;
+constexpr auto kTftR1Pin = 11;
+constexpr auto kTftR2Pin = 10;
+constexpr auto kTftR3Pin = 9;
+constexpr auto kTftR4Pin = 46;
+constexpr auto kTftR5Pin = 3;
+constexpr auto kTftG0Pin = 48;
+constexpr auto kTftG1Pin = 47;
+constexpr auto kTftG2Pin = 21;
+constexpr auto kTftG3Pin = 14;
+constexpr auto kTftG4Pin = 13;
+constexpr auto kTftG5Pin = 12;
+constexpr auto kTftB1Pin = 40;
+constexpr auto kTftB2Pin = 39;
+constexpr auto kTftB3Pin = 38;
+constexpr auto kTftB4Pin = 0;
+constexpr auto kTftB5Pin = 45;
 
 constexpr auto kI2cBus = I2C_NUM_0;
 constexpr auto kI2cSdaPin = GPIO_NUM_8;
@@ -143,29 +141,29 @@ CreateDisplay()
         .bounce_buffer_size_px = hal::kDisplayWidth * 10,
         .sram_trans_align = 64, // Deprecated
         .dma_burst_size = 64,
-        .hsync_gpio_num = TFT_HSYNC,
-        .vsync_gpio_num = TFT_VSYNC,
-        .de_gpio_num = TFT_DE,
-        .pclk_gpio_num = TFT_PCLK,
+        .hsync_gpio_num = kTftHSYNCPin,
+        .vsync_gpio_num = kTftVSYNCPin,
+        .de_gpio_num = kTftDEPin,
+        .pclk_gpio_num = kTftPCLKPin,
         .disp_gpio_num = GPIO_NUM_NC,
         .data_gpio_nums =
             {
-                TFT_B1,
-                TFT_B2,
-                TFT_B3,
-                TFT_B4,
-                TFT_B5,
-                TFT_G0,
-                TFT_G1,
-                TFT_G2,
-                TFT_G3,
-                TFT_G4,
-                TFT_G5,
-                TFT_R1,
-                TFT_R2,
-                TFT_R3,
-                TFT_R4,
-                TFT_R5,
+                kTftB1Pin,
+                kTftB2Pin,
+                kTftB3Pin,
+                kTftB4Pin,
+                kTftB5Pin,
+                kTftG0Pin,
+                kTftG1Pin,
+                kTftG2Pin,
+                kTftG3Pin,
+                kTftG4Pin,
+                kTftG5Pin,
+                kTftR1Pin,
+                kTftR2Pin,
+                kTftR3Pin,
+                kTftR4Pin,
+                kTftR5Pin,
             },
         .flags {
             .disp_active_low = 0,
