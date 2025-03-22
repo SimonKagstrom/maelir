@@ -54,9 +54,10 @@ constexpr auto kI2cSclPin = GPIO_NUM_7;
 
 constexpr auto kI2cExpanderAddress = ESP_IO_EXPANDER_I2C_TCA9554_ADDRESS_000;
 
-constexpr auto kExpanderTftReset = IO_EXPANDER_PIN_NUM_1;
-constexpr auto kExpanderTftCs = IO_EXPANDER_PIN_NUM_3;
-// TODO
+constexpr auto kExpanderTftReset = IO_EXPANDER_PIN_NUM_0;
+constexpr auto kExpanderTftTpRst = IO_EXPANDER_PIN_NUM_1;
+constexpr auto kExpanderTftCs = IO_EXPANDER_PIN_NUM_2;
+
 constexpr auto kTftSck = 2;
 constexpr auto kTftSda = 1;
 
@@ -103,13 +104,16 @@ CreateDisplay()
         esp_io_expander_new_i2c_tca9554(bus_handle, kI2cExpanderAddress, &expander_handle));
 
     esp_io_expander_set_dir(expander_handle, kExpanderTftReset, IO_EXPANDER_OUTPUT);
+    esp_io_expander_set_dir(expander_handle, kExpanderTftTpRst, IO_EXPANDER_OUTPUT);
     esp_io_expander_set_dir(expander_handle, kExpanderTftCs, IO_EXPANDER_OUTPUT);
 
-    esp_io_expander_set_level(expander_handle, kExpanderTftReset | kExpanderTftCs, 1);
+    esp_io_expander_set_level(expander_handle, kExpanderTftReset, 1);
+    esp_io_expander_set_level(expander_handle, kExpanderTftTpRst, 0);
+    esp_io_expander_set_level(expander_handle, kExpanderTftCs, 1);
 
     spi_line_config_t line_config = {
         .cs_io_type = IO_TYPE_EXPANDER,
-        .cs_gpio_num = kExpanderTftCs,
+        .cs_expander_pin = kExpanderTftCs,
         .scl_io_type = IO_TYPE_GPIO,
         .scl_gpio_num = kTftSck,
         .sda_io_type = IO_TYPE_GPIO,
