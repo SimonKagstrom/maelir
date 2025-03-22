@@ -6,7 +6,6 @@ add_compile_definitions(LV_CONF_INCLUDE_SIMPLE=1)
 # Include for ESP-IDF build system functions
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 #include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
-#set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/managed_components)
 
 project (maelir_waveshare_lcd_esp32s3 LANGUAGES CXX C ASM)
 

@@ -12,8 +12,8 @@ PUBLIC
     idf::freertos
     idf::esp_lcd
     idf::esp_timer
-    idf::esp_lcd_st7701
-    idf::esp_io_expander_tca9554
+    idf::espressif__esp_lcd_st7701
+    idf::espressif__esp_io_expander_tca9554
     idf::espressif__esp_lcd_panel_io_additions
     maelir_interface
 )
