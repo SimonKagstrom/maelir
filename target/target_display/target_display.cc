@@ -7,7 +7,6 @@
 #include <esp_err.h>
 #include <esp_heap_caps.h>
 #include <esp_lcd_panel_io.h>
-#include <esp_lcd_panel_io_additions.h>
 #include <esp_lcd_panel_rgb.h>
 #include <esp_lcd_st7701.h>
 #include <esp_log.h>
