@@ -2,7 +2,6 @@
 #include "gps_mux.hh"
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
-#include "i2c_gps.hh"
 #include "route_service.hh"
 #include "sdkconfig.h"
 #include "storage.hh"
