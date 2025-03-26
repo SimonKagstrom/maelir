@@ -2,6 +2,7 @@ set(RESOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../resources CACHE PATH "Path to reso
 
 add_subdirectory(application_state)
 add_subdirectory(base_thread)
+add_subdirectory(gps_listener)
 add_subdirectory(gps_reader)
 add_subdirectory(gps_simulator)
 add_subdirectory(nmea_parser)
