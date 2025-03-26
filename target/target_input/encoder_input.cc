@@ -84,7 +84,7 @@ EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button, uin
 
     //configure GPIO with the given settings
     gpio_config(&io_conf);
-    gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
+    gpio_install_isr_service(0);
 
     gpio_isr_handler_add(m_pin_button, EncoderInput::StaticButtonIsr, static_cast<void*>(this));
 }
