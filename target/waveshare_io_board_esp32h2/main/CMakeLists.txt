@@ -10,4 +10,5 @@ target_link_libraries(${COMPONENT_TARGET}
     uart_gps
     target_os
     target_nvm
+    gps_listener
 )
