@@ -11,6 +11,8 @@ class IInput
 public:
     enum class EventType : uint8_t
     {
+        kNoEvent = 0,
+
         kButtonDown,
         kButtonUp,
         kLeft,

@@ -24,6 +24,7 @@ add_executable(ut
     os/semaphore_unittest.cc
     main.cc
     test_application_state.cc
+    test_event_serializer.cc
     test_gps_reader.cc
     test_nmea_parser.cc
     test_router.cc
@@ -32,6 +33,7 @@ add_executable(ut
 
 target_link_libraries(ut
     application_state
+    event_serializer
     nmea_parser
     router
     router_interface

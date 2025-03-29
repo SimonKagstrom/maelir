@@ -1,0 +1,22 @@
+@startuml
+
+state kWaitForStart
+state kWaitForLength
+state kReceiveData
+state kChecksum #LightGreen : Put in deserialized\nlist
+
+[*] --> kWaitForStart
+
+kWaitForStart --> kWaitForStart : != start
+kWaitForStart --> kWaitForLength : Start byte\nreceived
+
+kWaitForLength --> kReceiveData : Start + Length
+kWaitForLength --> kWaitForStart : Length error
+
+kReceiveData --> kReceiveData : < length
+kReceiveData --> kChecksum : Data
+
+kChecksum --> kWaitForStart : Checksum byte\nreceived
+
+
+@enduml
