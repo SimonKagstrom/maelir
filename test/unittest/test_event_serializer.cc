@@ -89,7 +89,7 @@ TEST_CASE("the deserializer handles entry data")
                 auto st = std::get<InputEventState>(v).state;
 
                 REQUIRE(ev == hal::IInput::EventType::kRight);
-                REQUIRE(st == hal::IInput::StateType::kButtonDown);
+                REQUIRE(st.IsActive(hal::IInput::StateType::kButtonDown));
             }
         }
     }
@@ -176,7 +176,7 @@ TEST_CASE("serialized data can be deserialized")
     {
         auto input_event = InputEventState {
             .event = hal::IInput::EventType::kLeft,
-            .state = hal::IInput::StateType::kSwitchUp,
+            .state = hal::IInput::State(std::to_underlying(hal::IInput::StateType::kSwitchUp)),
         };
         auto data = Serialize(input_event);
 
@@ -189,7 +189,7 @@ TEST_CASE("serialized data can be deserialized")
             REQUIRE(std::holds_alternative<InputEventState>(v));
             auto ev = std::get<InputEventState>(v);
             REQUIRE(ev.event == input_event.event);
-            REQUIRE(ev.state == input_event.state);
+            REQUIRE(ev.state.Raw() == input_event.state.Raw());
 
             AND_THEN("no more events are deserialized")
             {
@@ -300,11 +300,11 @@ TEST_CASE("serialized data can be deserialized")
     {
         auto i0 = InputEventState {
             .event = hal::IInput::EventType::kLeft,
-            .state = hal::IInput::StateType::kSwitchUp,
+            .state = hal::IInput::State(std::to_underlying(hal::IInput::StateType::kSwitchUp)),
         };
         auto i1 = InputEventState {
             .event = hal::IInput::EventType::kSwitchDown,
-            .state = hal::IInput::StateType::kButtonDown,
+            .state = hal::IInput::State(std::to_underlying(hal::IInput::StateType::kButtonDown)),
         };
         hal::RawGpsData g0 {.position = std::nullopt, .heading = std::nullopt, .speed = 13.0f};
 
@@ -329,9 +329,9 @@ TEST_CASE("serialized data can be deserialized")
             REQUIRE(std::holds_alternative<hal::RawGpsData>(v2));
 
             REQUIRE(std::get<InputEventState>(v0).event == i0.event);
-            REQUIRE(std::get<InputEventState>(v0).state == i0.state);
+            REQUIRE(std::get<InputEventState>(v0).state.Raw() == i0.state.Raw());
             REQUIRE(std::get<InputEventState>(v1).event == i1.event);
-            REQUIRE(std::get<InputEventState>(v1).state == i1.state);
+            REQUIRE(std::get<InputEventState>(v1).state.Raw() == i1.state.Raw());
             REQUIRE(std::get<hal::RawGpsData>(v2).position == std::nullopt);
             REQUIRE(std::get<hal::RawGpsData>(v2).heading == std::nullopt);
             REQUIRE(std::get<hal::RawGpsData>(v2).speed.has_value());

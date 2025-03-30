@@ -10,7 +10,7 @@ PUBLIC
 target_link_libraries(uart_gps
 PUBLIC
     idf::freertos
-    idf::esp_driver_uart
+    target_uart
     idf::esp_timer
     maelir_interface
     nmea_parser

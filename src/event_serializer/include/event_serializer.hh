@@ -15,7 +15,7 @@ namespace serializer
 struct InputEventState
 {
     hal::IInput::EventType event;
-    hal::IInput::StateType state;
+    hal::IInput::State state;
 };
 
 template <typename T>

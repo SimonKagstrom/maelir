@@ -105,8 +105,7 @@ Deserializer::HandleEntry(std::span<const uint8_t> data)
         // Check limits
         if (data[0] < event_limit && data[1] < 16)
         {
-            m_input_events.push(
-                {hal::IInput::EventType {data[0]}, hal::IInput::StateType {data[1]}});
+            m_input_events.push({hal::IInput::EventType {data[0]}, hal::IInput::State {data[1]}});
         }
     }
 
@@ -175,8 +174,10 @@ void
 DoSerialize(const serializer::InputEventState& data, etl::vector<uint8_t, 32>& str)
 {
     str.push_back(2); // size
+    auto raw_state = data.state.Raw();
+
     str.push_back(std::to_underlying(data.event));
-    str.push_back(std::to_underlying(data.state));
+    str.push_back(raw_state);
 }
 
 void

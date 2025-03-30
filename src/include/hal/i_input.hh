@@ -48,6 +48,11 @@ public:
         {
         }
 
+        uint8_t Raw() const
+        {
+            return m_state;
+        }
+
     private:
         const uint8_t m_state;
     };
