@@ -1,3 +1,4 @@
+#include "gps_listener.hh"
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
 #include "nvm_host.hh"
@@ -6,6 +7,9 @@
 #include "storage.hh"
 #include "tile_producer.hh"
 #include "time.hh"
+#include "uart_bridge.hh"
+#include "uart_event_forwarder.hh"
+#include "uart_event_listener.hh"
 #include "ui.hh"
 
 #include <QApplication>
@@ -74,13 +78,21 @@ main(int argc, char* argv[])
     auto storage = std::make_unique<Storage>(*nvm, state, route_service->AttachListener());
     auto producer = std::make_unique<TileProducer>(state, *map_metadata);
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
-    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_simulator);
+    auto gps_listener = std::make_unique<GpsListener>(*gps_simulator);
+
+
+    auto uart_bridge = std::make_unique<UartBridge>();
+    auto [uart_a, uart_b] = uart_bridge->GetEndpoints();
+
+    auto uart_event_listener = std::make_unique<UartEventListener>(uart_a);
+    auto uart_event_forwarder = std::make_unique<UartEventForwarder>(uart_b, window, *gps_listener);
+    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *uart_event_listener);
 
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
                                               *producer,
                                               window.GetDisplay(),
-                                              window,
+                                              *uart_event_listener,
                                               *route_service,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
@@ -90,6 +102,10 @@ main(int argc, char* argv[])
 
     // Hack to make sure storage has started (not needed with FreeRTOS)
     os::Sleep(10ms);
+
+    gps_listener->Start();
+    uart_event_listener->Start();
+    uart_event_forwarder->Start();
 
     gps_simulator->Start();
     gps_reader->Start();

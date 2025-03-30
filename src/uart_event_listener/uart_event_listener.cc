@@ -41,7 +41,7 @@ UartEventListener::OnActivation()
         {
             auto event = std::get<serializer::InputEventState>(v);
 
-            m_state = hal::IInput::State(event.state.Raw());
+            m_state = event.state;
             m_listener->OnInput(hal::IInput::Event{event.event});
         }
         else
@@ -51,7 +51,7 @@ UartEventListener::OnActivation()
         }
     }
 
-    return std::nullopt;
+    return 0ms;
 }
 
 

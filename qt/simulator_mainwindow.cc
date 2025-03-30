@@ -58,7 +58,6 @@ void
 MainWindow::ButtonEvent(hal::IInput::EventType type)
 {
     Event event;
-    event.button = 0;
     event.type = type;
 
     using Ev = hal::IInput::EventType;

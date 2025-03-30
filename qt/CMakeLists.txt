@@ -38,6 +38,7 @@ find_package(etl REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 add_subdirectory(.. maelir)
+add_subdirectory(uart_bridge)
 
 add_library(os_qt EXCLUDE_FROM_ALL
     os/base_thread_qt.cc
@@ -67,6 +68,9 @@ target_link_libraries(maelir_qt
     gps_simulator
     route_service
     storage
+    uart_bridge
+    uart_event_listener
+    uart_event_forwarder
     lvgl
 )
 
