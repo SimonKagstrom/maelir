@@ -13,7 +13,7 @@ add_subdirectory(router)
 add_subdirectory(storage)
 add_subdirectory(tile_producer)
 add_subdirectory(timer_manager)
-add_subdirectory(uart_event_bridge)
+add_subdirectory(uart_event_forwarder)
 add_subdirectory(ui)
 
 

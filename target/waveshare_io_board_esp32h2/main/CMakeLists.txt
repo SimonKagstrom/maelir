@@ -12,4 +12,5 @@ target_link_libraries(${COMPONENT_TARGET}
     target_nvm
     gps_listener
     event_serializer
+    uart_event_forwarder
 )
