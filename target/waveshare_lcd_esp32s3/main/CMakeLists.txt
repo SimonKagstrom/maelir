@@ -17,4 +17,5 @@ target_link_libraries(${COMPONENT_TARGET}
     storage
     uart_gps
     i2c_gps
+    uart_event_listener
 )

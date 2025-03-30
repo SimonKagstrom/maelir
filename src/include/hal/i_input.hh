@@ -54,12 +54,11 @@ public:
         }
 
     private:
-        const uint8_t m_state;
+        uint8_t m_state;
     };
 
     struct Event
     {
-        uint8_t button;
         EventType type;
     };
 

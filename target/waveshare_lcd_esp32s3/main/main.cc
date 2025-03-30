@@ -7,8 +7,9 @@
 #include "storage.hh"
 #include "target_display.hh"
 #include "target_nvm.hh"
+#include "target_uart.hh"
 #include "tile_producer.hh"
-#include "uart_gps.hh"
+#include "uart_event_listener.hh"
 #include "ui.hh"
 
 #include <esp_io_expander_tca9554.h>
@@ -59,29 +60,6 @@ constexpr auto kExpanderTftCs = IO_EXPANDER_PIN_NUM_2;
 
 constexpr auto kTftSck = 2;
 constexpr auto kTftSda = 1;
-
-class DummyInput : public hal::IInput
-{
-public:
-    void AttachListener(hal::IInput::IListener* listener) final
-    {
-    }
-
-    hal::IInput::State GetState() final
-    {
-        return hal::IInput::State(0);
-    }
-};
-
-class DummyGps : public hal::IGps
-{
-public:
-    std::optional<hal::RawGpsData> WaitForData(os::binary_semaphore& semaphore) final
-    {
-        os::Sleep(10min);
-        return std::nullopt;
-    }
-};
 
 std::unique_ptr<DisplayTarget>
 CreateDisplay()
@@ -245,10 +223,13 @@ app_main(void)
 
     state.Checkout()->demo_mode = true;
 
-    auto encoder_input = std::make_unique<DummyInput>();
-    auto display = CreateDisplay();
-    auto gps_device = std::make_unique<DummyGps>();
+    auto io_board_uart = std::make_unique<TargetUart>(UART_NUM_0,
+                                                      115200,
+                                                      GPIO_NUM_44,  // RX
+                                                      GPIO_NUM_43); // TX
 
+    auto uart_event_listener = std::make_unique<UartEventListener>(*io_board_uart);
+    auto display = CreateDisplay();
 
     // Threads
     auto route_service = std::make_unique<RouteService>(*map_metadata);
@@ -257,19 +238,20 @@ app_main(void)
     auto gps_simulator = std::make_unique<GpsSimulator>(*map_metadata, state, *route_service);
 
     // Selects between the real and demo GPS
-    auto gps_mux = std::make_unique<GpsMux>(state, *gps_device, *gps_simulator);
+    auto gps_mux = std::make_unique<GpsMux>(state, *uart_event_listener, *gps_simulator);
 
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_mux);
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
                                               *producer,
                                               *display,
-                                              *encoder_input,
+                                              *uart_event_listener,
                                               *route_service,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
     storage->Start(0);
+    uart_event_listener->Start(0);
     gps_simulator->Start(0);
     gps_reader->Start(0);
     producer->Start(1, os::ThreadPriority::kNormal);

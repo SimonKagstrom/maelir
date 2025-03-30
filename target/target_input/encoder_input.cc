@@ -119,7 +119,6 @@ void
 EncoderInput::PcntOnReach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t* edata)
 {
     IInput::Event event = {
-        .button = 0,
         .type = IInput::EventType::kButtonDown,
     };
 
@@ -158,7 +157,6 @@ EncoderInput::ButtonIsr()
     m_button_timestamp = now;
 
     IInput::Event event = {
-        .button = 0,
         .type = gpio_get_level(m_pin_button) ? IInput::EventType::kButtonDown
                                              : IInput::EventType::kButtonUp,
     };
