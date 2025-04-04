@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <array>
 
 namespace
 {
