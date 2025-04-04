@@ -21,5 +21,5 @@ GpsListener::OnActivation()
         m_on_data(*data);
     }
 
-    return std::nullopt;
+    return 0ms;
 }
