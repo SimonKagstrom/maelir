@@ -42,7 +42,7 @@ UartEventListener::OnActivation()
             auto event = std::get<serializer::InputEventState>(v);
 
             m_state = event.state;
-            m_listener->OnInput(hal::IInput::Event{event.event});
+            m_listener->OnInput(hal::IInput::Event {event.event});
         }
         else
         {
@@ -77,12 +77,13 @@ UartEventListener::WaitForData(os::binary_semaphore& semaphore)
         m_gps_semaphore.acquire();
     }
 
-    hal::RawGpsData data;
-    if (m_gps_queue.pop(data))
+    std::optional<hal::RawGpsData> data;
+    hal::RawGpsData d;
+    if (m_gps_queue.pop(d))
     {
-        semaphore.release();
-        return data;
+        data = d;
     }
 
-    return {};
+    semaphore.release();
+    return data;
 }
