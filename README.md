@@ -36,3 +36,8 @@ Flash the map:
 ```
 esptool.py write_flash --flash_mode dio --no-compress --flash_freq 40m --flash_size 16MB 0x00200000 map_data.bin
 ```
+
+Flash the op board:
+```
+python -m esptool write_flash @flash_project_args && python -m esp_idf_monitor -p /dev/tty.wchusbserial59710824481 ./maelir_waveshare_io_board_esp32h2.elf
+```
