@@ -32,9 +32,13 @@ TargetUart::Write(std::span<const uint8_t> data)
 std::span<uint8_t>
 TargetUart::Read(std::span<uint8_t> data, milliseconds timeout)
 {
+    size_t in_hw_buffer = 0;
+    uart_get_buffered_data_len(m_port_number, &in_hw_buffer);
+
+    auto wanted = std::max(1u, in_hw_buffer);
     auto len = uart_read_bytes(m_port_number,
                                reinterpret_cast<char*>(data.data()),
-                               data.size(),
+                               std::min(wanted, data.size()),
                                pdMS_TO_TICKS(timeout.count()));
     if (len > 0)
     {
