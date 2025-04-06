@@ -29,11 +29,13 @@ DummyListener g_dummy_listener;
 } // namespace
 
 
-EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button, uint8_t switch_up_pin)
-    : m_pin_button(static_cast<gpio_num_t>(pin_button))
+EncoderInput::EncoderInput(uint8_t pin_a,
+                           uint8_t pin_b,
+                           ButtonDebouncer& button,
+                           uint8_t switch_up_pin)
+    : m_button(button)
     , m_pin_switch_up(static_cast<gpio_num_t>(switch_up_pin))
     , m_listener(&g_dummy_listener)
-    , m_button_timestamp(os::GetTimeStamp())
 {
     ESP_ERROR_CHECK(pcnt_new_unit(&kPcntUnitConfig, &m_pcnt_unit));
     ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(m_pcnt_unit, &kFilterConfig));
@@ -74,19 +76,15 @@ EncoderInput::EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button, uin
     ESP_ERROR_CHECK(pcnt_unit_clear_count(m_pcnt_unit));
     ESP_ERROR_CHECK(pcnt_unit_start(m_pcnt_unit));
 
-    gpio_config_t io_conf = {};
-
-    io_conf.intr_type = GPIO_INTR_ANYEDGE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = 1 << m_pin_button;
-    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-
-    //configure GPIO with the given settings
-    gpio_config(&io_conf);
-    gpio_install_isr_service(0);
-
-    gpio_isr_handler_add(m_pin_button, EncoderInput::StaticButtonIsr, static_cast<void*>(this));
+    m_button_listener = m_button.AttachListener([this](bool state) {
+        if (m_listener)
+        {
+            IInput::Event event = {
+                .type = state ? IInput::EventType::kButtonDown : IInput::EventType::kButtonUp,
+            };
+            m_listener->OnInput(event);
+        }
+    });
 }
 
 void
@@ -99,7 +97,7 @@ IInput::State
 EncoderInput::GetState()
 {
     auto switch_up_active = gpio_get_level(m_pin_switch_up);
-    auto button = gpio_get_level(m_pin_button);
+    auto button = m_button.GetState();
 
     uint8_t state = 0;
 
@@ -143,30 +141,4 @@ EncoderInput::StaticPcntOnReach(pcnt_unit_handle_t unit,
     p_this->PcntOnReach(unit, edata);
 
     return false;
-}
-
-void
-EncoderInput::ButtonIsr()
-{
-    auto now = os::GetTimeStamp();
-
-    if (now - m_button_timestamp < 50ms)
-    {
-        return;
-    }
-    m_button_timestamp = now;
-
-    IInput::Event event = {
-        .type = gpio_get_level(m_pin_button) ? IInput::EventType::kButtonDown
-                                             : IInput::EventType::kButtonUp,
-    };
-
-    m_listener->OnInput(event);
-}
-
-void
-EncoderInput::StaticButtonIsr(void* arg)
-{
-    auto p_this = static_cast<EncoderInput*>(arg);
-    p_this->ButtonIsr();
 }

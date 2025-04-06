@@ -221,7 +221,7 @@ app_main(void)
 
     ApplicationState state;
 
-    state.Checkout()->demo_mode = true;
+//    state.Checkout()->demo_mode = true;
 
     auto io_board_uart = std::make_unique<TargetUart>(UART_NUM_0,
                                                       115200,

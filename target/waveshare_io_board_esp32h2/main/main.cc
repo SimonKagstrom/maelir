@@ -1,6 +1,8 @@
 #include "base_thread.hh"
+#include "button_debouncer.hh"
 #include "encoder_input.hh"
 #include "event_serializer.hh"
+#include "target_gpio.hh"
 #include "target_uart.hh"
 #include "uart_event_forwarder.hh"
 #include "uart_gps.hh"
@@ -12,10 +14,14 @@
 extern "C" void
 app_main(void)
 {
-    auto encoder_input = std::make_unique<EncoderInput>(GPIO_NUM_0,  // Pin A
-                                                        GPIO_NUM_1,  // Pin B
-                                                        GPIO_NUM_2,  // Button
-                                                        GPIO_NUM_3); // Switch up
+    auto button_gpio = std::make_unique<TargetGpio>(GPIO_NUM_2);
+
+    auto button_debouncer = std::make_unique<ButtonDebouncer>(*button_gpio);
+
+    auto encoder_input = std::make_unique<EncoderInput>(GPIO_NUM_0,        // Pin A
+                                                        GPIO_NUM_1,        // Pin B
+                                                        *button_debouncer, // Button
+                                                        GPIO_NUM_3);       // Switch up
     auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
                                                  9600,
                                                  GPIO_NUM_10,  // RX
@@ -29,6 +35,7 @@ app_main(void)
     auto gps_listener = std::make_unique<GpsListener>(*gps_device);
     auto forwarder = std::make_unique<UartEventForwarder>(*lcd_uart, *encoder_input, *gps_listener);
 
+    button_debouncer->Start(0, os::ThreadPriority::kHigh);
     gps_listener->Start(0, os::ThreadPriority::kNormal);
     forwarder->Start(0, os::ThreadPriority::kNormal);
 

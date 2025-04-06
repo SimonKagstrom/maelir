@@ -5,11 +5,12 @@
 
 #include <driver/gpio.h>
 #include <driver/pulse_cnt.h>
+#include "button_debouncer.hh"
 
 class EncoderInput : public hal::IInput
 {
 public:
-    EncoderInput(uint8_t pin_a, uint8_t pin_b, uint8_t pin_button, uint8_t switch_up_pin);
+    EncoderInput(uint8_t pin_a, uint8_t pin_b, ButtonDebouncer &button, uint8_t switch_up_pin);
 
 private:
     void AttachListener(hal::IInput::IListener* listener) final;
@@ -24,9 +25,10 @@ private:
     static void StaticButtonIsr(void* arg);
 
 
-    const gpio_num_t m_pin_button;
+    ButtonDebouncer &m_button;
     const gpio_num_t m_pin_switch_up;
     hal::IInput::IListener* m_listener;
     pcnt_unit_handle_t m_pcnt_unit;
-    milliseconds m_button_timestamp;
+
+    std::unique_ptr<ListenerCookie> m_button_listener;
 };

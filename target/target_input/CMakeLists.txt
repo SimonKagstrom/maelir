@@ -11,5 +11,5 @@ target_link_libraries(encoder_input
 PUBLIC
     idf::freertos
     idf::driver
-    maelir_interface
+    button_debouncer
 )
