@@ -57,22 +57,22 @@ ButtonDebouncer::OnActivation()
 
         m_history_count++;
 
+        // Pressed?
+        if (Masked(m_button_history) == 0b00000111)
+        {
+            m_button_history = kPressed;
+            m_state = true;
+            m_on_state_change(true);
+        }
+        else if (Masked(m_button_history) == 0b11000000)
+        {
+            m_button_history = kReleased;
+            m_state = false;
+            m_on_state_change(false);
+        }
+
         if (m_history_count >= 8)
         {
-            // Pressed?
-            if (Masked(m_button_history) == 0b00000111)
-            {
-                m_button_history = kPressed;
-                m_state = true;
-                m_on_state_change(true);
-            }
-            else if (Masked(m_button_history) == 0b11000000)
-            {
-                m_button_history = kReleased;
-                m_state = false;
-                m_on_state_change(false);
-            }
-
             m_history_count = 0;
 
             // Restart on the next interrupt
