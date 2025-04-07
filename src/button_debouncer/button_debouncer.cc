@@ -5,11 +5,16 @@ constexpr uint8_t kPressed = 0b11111111;
 constexpr uint8_t kReleased = 0b00000000;
 constexpr uint8_t kMaskBits = 0b11000111;
 
+namespace
+{
+
 auto
 Masked(uint8_t value)
 {
     return value & kMaskBits;
 }
+
+} // namespace
 
 
 ButtonDebouncer::ButtonDebouncer(hal::IGpio& button_gpio)
