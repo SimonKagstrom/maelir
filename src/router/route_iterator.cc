@@ -54,11 +54,11 @@ RouteIterator::Next()
             return std::nullopt;
 
         case State::kValueCount:
-            // Unrechable
+            // Unreachable
             return std::nullopt;
         }
     }
 
-    // Unrechable
+    // Unreachable
     return std::nullopt;
 }

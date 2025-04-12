@@ -307,7 +307,7 @@ TEST_CASE_FIXTURE(Fixture, "a periodic timer is created")
             REQUIRE(timer->TimeLeft() == 100ms);
         }
 
-        AND_THEN("the peroidic timer is invoked after the period")
+        AND_THEN("the periodic timer is invoked after the period")
         {
             r_cb = NAMED_REQUIRE_CALL(cb, OnTimeout());
             AdvanceTime(100ms);

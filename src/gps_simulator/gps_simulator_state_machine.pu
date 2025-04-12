@@ -1,7 +1,7 @@
 @startuml
 
 state kIdle #Orange : Drop route
-state kRequestRoute : router.RequstRoute()
+state kRequestRoute : router.RequestRoute()
 state kWaitingForRoute
 state kDemo #LightGreen : RunDemo()
 state kExitDemo : Release semaphore
