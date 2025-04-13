@@ -1,4 +1,5 @@
 #include "base_thread.hh"
+#include "button_debouncer.hh"
 #include "encoder_input.hh"
 #include "event_serializer.hh"
 #include "target_gpio.hh"
