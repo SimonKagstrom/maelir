@@ -22,21 +22,22 @@ DummyListener g_dummy_listener;
 
 // TODO: Move to src, when the generic GPIO is used
 EncoderInput::EncoderInput(RotaryEncoder& rotary_encoder,
-                           ButtonDebouncer& button,
+                           hal::IGpio& button,
                            uint8_t switch_up_pin)
     : m_button(button)
     , m_pin_switch_up(static_cast<gpio_num_t>(switch_up_pin))
     , m_listener(&g_dummy_listener)
 {
-    m_rotary_listener = rotary_encoder.AttachListener([this](RotaryEncoder::Direction direction) {
-        IInput::Event event = {
-            .type = direction == RotaryEncoder::Direction::kLeft ? IInput::EventType::kLeft
-                                                                 : IInput::EventType::kRight,
-        };
-        m_listener->OnInput(event);
-    });
+    m_rotary_listener =
+        rotary_encoder.AttachIrqListener([this](RotaryEncoder::Direction direction) {
+            IInput::Event event = {
+                .type = direction == RotaryEncoder::Direction::kLeft ? IInput::EventType::kLeft
+                                                                     : IInput::EventType::kRight,
+            };
+            m_listener->OnInput(event);
+        });
 
-    m_button_listener = m_button.AttachListener([this](bool state) {
+    m_button_listener = m_button.AttachIrqListener([this](bool state) {
         if (m_listener)
         {
             IInput::Event event = {

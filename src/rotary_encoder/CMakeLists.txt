@@ -9,5 +9,5 @@ PUBLIC
 
 target_link_libraries(rotary_encoder
 PUBLIC
-    button_debouncer
+    maelir_interface
 )

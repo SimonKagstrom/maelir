@@ -5,16 +5,24 @@
 
 #include <atomic>
 
-class ButtonDebouncer : public os::BaseThread
+class ButtonDebouncer : public os::BaseThread, public hal::IGpio
 {
 public:
     ButtonDebouncer(hal::IGpio& button_gpio);
 
-    std::unique_ptr<ListenerCookie> AttachListener(std::function<void(bool)> on_state_change);
-
-    bool GetState() const;
-
 private:
+    // from hal::IGpio
+    bool GetState() const final;
+
+    void SetState(bool state) final
+    {
+        // Not relevant
+    }
+
+    std::unique_ptr<ListenerCookie>
+    AttachIrqListener(std::function<void(bool)> on_state_change) final;
+
+    // From os::BaseThread
     std::optional<milliseconds> OnActivation() final;
 
     hal::IGpio& m_button_gpio;

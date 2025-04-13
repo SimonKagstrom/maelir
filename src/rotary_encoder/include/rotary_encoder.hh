@@ -1,6 +1,6 @@
 #pragma once
 
-#include "button_debouncer.hh"
+#include "hal/i_gpio.hh"
 #include "listener_cookie.hh"
 
 #include <etl/vector.h>
@@ -16,17 +16,17 @@ public:
         kValueCount,
     };
 
-    RotaryEncoder(ButtonDebouncer& pin_a, ButtonDebouncer& pin_b);
+    RotaryEncoder(hal::IGpio& pin_a, hal::IGpio& pin_b);
 
-    std::unique_ptr<ListenerCookie> AttachListener(std::function<void(Direction)> on_rotation);
+    std::unique_ptr<ListenerCookie> AttachIrqListener(std::function<void(Direction)> on_rotation);
 
 private:
     void Process();
 
     std::function<void(Direction)> m_on_rotation {[](auto) {}};
 
-    ButtonDebouncer& m_pin_a;
-    ButtonDebouncer& m_pin_b;
+    hal::IGpio& m_pin_a;
+    hal::IGpio& m_pin_b;
 
     etl::vector<std::unique_ptr<ListenerCookie>, 2> m_listeners;
 

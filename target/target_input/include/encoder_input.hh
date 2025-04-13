@@ -1,6 +1,5 @@
 #pragma once
 
-#include "button_debouncer.hh"
 #include "hal/i_input.hh"
 #include "rotary_encoder.hh"
 #include "time.hh"
@@ -10,7 +9,7 @@
 class EncoderInput : public hal::IInput
 {
 public:
-    EncoderInput(RotaryEncoder& rotary_encoder, ButtonDebouncer& button, uint8_t switch_up_pin);
+    EncoderInput(RotaryEncoder& rotary_encoder, hal::IGpio& button, uint8_t switch_up_pin);
 
 private:
     void AttachListener(hal::IInput::IListener* listener) final;
@@ -20,7 +19,7 @@ private:
     static void StaticButtonIsr(void* arg);
 
 
-    ButtonDebouncer& m_button;
+    hal::IGpio& m_button;
     const gpio_num_t m_pin_switch_up;
     hal::IInput::IListener* m_listener {nullptr};
 

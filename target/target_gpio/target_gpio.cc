@@ -3,20 +3,6 @@
 TargetGpio::TargetGpio(uint8_t pin)
     : m_pin(static_cast<gpio_num_t>(pin))
 {
-    gpio_config_t io_conf = {};
-
-    io_conf.intr_type = GPIO_INTR_ANYEDGE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = 1 << m_pin;
-    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-
-    ESP_ERROR_CHECK(gpio_config(&io_conf));
-
-    //configure GPIO with the given settings
-    gpio_config(&io_conf);
-    gpio_install_isr_service(0);
-
     gpio_isr_handler_add(m_pin, TargetGpio::StaticButtonIsr, static_cast<void*>(this));
 }
 

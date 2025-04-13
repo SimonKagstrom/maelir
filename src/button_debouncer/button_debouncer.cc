@@ -27,7 +27,7 @@ ButtonDebouncer::ButtonDebouncer(hal::IGpio& button_gpio)
 }
 
 std::unique_ptr<ListenerCookie>
-ButtonDebouncer::AttachListener(std::function<void(bool)> on_state_change)
+ButtonDebouncer::AttachIrqListener(std::function<void(bool)> on_state_change)
 {
     m_on_state_change = std::move(on_state_change);
 

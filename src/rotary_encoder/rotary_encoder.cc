@@ -35,16 +35,17 @@ constexpr uint8_t kTable[7][4] = {
     {kCcwNext, kCcwFinal, kCcwBegin, kStart},
 };
 
-RotaryEncoder::RotaryEncoder(ButtonDebouncer& pin_a, ButtonDebouncer& pin_b)
+
+RotaryEncoder::RotaryEncoder(hal::IGpio& pin_a, hal::IGpio& pin_b)
     : m_pin_a(pin_a)
     , m_pin_b(pin_b)
 {
-    m_listeners.push_back(m_pin_a.AttachListener([this](auto state) { Process(); }));
-    m_listeners.push_back(m_pin_b.AttachListener([this](auto state) { Process(); }));
+    m_listeners.push_back(m_pin_a.AttachIrqListener([this](auto) { Process(); }));
+    m_listeners.push_back(m_pin_b.AttachIrqListener([this](auto) { Process(); }));
 }
 
 std::unique_ptr<ListenerCookie>
-RotaryEncoder::AttachListener(std::function<void(Direction)> on_rotation)
+RotaryEncoder::AttachIrqListener(std::function<void(Direction)> on_rotation)
 {
     m_on_rotation = std::move(on_rotation);
     return std::make_unique<ListenerCookie>([this]() { m_on_rotation = [](auto) {}; });
@@ -57,7 +58,7 @@ RotaryEncoder::Process()
     auto pin_b = m_pin_b.GetState();
 
     // Get the current state of the rotary encoder
-    m_state = kTable[m_state][(pin_a << 1) | pin_b];
+    m_state = kTable[m_state & 0xf][(pin_a << 1) | pin_b];
 
     if (m_on_rotation)
     {
