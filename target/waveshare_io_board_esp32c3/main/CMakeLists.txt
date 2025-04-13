@@ -13,6 +13,7 @@ target_link_libraries(${COMPONENT_TARGET}
     gps_listener
     button_debouncer
     target_gpio
+    rotary_encoder
     event_serializer
     uart_event_forwarder
 )

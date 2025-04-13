@@ -28,5 +28,5 @@ private:
 
     os::TimerHandle m_timer {nullptr};
 
-    std::atomic_bool m_interrupt{false};
+    std::atomic_bool m_interrupt {false};
 };
