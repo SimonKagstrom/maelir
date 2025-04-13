@@ -10,4 +10,4 @@ target/build
 external/lvgl/examples
 external/lvgl/tests
 external/lvgl/zephyr
-
+image_cache
