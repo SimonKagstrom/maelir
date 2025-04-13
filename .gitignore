@@ -1,5 +1,10 @@
 *~
 *.pro*
+*.old
+*.lock
+managed_components
+*.DS_Store
+*.code-workspace
 build/
 target/build
 external/lvgl/examples
