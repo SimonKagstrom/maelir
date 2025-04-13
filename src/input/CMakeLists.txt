@@ -9,8 +9,6 @@ PUBLIC
 
 target_link_libraries(encoder_input
 PUBLIC
-    idf::freertos
-    idf::driver
     rotary_encoder
     button_debouncer
 )

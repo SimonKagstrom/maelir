@@ -1,7 +1,5 @@
 #include "encoder_input.hh"
 
-#include <array>
-
 using namespace hal;
 
 namespace
@@ -20,12 +18,11 @@ DummyListener g_dummy_listener;
 } // namespace
 
 
-// TODO: Move to src, when the generic GPIO is used
 EncoderInput::EncoderInput(RotaryEncoder& rotary_encoder,
                            hal::IGpio& button,
-                           uint8_t switch_up_pin)
+                           hal::IGpio& switch_up_pin)
     : m_button(button)
-    , m_pin_switch_up(static_cast<gpio_num_t>(switch_up_pin))
+    , m_switch_up_pin(switch_up_pin)
     , m_listener(&g_dummy_listener)
 {
     m_rotary_listener =
@@ -57,7 +54,7 @@ EncoderInput::AttachListener(IListener* listener)
 IInput::State
 EncoderInput::GetState()
 {
-    auto switch_up_active = gpio_get_level(m_pin_switch_up);
+    auto switch_up_active = m_switch_up_pin.GetState();
     auto button = m_button.GetState();
 
     uint8_t state = 0;
