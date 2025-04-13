@@ -13,6 +13,7 @@
 #include "ui.hh"
 
 #include <QApplication>
+#include <QCommandLineParser>
 #include <QFile>
 #include <fmt/format.h>
 #include <stdlib.h>
@@ -20,27 +21,41 @@
 int
 main(int argc, char* argv[])
 {
-    if (argc != 2)
+    QApplication a(argc, argv);
+    QCommandLineParser parser;
+
+    parser.addOptions({
+        {{"s", "seed"}, "Random seed", "seed"},
+        {{"m", "map"}, "Path to the map file", "map_file"},
+    });
+
+    parser.process(a);
+
+    QString map_file = "map.bin";
+    if (parser.isSet("map"))
     {
-        fmt::print("Usage: {} <path_to_generated_tiles.bin>\n", argv[0]);
-        exit(1);
+        map_file = parser.value("map");
+    }
+    int seed = 0;
+    if (parser.isSet("seed"))
+    {
+        seed = parser.value("seed").toInt();
     }
 
-    QApplication a(argc, argv);
     MainWindow window;
 
-    auto bin_file = QFile(argv[1]);
+    auto bin_file = QFile(map_file);
     auto rv = bin_file.open(QIODevice::ReadOnly);
     if (!rv)
     {
-        fmt::print("Failed to open {}\n", argv[1]);
+        fmt::print("Failed to open {}\n", map_file.toStdString());
         return 1;
     }
 
     auto mmap_bin = bin_file.map(0, bin_file.size());
     if (!mmap_bin)
     {
-        fmt::print("Failed to map {}\n", argv[1]);
+        fmt::print("Failed to map {}\n", map_file.toStdString());
         return 1;
     }
 
@@ -48,8 +63,7 @@ main(int argc, char* argv[])
 
     ApplicationState state;
 
-    //srand(time(0));
-    srand(5);
+    srand(seed);
     state.Checkout()->demo_mode = true;
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
