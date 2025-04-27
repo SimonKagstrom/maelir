@@ -1,7 +1,8 @@
 #include "target_gpio.hh"
 
-TargetGpio::TargetGpio(uint8_t pin)
+TargetGpio::TargetGpio(uint8_t pin, TargetGpio::Polarity polarity)
     : m_pin(static_cast<gpio_num_t>(pin))
+    , m_polarity(polarity == Polarity::kActiveHigh ? 0 : 1)
 {
     gpio_isr_handler_add(m_pin, TargetGpio::StaticButtonIsr, static_cast<void*>(this));
 }
@@ -15,7 +16,7 @@ TargetGpio::SetState(bool state)
 bool
 TargetGpio::GetState() const
 {
-    return gpio_get_level(m_pin);
+    return gpio_get_level(m_pin) ^ m_polarity;
 }
 
 std::unique_ptr<ListenerCookie>
