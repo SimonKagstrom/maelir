@@ -24,7 +24,7 @@ app_main(void)
     io_conf.intr_type = GPIO_INTR_ANYEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = 1 << kPinButton;
-    io_conf.pull_down_en = GPIO_PULLUP_DISABLE;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     ESP_ERROR_CHECK(gpio_config(&io_conf));
 
@@ -47,7 +47,7 @@ app_main(void)
     // Install the GPIO interrupt service
     gpio_install_isr_service(0);
 
-    auto button_gpio = std::make_unique<TargetGpio>(kPinButton);
+    auto button_gpio = std::make_unique<TargetGpio>(kPinButton, TargetGpio::Polarity::kActiveLow);
     auto pin_a_gpio = std::make_unique<TargetGpio>(kPinA);
     auto pin_b_gpio = std::make_unique<TargetGpio>(kPinB);
     auto switch_up_gpio = std::make_unique<TargetGpio>(kPinSwitchUp);
