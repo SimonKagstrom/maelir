@@ -12,6 +12,7 @@
 #include "uart_event_listener.hh"
 #include "ui.hh"
 
+#include <driver/gpio.h>
 #include <esp_io_expander_tca9554.h>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_io_additions.h>
