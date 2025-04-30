@@ -68,14 +68,15 @@ CreateDisplay()
     i2c_master_bus_handle_t bus_handle = nullptr;
     esp_io_expander_handle_t expander_handle = nullptr;
 
-    const i2c_master_bus_config_t i2c_master_config = {.i2c_port = kI2cBus,
-                                                       .sda_io_num = kI2cSdaPin,
-                                                       .scl_io_num = kI2cSclPin,
-                                                       .clk_source = I2C_CLK_SRC_DEFAULT,
-                                                       .glitch_ignore_cnt = 7,
-                                                       .intr_priority = 0,
-                                                       .trans_queue_depth = 0,
-                                                       .flags {.enable_internal_pullup = true}};
+    const i2c_master_bus_config_t i2c_master_config = {
+        .i2c_port = kI2cBus,
+        .sda_io_num = kI2cSdaPin,
+        .scl_io_num = kI2cSclPin,
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .glitch_ignore_cnt = 7,
+        .intr_priority = 0,
+        .trans_queue_depth = 0,
+        .flags {.enable_internal_pullup = true, .allow_pd = false}};
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_master_config, &bus_handle));
 
     ESP_ERROR_CHECK(

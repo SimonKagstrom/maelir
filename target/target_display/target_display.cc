@@ -206,7 +206,7 @@ DisplayTarget::DisplayTarget(const esp_lcd_panel_io_3wire_spi_config_t& io_confi
     esp_lcd_rgb_panel_event_callbacks_t callbacks = {};
     callbacks.on_bounce_empty = DisplayTarget::OnBounceBufferFillStatic;
     callbacks.on_vsync = OnVsync;
-    callbacks.on_bounce_frame_finish = DisplayTarget::OnBounceBufferFinishStatic;
+    callbacks.on_frame_buf_complete = DisplayTarget::OnBounceBufferFinishStatic;
 
     ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(m_panel_handle, &callbacks, this));
 
