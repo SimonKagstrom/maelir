@@ -1,3 +1,13 @@
+# Maelir
+Maelir is a round screen GPS plotter for classic boats. It's based on an ESP32S3 and an
+ESP32C3, both from waveshare, plus a UBLOX Neo-7M GPS module and a rotary encoder.
+
+![the hardware on the table](doc/maelir_open.jpg)
+
+-----
+The rest of hte document is just for me to remember commands, for now. TODO: More description...
+
+
 Qt:
 
 ```
