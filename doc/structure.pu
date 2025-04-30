@@ -1,0 +1,60 @@
+@startuml
+
+class IUart #LightGreen
+class IInput #LightGreen
+class IGps #LightGreen
+class INvm #LightGreen
+
+class IRouteListener #LightGreen
+class IGpsPort #LightGreen
+
+class ApplicationState
+class GpsMux
+class NvmStorage
+
+class GpsReader #Pink
+class GpsSimulator #Pink
+class RouteService #Pink
+class Storage #Pink
+class TileProducer #Pink
+class UserInterface #Pink
+class UartEventListener #Pink
+
+UartEventListener --|> IInput
+UartEventListener --|> IGps
+UartEventListener --> IUart
+
+NvmStorage --|> INvm
+
+GpsReader --> ApplicationState
+GpsReader --> IGps
+GpsReader --> IGpsPort
+
+RouteService --> IRouteListener
+
+GpsSimulator --> ApplicationState
+GpsSimulator --|> IGps
+
+GpsMux --> ApplicationState
+GpsMux --|> IGps
+GpsMux --> UartEventListener
+GpsMux --> GpsSimulator
+
+
+Storage --> IRouteListener
+Storage --> ApplicationState
+Storage --> INvm
+
+
+TileProducer --> ApplicationState
+
+UserInterface --> ApplicationState
+UserInterface --> TileProducer
+UserInterface --> IRouteListener
+UserInterface --> IGpsPort
+UserInterface --> IInput
+
+
+
+
+@enduml
