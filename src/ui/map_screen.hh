@@ -1,5 +1,6 @@
 #pragma once
 
+#include "timer_manager.hh"
 #include "ui.hh"
 
 class UserInterface::MapScreen : public ScreenBase
@@ -101,6 +102,8 @@ private:
     std::unique_ptr<Image> m_static_map_image;
 
     Mode m_mode {Mode::kMap};
+
+    os::TimerHandle m_select_timer;
 
     // Position selection data
     Point m_crosshair_position;

@@ -13,6 +13,7 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     : m_parent(parent)
     , m_boat_data(DecodePngMask(boat_data, 0))
     , m_crosshair_data(DecodePngMask(crosshair_data, 0))
+    , m_select_timer(m_parent.StartTimer(0ms))
 {
     m_static_map_buffer =
         std::make_unique<uint8_t[]>(hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
@@ -127,6 +128,8 @@ UserInterface::MapScreen::OnPosition(const GpsData& position)
 void
 UserInterface::MapScreen::Update()
 {
+    char buf[32];
+
     auto state = m_parent.m_application_state.CheckoutReadonly();
     auto show_speedometer = state->show_speedometer;
 
@@ -136,7 +139,21 @@ UserInterface::MapScreen::Update()
         lv_obj_add_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
 
+        snprintf(buf,
+                 sizeof(buf),
+                 "%s",
+                 m_parent.m_position_select_vertical ? LV_SYMBOL_UP : LV_SYMBOL_RIGHT);
+
         show_speedometer = false;
+    }
+    else
+    {
+        snprintf(buf,
+                 sizeof(buf),
+                 "%s%s%s",
+                 m_parent.m_gps_position_valid ? LV_SYMBOL_GPS : "",
+                 m_parent.m_calculating_route ? " " : "",
+                 m_parent.m_calculating_route ? LV_SYMBOL_LOOP : "");
     }
 
     if (show_speedometer)
@@ -150,27 +167,11 @@ UserInterface::MapScreen::Update()
         lv_obj_add_flag(m_speedometer_arc, LV_OBJ_FLAG_HIDDEN);
     }
 
-    if (m_parent.m_gps_position_valid == false && m_parent.m_calculating_route == false)
-    {
-        lv_obj_add_flag(m_indicators_shadow, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(m_indicators, LV_OBJ_FLAG_HIDDEN);
-    }
-    else
-    {
-        char buf[32];
-
-        snprintf(buf,
-                 sizeof(buf),
-                 "%s%s%s",
-                 m_parent.m_gps_position_valid ? LV_SYMBOL_GPS : "",
-                 m_parent.m_calculating_route ? " " : "",
-                 m_parent.m_calculating_route ? LV_SYMBOL_LOOP : "");
-        lv_label_set_text(m_indicators, buf);
-        lv_label_set_text(m_indicators_shadow, buf);
-        lv_obj_align_to(m_indicators_shadow, m_indicators, LV_ALIGN_TOP_LEFT, 2, 2);
-        lv_obj_remove_flag(m_indicators_shadow, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_remove_flag(m_indicators, LV_OBJ_FLAG_HIDDEN);
-    }
+    lv_label_set_text(m_indicators, buf);
+    lv_label_set_text(m_indicators_shadow, buf);
+    lv_obj_align_to(m_indicators_shadow, m_indicators, LV_ALIGN_TOP_LEFT, 2, 2);
+    lv_obj_remove_flag(m_indicators_shadow, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(m_indicators, LV_OBJ_FLAG_HIDDEN);
 
     RunStateMachine();
 
@@ -649,16 +650,21 @@ UserInterface::MapScreen::OnInputViewMap(hal::IInput::Event event)
 void
 UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
 {
-    auto is_vertical = m_parent.m_input.GetState().IsActive(hal::IInput::StateType::kSwitchUp);
-    auto x_diff = is_vertical ? 0 : kPathFinderTileSize;
-    auto y_diff = is_vertical ? kPathFinderTileSize : 0;
+    auto x_diff = m_parent.m_position_select_vertical ? 0 : kPathFinderTileSize;
+    auto y_diff = m_parent.m_position_select_vertical ? kPathFinderTileSize : 0;
 
     switch (event.type)
     {
     case hal::IInput::EventType::kButtonDown:
+        m_select_timer = m_parent.StartTimer(1s, [this]() {
+            m_parent.m_position_select_vertical = !m_parent.m_position_select_vertical;
+
+            return std::nullopt;
+        });
         break;
     case hal::IInput::EventType::kButtonUp:
-        if (m_parent.m_select_position)
+        // Only select unless the timer has expired (otherwise it's a change of direction)
+        if (m_parent.m_select_position && m_select_timer->IsExpired() == false)
         {
             if (m_parent.m_select_position == PositionSelection::kHome)
             {

@@ -195,4 +195,5 @@ void
 UserInterface::SelectPosition(PositionSelection selection)
 {
     m_select_position = selection;
+    m_position_select_vertical = false;
 }

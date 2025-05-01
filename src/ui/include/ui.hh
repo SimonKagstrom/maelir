@@ -129,4 +129,5 @@ private:
 
     // Position selection data
     std::optional<UserInterface::PositionSelection> m_select_position;
+    bool m_position_select_vertical {false};
 };
