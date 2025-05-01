@@ -17,17 +17,23 @@ Masked(uint8_t value)
 } // namespace
 
 
-ButtonDebouncer::ButtonDebouncer(hal::IGpio& button_gpio)
-    : m_button_gpio(button_gpio)
+ButtonDebouncer::Button::Button(ButtonDebouncer& parent, std::unique_ptr<hal::IGpio> button_gpio)
+    : m_parent(parent)
+    , m_button_gpio(std::move(button_gpio))
 {
-    m_interrupt_listener = m_button_gpio.AttachIrqListener([this](bool state) {
+    m_interrupt_listener = m_button_gpio->AttachIrqListener([this](bool state) {
         m_interrupt = true;
-        Awake();
+        m_parent.Awake();
     });
 }
 
+ButtonDebouncer::Button::~Button()
+{
+    m_parent.RemoveButton(this);
+}
+
 std::unique_ptr<ListenerCookie>
-ButtonDebouncer::AttachIrqListener(std::function<void(bool)> on_state_change)
+ButtonDebouncer::Button::AttachIrqListener(std::function<void(bool)> on_state_change)
 {
     m_on_state_change = std::move(on_state_change);
 
@@ -35,30 +41,30 @@ ButtonDebouncer::AttachIrqListener(std::function<void(bool)> on_state_change)
 }
 
 bool
-ButtonDebouncer::GetState() const
+ButtonDebouncer::Button::GetState() const
 {
     return m_state.load();
 }
 
-std::optional<milliseconds>
-ButtonDebouncer::OnActivation()
+void
+ButtonDebouncer::Button::ScanButton()
 {
     if (m_timer)
     {
-        return std::nullopt;
+        return;
     }
 
     if (!m_interrupt)
     {
-        return std::nullopt;
+        return;
     }
 
-    m_timer = StartTimer(1ms, [this]() {
+    m_timer = m_parent.StartTimer(1ms, [this]() {
         m_interrupt = false;
         std::optional<milliseconds> out = 1ms;
 
         m_button_history <<= 1;
-        m_button_history |= static_cast<int>(m_button_gpio.GetState());
+        m_button_history |= static_cast<int>(m_button_gpio->GetState());
 
         m_history_count++;
 
@@ -87,6 +93,42 @@ ButtonDebouncer::OnActivation()
 
         return out;
     });
+}
+
+
+std::unique_ptr<hal::IGpio>
+ButtonDebouncer::AddButton(std::unique_ptr<hal::IGpio> pin)
+{
+    if (m_buttons.full())
+    {
+        return nullptr;
+    }
+
+    auto button = std::make_unique<Button>(*this, std::move(pin));
+
+    m_buttons.push_back(button.get());
+
+    return std::move(button);
+}
+
+void
+ButtonDebouncer::RemoveButton(Button* button)
+{
+    auto it = std::find(m_buttons.begin(), m_buttons.end(), button);
+    if (it != m_buttons.end())
+    {
+        m_buttons.erase(it);
+    }
+}
+
+std::optional<milliseconds>
+ButtonDebouncer::OnActivation()
+{
+    // Check all buttons, although probably only one has triggered
+    for (auto button : m_buttons)
+    {
+        button->ScanButton();
+    }
 
     return std::nullopt;
 }
