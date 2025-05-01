@@ -8,7 +8,7 @@ add_compile_definitions(LV_CONF_INCLUDE_SIMPLE=1)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 #include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 
-project (maelir_waveshare_io_board_esp32h2 LANGUAGES CXX C ASM)
+project (maelir_waveshare_io_board_esp32c3 LANGUAGES CXX C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
