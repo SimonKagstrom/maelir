@@ -139,10 +139,14 @@ UserInterface::MapScreen::Update()
         lv_obj_add_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
 
-        snprintf(buf,
-                 sizeof(buf),
-                 "%s",
-                 m_parent.m_position_select_vertical ? LV_SYMBOL_UP : LV_SYMBOL_RIGHT);
+        if (m_parent.m_position_select_vertical)
+        {
+            snprintf(buf, sizeof(buf), "%s\n%s", LV_SYMBOL_UP, LV_SYMBOL_DOWN);
+        }
+        else
+        {
+            snprintf(buf, sizeof(buf), "%s%s", LV_SYMBOL_LEFT, LV_SYMBOL_RIGHT);
+        }
 
         show_speedometer = false;
     }
