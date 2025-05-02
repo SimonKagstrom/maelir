@@ -119,7 +119,7 @@ CreateDisplay()
         .clk_src = LCD_CLK_SRC_PLL240M,
         .timings =
             {
-                .pclk_hz = 18 * 1000 * 1000,
+                .pclk_hz = 15 * 1000 * 1000,
                 .h_res = hal::kDisplayWidth,
                 .v_res = hal::kDisplayHeight,
                 .hsync_pulse_width = 8,
@@ -254,7 +254,7 @@ app_main(void)
     uart_event_listener->Start(0);
     gps_simulator->Start(0);
     gps_reader->Start(0);
-    producer->Start(1, os::ThreadPriority::kNormal);
+    producer->Start(0, os::ThreadPriority::kHigh);
     route_service->Start(0, os::ThreadPriority::kNormal, 5000);
 
     // Time for the storage to read the home position
