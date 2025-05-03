@@ -250,16 +250,16 @@ app_main(void)
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
-    storage->Start("storage", 0);
-    uart_event_listener->Start("uart_event_listener", 0);
-    gps_simulator->Start("gps_simulator", 0, os::ThreadPriority::kNormal, 4096);
-    gps_reader->Start("gps_reader", 0);
-    producer->Start("tile_producer", 0, os::ThreadPriority::kHigh);
-    route_service->Start("route_service", 0, os::ThreadPriority::kNormal, 4096);
+    storage->Start("storage");
+    uart_event_listener->Start("uart_event_listener");
+    gps_simulator->Start("gps_simulator", 4096);
+    gps_reader->Start("gps_reader");
+    producer->Start("tile_producer", os::ThreadPriority::kHigh);
+    route_service->Start("route_service", 4096);
 
     // Time for the storage to read the home position
     os::Sleep(10ms);
-    ui->Start("ui", 1, os::ThreadPriority::kHigh, 8192);
+    ui->Start("ui", os::ThreadCore::kCore1, os::ThreadPriority::kHigh, 8192);
 
     while (true)
     {

@@ -27,7 +27,10 @@ BaseThread::~BaseThread()
 }
 
 void
-BaseThread::Start(const char* name, uint8_t core, ThreadPriority enum_priority, uint32_t stack_size)
+BaseThread::Start(const char* name,
+                  os::ThreadCore core,
+                  ThreadPriority enum_priority,
+                  uint32_t stack_size)
 {
     auto priority = std::to_underlying(enum_priority);
 
@@ -43,7 +46,7 @@ BaseThread::Start(const char* name, uint8_t core, ThreadPriority enum_priority, 
                             this,
                             priority,
                             &m_impl->m_task,
-                            core);
+                            std::to_underlying(core));
 }
 
 
