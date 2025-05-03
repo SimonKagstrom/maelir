@@ -28,7 +28,7 @@ BaseThread::~BaseThread()
 }
 
 void
-BaseThread::Start(uint8_t, ThreadPriority, uint32_t)
+BaseThread::Start(const char*, uint8_t, ThreadPriority, uint32_t)
 {
     m_impl->m_thread->start();
 }

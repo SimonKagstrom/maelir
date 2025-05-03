@@ -27,14 +27,18 @@ BaseThread::~BaseThread()
 }
 
 void
-BaseThread::Start(uint8_t core, ThreadPriority priority, uint32_t stack_size)
+BaseThread::Start(const char* name, uint8_t core, ThreadPriority enum_priority, uint32_t stack_size)
 {
+    auto priority = std::to_underlying(enum_priority);
+
     static_assert(tskIDLE_PRIORITY == 0, "FreeRTOS priority assumption broken");
+    static_assert(std::to_underlying(ThreadPriority::kLow) > tskIDLE_PRIORITY,
+                  "FreeRTOS priority assumption broken");
     assert(priority < configMAX_PRIORITIES);
     assert(priority > 0);
 
     xTaskCreatePinnedToCore([](void* arg) { static_cast<BaseThread*>(arg)->ThreadLoop(); },
-                            "x",
+                            name,
                             stack_size,
                             this,
                             priority,

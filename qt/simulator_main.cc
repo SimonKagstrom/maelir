@@ -112,20 +112,20 @@ main(int argc, char* argv[])
                                               route_service->AttachListener());
 
 
-    storage->Start();
+    storage->Start("storage");
 
     // Hack to make sure storage has started (not needed with FreeRTOS)
     os::Sleep(10ms);
 
-    gps_listener->Start();
-    uart_event_listener->Start();
-    uart_event_forwarder->Start();
+    gps_listener->Start("gps_listener");
+    uart_event_listener->Start("uart_event_listener");
+    uart_event_forwarder->Start("uart_event_forwarder");
 
-    gps_simulator->Start();
-    gps_reader->Start();
-    producer->Start();
-    route_service->Start();
-    ui->Start();
+    gps_simulator->Start("gps_simulator");
+    gps_reader->Start("gps_reader");
+    producer->Start("tile_producer");
+    route_service->Start("route_service");
+    ui->Start("ui");
 
     window.show();
 

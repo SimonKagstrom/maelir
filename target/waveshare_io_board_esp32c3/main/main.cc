@@ -73,9 +73,9 @@ app_main(void)
     auto gps_listener = std::make_unique<GpsListener>(*gps_device);
     auto forwarder = std::make_unique<UartEventForwarder>(*lcd_uart, *encoder_input, *gps_listener);
 
-    button_debouncer->Start(0, os::ThreadPriority::kHigh);
-    gps_listener->Start(0, os::ThreadPriority::kNormal);
-    forwarder->Start(0, os::ThreadPriority::kNormal);
+    button_debouncer->Start("button_debouncer", 0, os::ThreadPriority::kHigh);
+    gps_listener->Start("gps_listener", 0, os::ThreadPriority::kNormal);
+    forwarder->Start("uart_forwarder", 0, os::ThreadPriority::kNormal);
 
     while (true)
     {

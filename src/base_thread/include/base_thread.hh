@@ -10,7 +10,7 @@
 namespace os
 {
 
-enum ThreadPriority : uint8_t
+enum class ThreadPriority : uint8_t
 {
     kLow = 1,
     kNormal,
@@ -29,9 +29,10 @@ public:
         m_semaphore.release();
     }
 
-    void Start(uint8_t core = 0,
+    void Start(const char* name,
+               uint8_t core = 0,
                ThreadPriority priority = ThreadPriority::kLow,
-               uint32_t stack_size = 5000);
+               uint32_t stack_size = 2048);
 
     void Stop()
     {
