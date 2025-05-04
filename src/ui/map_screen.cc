@@ -155,7 +155,7 @@ UserInterface::MapScreen::Update()
         snprintf(buf,
                  sizeof(buf),
                  "%s%s%s",
-                 m_parent.m_gps_position_valid ? LV_SYMBOL_GPS : "",
+                 m_parent.m_gps_position_valid ? LV_SYMBOL_GPS : LV_SYMBOL_CLOSE,
                  m_parent.m_calculating_route ? " " : "",
                  m_parent.m_calculating_route ? LV_SYMBOL_LOOP : "");
     }
