@@ -7,10 +7,13 @@ target_link_libraries(${COMPONENT_TARGET}
     idf::spi_flash
     idf::esp_partition
     encoder_input
+    button_debouncer
     tile_producer
     gps_simulator
     ui
     gps_reader
+    target_gpio
+    target_uart
     target_display
     target_os
     target_nvm

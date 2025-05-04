@@ -41,18 +41,17 @@ app_main(void)
     // Install the GPIO interrupt service
     gpio_install_isr_service(0);
 
-    auto button_gpio = std::make_unique<TargetGpio>(GPIO_NUM_2);
+    auto button_debouncer = std::make_unique<ButtonDebouncer>();
+
     auto pin_a_gpio = std::make_unique<TargetGpio>(GPIO_NUM_0);
     auto pin_b_gpio = std::make_unique<TargetGpio>(GPIO_NUM_1);
     auto switch_up_gpio = std::make_unique<TargetGpio>(GPIO_NUM_3);
-
-    // TODO: Pass multiple into one debonucer
-    auto button_debouncer = std::make_unique<ButtonDebouncer>(*button_gpio);
+    auto button_gpio = button_debouncer->AddButton(std::make_unique<TargetGpio>(GPIO_NUM_2));
 
     auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
 
     auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder,
-                                                        *button_debouncer, // Button
+                                                        *button_gpio, // Button
                                                         *switch_up_gpio);  // Switch up
     auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
                                                  9600,
@@ -67,9 +66,9 @@ app_main(void)
     auto gps_listener = std::make_unique<GpsListener>(*gps_device);
     auto forwarder = std::make_unique<UartEventForwarder>(*lcd_uart, *encoder_input, *gps_listener);
 
-    button_debouncer->Start(0, os::ThreadPriority::kHigh);
-    gps_listener->Start(0, os::ThreadPriority::kNormal);
-    forwarder->Start(0, os::ThreadPriority::kNormal);
+    button_debouncer->Start("button_debouncder", os::ThreadPriority::kHigh);
+    gps_listener->Start("gps_listener");
+    forwarder->Start("forwarder");
 
     while (true)
     {

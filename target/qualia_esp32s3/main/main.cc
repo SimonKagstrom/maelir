@@ -1,3 +1,4 @@
+#include "button_debouncer.hh"
 #include "encoder_input.hh"
 #include "gps_mux.hh"
 #include "gps_reader.hh"
@@ -7,7 +8,9 @@
 #include "sdkconfig.h"
 #include "storage.hh"
 #include "target_display.hh"
+#include "target_gpio.hh"
 #include "target_nvm.hh"
+#include "target_uart.hh"
 #include "tile_producer.hh"
 #include "uart_gps.hh"
 #include "ui.hh"
@@ -65,14 +68,15 @@ CreateDisplay()
     i2c_master_bus_handle_t bus_handle = nullptr;
     esp_io_expander_handle_t expander_handle = nullptr;
 
-    const i2c_master_bus_config_t i2c_master_config = {.i2c_port = kI2cBus,
-                                                       .sda_io_num = kI2cSdaPin,
-                                                       .scl_io_num = kI2cSclPin,
-                                                       .clk_source = I2C_CLK_SRC_DEFAULT,
-                                                       .glitch_ignore_cnt = 7,
-                                                       .intr_priority = 0,
-                                                       .trans_queue_depth = 0,
-                                                       .flags {.enable_internal_pullup = true}};
+    const i2c_master_bus_config_t i2c_master_config = {
+        .i2c_port = kI2cBus,
+        .sda_io_num = kI2cSdaPin,
+        .scl_io_num = kI2cSclPin,
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .glitch_ignore_cnt = 7,
+        .intr_priority = 0,
+        .trans_queue_depth = 0,
+        .flags {.enable_internal_pullup = true, .allow_pd = false}};
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_master_config, &bus_handle));
 
     ESP_ERROR_CHECK(
@@ -217,14 +221,26 @@ app_main(void)
 
     state.Checkout()->demo_mode = true;
 
-    auto encoder_input = std::make_unique<EncoderInput>(6,   // Pin A -> 6 (MISO)
-                                                        7,   // Pin B -> 7 (MOSI)
-                                                        5,   // Button -> 5(SCK)
-                                                        16); // Switch up -> 16 (A1)
+    auto button_debouncer = std::make_unique<ButtonDebouncer>();
+
+    auto pin_a_gpio = std::make_unique<TargetGpio>(GPIO_NUM_6);
+    auto pin_b_gpio = std::make_unique<TargetGpio>(GPIO_NUM_7);
+    auto switch_up_gpio = std::make_unique<TargetGpio>(GPIO_NUM_16);
+    auto button_gpio = button_debouncer->AddButton(std::make_unique<TargetGpio>(GPIO_NUM_5));
+
+    auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
+
+    auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder,
+                                                        *button_gpio,     // Button
+                                                        *switch_up_gpio); // Switch up
+
     auto display = CreateDisplay();
-    auto gps_device = std::make_unique<UartGps>(UART_NUM_1,
-                                                17, // RX -> A0
-                                                8); // TX -> CS (not used)
+    auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
+                                                 9600,
+                                                 GPIO_NUM_17, // RX
+                                                 GPIO_NUM_8); // TX
+
+    auto gps_device = std::make_unique<UartGps>(*gps_uart);
 
     //    auto gps_device = std::make_unique<I2cGps>(
     //            18, // SCL
@@ -250,15 +266,16 @@ app_main(void)
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
-    storage->Start(0);
-    gps_simulator->Start(0);
-    gps_reader->Start(0);
-    producer->Start(1, os::ThreadPriority::kNormal);
-    route_service->Start(0, os::ThreadPriority::kNormal, 5000);
+    button_debouncer->Start("button_debouncder", os::ThreadPriority::kHigh);
+    storage->Start("storage");
+    gps_simulator->Start("gps_simulator", 4096);
+    gps_reader->Start("gps_reader");
+    producer->Start("producer", os::ThreadCore::kCore1);
+    route_service->Start("route_service", 4096);
 
     // Time for the storage to read the home position
     os::Sleep(10ms);
-    ui->Start(1, os::ThreadPriority::kHigh, 8192);
+    ui->Start("ui", os::ThreadCore::kCore1, os::ThreadPriority::kHigh, 8192);
 
     while (true)
     {

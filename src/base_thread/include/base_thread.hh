@@ -54,22 +54,27 @@ public:
         Start(name, ThreadCore::kCore0, ThreadPriority::kLow, kDefaultStackSize);
     }
 
-    void Start(const char *name, ThreadCore core)
+    void Start(const char* name, ThreadCore core)
     {
         Start(name, core, ThreadPriority::kLow, kDefaultStackSize);
     }
 
-    void Start(const char *name, ThreadPriority priority)
+    void Start(const char* name, ThreadPriority priority)
     {
         Start(name, ThreadCore::kCore0, priority, kDefaultStackSize);
     }
 
-    void Start(const char *name, ThreadCore core, ThreadPriority priority)
+    void Start(const char* name, ThreadCore core, ThreadPriority priority)
     {
         Start(name, core, priority, kDefaultStackSize);
     }
 
-    void Start(const char *name, uint32_t stack_size)
+    void Start(const char* name, ThreadCore core, uint32_t stack_size)
+    {
+        Start(name, core, ThreadPriority::kLow, stack_size);
+    }
+
+    void Start(const char* name, uint32_t stack_size)
     {
         Start(name, ThreadCore::kCore0, ThreadPriority::kLow, stack_size);
     }
