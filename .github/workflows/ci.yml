@@ -1,0 +1,32 @@
+name: Maelir CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y g++ cmake ninja-build python3-pip
+        pip3 install -r ${{github.workspace}}/requirements.txt
+        conan profile detect -f
+
+    - name: Install conan deps
+      run: conan install -of ${{github.workspace}}/build/conan_target --build=missing -s build_type=Release -pr ${{github.workspace}}/target/conanprofile.txt ${{github.workspace}}/target/conanfile.txt
+
+    - name: waveshare-lcd build
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: v5.4
+        target: esp32s3
+        path: 'target/waveshare_lcd_esp32c3'
+        command: |
+          cmake -GNinja -B ${{github.workspace}}/build/maelir_waveshare_lcd/  -DCMAKE_PREFIX_PATH="${{github.workspace}}/build/conan_target/build/Release/generators/" -DCMAKE_BUILD_TYPE=Release ${{github.workspace}}/target/waveshare_lcd_esp32s3
+          cmake --build ${{github.workspace}}/build/maelir_waveshare_lcd/ --config Release
