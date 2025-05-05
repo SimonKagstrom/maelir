@@ -15,7 +15,7 @@ ToDegrees(auto word)
     }
 
     char* end = nullptr;
-    auto nmea = std::strtod(word.data(), &end);
+    auto nmea = std::strtof(word.data(), &end);
     if (end == nullptr)
     {
         return std::nullopt;
@@ -40,10 +40,10 @@ NmeaParser::PushData(std::string_view data)
 
     if (!m_pending_data.empty())
     {
-        auto data = m_pending_data.back();
+        auto d = m_pending_data.back();
         m_pending_data.clear();
 
-        return data;
+        return d;
     }
     return std::nullopt;
 }

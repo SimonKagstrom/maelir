@@ -38,12 +38,12 @@ UserInterface::UserInterface(ApplicationState& application_state,
 
 void
 UserInterface::StaticLvglFlushCallback(lv_display_t* display,
-                                       const lv_area_t* area,
+                                       const lv_area_t* area [[maybe_unused]],
                                        uint8_t* px_map)
 {
     if (lv_display_flush_is_last(display))
     {
-        auto p = reinterpret_cast<UserInterface*>(lv_display_get_user_data(display));
+        auto p = static_cast<UserInterface*>(lv_display_get_user_data(display));
 
         p->m_display.Flip();
         lv_display_flush_ready(display);
@@ -88,7 +88,7 @@ UserInterface::OnStartup()
 void
 UserInterface::StaticLvglEncoderRead(lv_indev_t* indev, lv_indev_data_t* data)
 {
-    auto p = reinterpret_cast<UserInterface*>(lv_indev_get_user_data(indev));
+    auto p = static_cast<UserInterface*>(lv_indev_get_user_data(indev));
 
     data->state = p->m_button_state;
     data->enc_diff = p->m_enc_diff;

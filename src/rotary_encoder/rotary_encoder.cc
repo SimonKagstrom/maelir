@@ -48,14 +48,14 @@ std::unique_ptr<ListenerCookie>
 RotaryEncoder::AttachIrqListener(std::function<void(Direction)> on_rotation)
 {
     m_on_rotation = std::move(on_rotation);
-    return std::make_unique<ListenerCookie>([this]() { m_on_rotation = [](auto) {}; });
+    return std::make_unique<ListenerCookie>([this]() { m_on_rotation = [](auto) { /* nop! */ }; });
 }
 
 void
 RotaryEncoder::Process()
 {
-    auto pin_a = m_pin_a.GetState();
-    auto pin_b = m_pin_b.GetState();
+    int pin_a = m_pin_a.GetState();
+    int pin_b = m_pin_b.GetState();
 
     // Get the current state of the rotary encoder
     m_state = kTable[m_state & 0xf][(pin_a << 1) | pin_b];

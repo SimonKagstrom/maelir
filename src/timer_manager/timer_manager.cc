@@ -79,7 +79,7 @@ TimerManager::StartTimer(milliseconds timeout,
         return nullptr;
     }
 
-    auto index = m_free_timers.find_first(true);
+    auto index = static_cast<uint8_t>(m_free_timers.find_first(true));
     m_free_timers[index] = false;
 
     if (m_in_expire)

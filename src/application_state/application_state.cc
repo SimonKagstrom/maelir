@@ -28,11 +28,11 @@ private:
 
 struct ApplicationState::StateImpl : ApplicationState::State
 {
-    StateImpl(ApplicationState& parent)
+    explicit StateImpl(ApplicationState& parent)
         : m_parent(parent)
+        , m_shadow(parent.m_global_state)
     {
         static_cast<State&>(*this) = parent.m_global_state;
-        m_shadow = parent.m_global_state;
     }
 
     ~StateImpl() final
@@ -74,7 +74,7 @@ template <typename M>
 bool
 ApplicationState::UpdateIfChanged(M ApplicationState::State::* member,
                                   const ApplicationState::StateImpl* current_state,
-                                  ApplicationState::State* global_state)
+                                  ApplicationState::State* global_state) const
 {
     if (current_state->*member != current_state->m_shadow.*member)
     {

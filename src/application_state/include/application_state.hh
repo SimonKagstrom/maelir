@@ -59,7 +59,7 @@ private:
     template <typename M>
     bool UpdateIfChanged(M ApplicationState::State::* member,
                          const ApplicationState::StateImpl* current_state,
-                         ApplicationState::State* global_state);
+                         ApplicationState::State* global_state) const;
 
     void Commit(const StateImpl* state);
 

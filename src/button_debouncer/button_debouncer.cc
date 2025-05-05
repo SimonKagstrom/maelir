@@ -21,7 +21,7 @@ ButtonDebouncer::Button::Button(ButtonDebouncer& parent, std::unique_ptr<hal::IG
     : m_parent(parent)
     , m_button_gpio(std::move(button_gpio))
 {
-    m_interrupt_listener = m_button_gpio->AttachIrqListener([this](bool state) {
+    m_interrupt_listener = m_button_gpio->AttachIrqListener([this](bool state [[maybe_unused]]) {
         m_interrupt = true;
         m_parent.Awake();
     });
@@ -37,7 +37,8 @@ ButtonDebouncer::Button::AttachIrqListener(std::function<void(bool)> on_state_ch
 {
     m_on_state_change = std::move(on_state_change);
 
-    return std::make_unique<ListenerCookie>([this]() { m_on_state_change = [](auto) {}; });
+    return std::make_unique<ListenerCookie>(
+        [this]() { m_on_state_change = [](auto) { /* nop! */ }; });
 }
 
 bool
@@ -114,7 +115,7 @@ ButtonDebouncer::AddButton(std::unique_ptr<hal::IGpio> pin)
 void
 ButtonDebouncer::RemoveButton(Button* button)
 {
-    auto it = std::find(m_buttons.begin(), m_buttons.end(), button);
+    auto it = std::ranges::find(m_buttons, button);
     if (it != m_buttons.end())
     {
         m_buttons.erase(it);
