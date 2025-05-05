@@ -10,7 +10,7 @@ TargetGpio::TargetGpio(uint8_t pin, TargetGpio::Polarity polarity)
 void
 TargetGpio::SetState(bool state)
 {
-    gpio_set_level(m_pin, state);
+    gpio_set_level(m_pin, state ^ m_polarity);
 }
 
 bool
