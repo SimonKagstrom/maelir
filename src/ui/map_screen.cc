@@ -77,6 +77,7 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     lv_obj_align(m_speedometer_scale, LV_ALIGN_TOP_LEFT, 0, 0);
 
     lv_scale_set_label_show(m_speedometer_scale, true);
+    lv_obj_set_style_text_font(m_speedometer_scale, &lv_font_montserrat_30, LV_PART_MAIN);
 
     lv_scale_set_total_tick_count(m_speedometer_scale, kMaxKnots + 1);
     lv_scale_set_major_tick_every(m_speedometer_scale, 5);
@@ -112,6 +113,9 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
 
     lv_obj_add_style(m_indicators, &style_white_text, 0);
     lv_obj_add_style(m_indicators_shadow, &style_text_shadow, 0);
+    lv_obj_set_style_text_font(m_indicators, &lv_font_montserrat_30, LV_PART_MAIN);
+    lv_obj_set_style_text_font(m_indicators_shadow, &lv_font_montserrat_30, LV_PART_MAIN);
+
 
     lv_obj_align(m_indicators, LV_ALIGN_BOTTOM_MID, 0, -1);
 }
