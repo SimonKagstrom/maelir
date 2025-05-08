@@ -4,3 +4,6 @@
 [submodule "external/lvgl"]
 	path = external/lvgl
 	url = https://github.com/lvgl/lvgl.git
+[submodule "external/maelir_data"]
+	path = external/maelir_data
+	url = git@github.com:SimonKagstrom/maelir_data.git
