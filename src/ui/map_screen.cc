@@ -484,8 +484,10 @@ UserInterface::MapScreen::DrawMapTiles(const Point& position)
 {
     auto x_remainder = position.x % kTileSize;
     auto y_remainder = position.y % kTileSize;
-    auto num_tiles_x = (hal::kDisplayWidth + kTileSize - 1) / kTileSize + !!x_remainder;
-    auto num_tiles_y = (hal::kDisplayHeight + kTileSize - 1) / kTileSize + !!y_remainder;
+    auto num_tiles_x =
+        (hal::kDisplayWidth + kTileSize - 1) / kTileSize + static_cast<int>(!!x_remainder);
+    auto num_tiles_y =
+        (hal::kDisplayHeight + kTileSize - 1) / kTileSize + static_cast<int>(!!y_remainder);
 
     auto start_x = position.x - x_remainder;
     auto start_y = position.y - y_remainder;
@@ -652,7 +654,6 @@ UserInterface::MapScreen::OnInputViewMap(hal::IInput::Event event)
     }
 
     m_mode = static_cast<Mode>(mode % std::to_underlying(Mode::kValueCount));
-    printf("Event: %d. State now %d\n", (int)event.type, (int)m_mode);
 }
 
 void
