@@ -12,7 +12,7 @@ BaseThread::~BaseThread()
 }
 
 void
-BaseThread::Start(uint8_t, ThreadPriority, uint32_t)
+BaseThread::Start(const char*, ThreadCore, ThreadPriority, uint32_t)
 {
 }
 
