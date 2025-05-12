@@ -35,8 +35,8 @@ target_link_libraries(ut
     application_state
     event_serializer
     nmea_parser
+    route_iterator
     router
-    router_interface
     timer_manager
     gps_reader
     doctest::doctest

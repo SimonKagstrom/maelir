@@ -24,4 +24,5 @@ PRIVATE
     boat_library
     crosshair_library
     painter
+    route_iterator
 )

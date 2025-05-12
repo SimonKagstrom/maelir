@@ -85,6 +85,7 @@ target_include_directories(map_editor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(map_editor
     os_qt
     yaml-cpp
+    route_iterator
     router
     router_interface
 )
