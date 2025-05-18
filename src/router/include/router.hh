@@ -9,7 +9,7 @@
 #include <span>
 
 constexpr auto kTargetCacheSize = 65535;
-constexpr auto kUnitTestCacheSize = 24;
+constexpr auto kUnitTestCacheSize = 64;
 constexpr IndexType kInvalidIndex = std::numeric_limits<IndexType>::max();
 
 template <size_t CACHE_SIZE>
