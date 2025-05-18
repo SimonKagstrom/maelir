@@ -110,7 +110,9 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
     constexpr uint32_t kRouteLength =
         (kPathFinderTileSize * 7 + kPathFinderTileSize * 8) * kMetersPerPixel;
 
-    ALLOW_CALL(*gps_port, Poll()).RETURN(std::nullopt);
+    auto gps_data = GpsData {.speed = 20.0f};
+
+    ALLOW_CALL(*gps_port, Poll()).LR_RETURN(gps_data);
 
     auto state = m_application_state.CheckoutReadonly();
 
@@ -127,6 +129,27 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
         THEN("the distance to the target is updated")
         {
             REQUIRE(state->route_total_meters == kRouteLength);
+        }
+
+        AND_WHEN("the boat moves along the route")
+        {
+            THEN("the passed distance is updated")
+            {
+            }
+        }
+
+        AND_WHEN("the route is dropped")
+        {
+            const auto kRouteDroppedEv =
+                IRouteListener::Event {IRouteListener::EventType::kCalculating, {}};
+
+            REQUIRE_CALL(*route_listener, Poll()).LR_RETURN(kRouteDroppedEv);
+            DoRunLoop();
+
+            THEN("the distance to the target is zeroed")
+            {
+                REQUIRE(state->route_total_meters == 0);
+            }
         }
     }
 }
