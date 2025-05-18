@@ -23,12 +23,14 @@ add_executable(ut
     os/base_thread_unittest.cc
     os/semaphore_unittest.cc
     main.cc
+    mock_time.cc
     test_application_state.cc
     test_event_serializer.cc
     test_gps_reader.cc
     test_nmea_parser.cc
     test_router.cc
     test_timer_manager.cc
+    test_trip_computer.cc
 )
 
 target_link_libraries(ut
@@ -38,6 +40,7 @@ target_link_libraries(ut
     route_iterator
     router
     timer_manager
+    trip_computer
     gps_reader
     doctest::doctest
     trompeloeil::trompeloeil

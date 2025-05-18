@@ -1,63 +1,11 @@
 #include "test.hh"
 #include "timer_manager.hh"
+#include "mock_time.hh"
 
 using namespace os;
 
 namespace
 {
-
-class MockTime
-{
-public:
-    void SetTime(milliseconds time)
-    {
-        m_time = time;
-    }
-
-    void AdvanceTime(milliseconds time)
-    {
-        m_time += time;
-    }
-
-    auto Now()
-    {
-        return m_time;
-    }
-
-private:
-    milliseconds m_time {10s};
-};
-
-std::weak_ptr<MockTime> g_mock_time;
-
-class Fixture
-{
-public:
-    Fixture()
-    {
-        g_mock_time = m_time;
-    }
-
-    ~Fixture()
-    {
-        g_mock_time.reset();
-    }
-
-    void AdvanceTime(milliseconds time)
-    {
-        m_time->AdvanceTime(time);
-    }
-
-    void SetTime(milliseconds time)
-    {
-        m_time->SetTime(time);
-    }
-
-    os::binary_semaphore m_sem {0};
-
-private:
-    std::shared_ptr<MockTime> m_time = std::make_shared<MockTime>();
-};
 
 class MockCallback
 {
@@ -65,17 +13,11 @@ public:
     MAKE_MOCK0(OnTimeout, void());
 };
 
-} // namespace
-
-
-milliseconds
-os::GetTimeStamp()
+class Fixture : public TimeFixture
 {
-    auto p = g_mock_time.lock();
+};
 
-    assert(p);
-    return p->Now();
-}
+} // namespace
 
 
 TEST_CASE_FIXTURE(Fixture, "the timer manager is empty by default")

@@ -10,7 +10,9 @@
 class TripComputer : public os::BaseThread
 {
 public:
-    TripComputer(const MapMetadata& metadata, std::unique_ptr<IGpsPort> gps_port);
+    TripComputer(const MapMetadata& metadata,
+                 std::unique_ptr<IGpsPort> gps_port,
+                 std::unique_ptr<IRouteListener> route_listener);
 
 private:
     template <size_t Size>
@@ -37,6 +39,9 @@ private:
     };
 
     std::optional<milliseconds> OnActivation() final;
+
+    std::unique_ptr<IGpsPort> m_gps_port;
+    std::unique_ptr<IRouteListener> m_route_listener;
 
     HistoryBuffer<60> m_second_history;
     HistoryBuffer<5> m_minute_history;
