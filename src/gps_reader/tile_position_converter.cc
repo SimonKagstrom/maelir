@@ -96,7 +96,7 @@ PositionToPoint(const MapMetadata& metadata, const GpsPosition& gps_data)
 
             if (cur_index >= positions.size())
             {
-                return {0, 0};
+                continue;
             }
 
             // Make a copy to get it out of flash
