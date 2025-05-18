@@ -12,7 +12,7 @@
 class RouteService : public os::BaseThread
 {
 public:
-    RouteService(const MapMetadata& metadata);
+    explicit RouteService(const MapMetadata& metadata);
 
     // Context: Another thread
     void RequestRoute(Point from, Point to);

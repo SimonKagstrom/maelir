@@ -1,5 +1,9 @@
+#include "hal/i_gps.hh"
 #include "router.hh"
 #include "tile.hh"
+
+#include <cmath>
+#include <numbers>
 
 static IndexType
 PointToLandIndex(Point point, unsigned row_size)
@@ -35,4 +39,30 @@ IndexPairToDirection(IndexType from, IndexType to, unsigned row_size)
     int to_y = to / row_size;
 
     return PointPairToVector({from_x, from_y}, {to_x, to_y});
+}
+
+// From https://stackoverflow.com/questions/639695/how-to-convert-latitude-or-longitude-to-meters
+static float
+Wgs84DeltaToMeters(const GpsPosition& pos1, const GpsPosition& pos2)
+
+{
+    auto lat1 = pos1.latitude;
+    auto lon1 = pos1.longitude;
+    auto lat2 = pos2.latitude;
+    auto lon2 = pos2.longitude;
+
+    using namespace std::numbers;
+
+    constexpr auto kPi = std::numbers::pi_v<float>;
+
+    constexpr auto R = 6378.137f; // Radius of earth in KM
+    float dLat = lat2 * kPi / 180 - lat1 * kPi / 180;
+    float dLon = lon2 * kPi / 180 - lon1 * kPi / 180;
+    float a = std::sinf(dLat / 2) * std::sinf(dLat / 2) +
+              std::cosf(lat1 * kPi / 180) * std::cosf(lat2 * kPi / 180) * std::sinf(dLon / 2) *
+                  std::sinf(dLon / 2);
+    float c = 2 * std::atan2f(std::sqrtf(a), std::sqrtf(1 - a));
+    float d = R * c;
+
+    return d * 1000.0f; // meters
 }
