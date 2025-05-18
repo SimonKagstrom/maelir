@@ -1,12 +1,15 @@
 #include "trip_computer.hh"
 
-TripComputer::TripComputer(const MapMetadata& metadata,
-                           ApplicationState& application_state,
+TripComputer::TripComputer(ApplicationState& application_state,
                            std::unique_ptr<IGpsPort> gps_port,
-                           std::unique_ptr<IRouteListener> route_listener)
+                           std::unique_ptr<IRouteListener> route_listener,
+                           float meters_per_pixel,
+                           uint32_t land_mask_row_size)
     : m_application_state(application_state)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
+    , m_meters_per_pixel(meters_per_pixel)
+    , m_land_mask_row_size(land_mask_row_size)
 {
     m_gps_port->AwakeOn(GetSemaphore());
 }
@@ -34,6 +37,11 @@ template <size_t Size>
 uint8_t
 TripComputer::HistoryBuffer<Size>::Average() const
 {
+    if (m_history.empty())
+    {
+        return 0;
+    }
+
     auto sum = std::accumulate(m_history.begin(), m_history.end(), 0);
 
     return static_cast<uint8_t>(sum / m_history.size());
@@ -48,6 +56,20 @@ TripComputer::OnActivation()
         HandleSpeed(gps_data->speed);
     }
 
+    if (auto ev = m_route_listener->Poll(); m_route_listener)
+    {
+        auto state = m_application_state.Checkout();
+
+        // Reset
+        m_current_route = {};
+        state->route_total_meters = 0;
+        state->route_passed_meters = 0;
+
+        if (ev->type == IRouteListener::EventType::kReady)
+        {
+        }
+    }
+
     return std::nullopt;
 }
 
@@ -60,19 +82,30 @@ TripComputer::HandleSpeed(float speed_knots)
     }
     auto speed = static_cast<uint8_t>(std::clamp(speed_knots, 0.0f, 255.0f));
 
-    auto wrap = m_second_history.Push(speed);
-    auto second_average = m_second_history.Average();
+    auto wrap = m_minute_history.Push(speed);
+    auto minute_average = m_minute_history.Average();
 
     if (wrap)
     {
         // Wrap around, add to the minute history
-        m_minute_history.Push(second_average);
+        m_five_minute_history.Push(minute_average);
     }
 
     auto state = m_application_state.Checkout();
 
-    state->minute_average_speed = second_average;
-    state->five_minute_average_speed = m_minute_history.Average();
+    state->minute_average_speed = minute_average;
+    state->five_minute_average_speed = m_five_minute_history.Average();
+}
+
+uint32_t
+TripComputer::MeasureRoute()
+{
+    uint32_t meters = 0;
+
+    auto route_iterator = RouteIterator(m_current_route, m_land_mask_row_size);
+    auto last_point = route_iterator.Next();
+
+    return meters;
 }
 
 template class TripComputer::HistoryBuffer<60>;

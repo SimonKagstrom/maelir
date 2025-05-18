@@ -97,6 +97,14 @@ ApplicationState::Commit(const ApplicationState::StateImpl* state)
     updated |= UpdateIfChanged(&ApplicationState::State::gps_connected, state, &m_global_state);
     updated |= UpdateIfChanged(&ApplicationState::State::show_speedometer, state, &m_global_state);
     updated |= UpdateIfChanged(&ApplicationState::State::color_mode, state, &m_global_state);
+    updated |=
+        UpdateIfChanged(&ApplicationState::State::minute_average_speed, state, &m_global_state);
+    updated |= UpdateIfChanged(
+        &ApplicationState::State::five_minute_average_speed, state, &m_global_state);
+    updated |=
+        UpdateIfChanged(&ApplicationState::State::route_passed_meters, state, &m_global_state);
+    updated |=
+        UpdateIfChanged(&ApplicationState::State::route_total_meters, state, &m_global_state);
     updated |= UpdateIfChanged(&ApplicationState::State::home_position, state, &m_global_state);
     updated |= UpdateIfChanged(&ApplicationState::State::stored_positions, state, &m_global_state);
 

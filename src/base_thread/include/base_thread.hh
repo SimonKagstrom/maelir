@@ -7,6 +7,8 @@
 #include <atomic>
 #include <optional>
 
+class ThreadFixture;
+
 namespace os
 {
 
@@ -29,6 +31,9 @@ enum class ThreadCore : uint8_t
 class BaseThread
 {
 public:
+    // For unit tests
+    friend class ::ThreadFixture;
+
     BaseThread();
 
     virtual ~BaseThread();
@@ -110,6 +115,15 @@ protected:
 private:
     struct Impl;
 
+    // Accessible for unit tests
+    std::optional<milliseconds> RunLoop()
+    {
+        auto thread_wakeup = OnActivation();
+        auto timer_expiration = m_timer_manager.Expire();
+
+        return SelectWakeup(thread_wakeup, timer_expiration);
+    }
+
     std::optional<milliseconds> SelectWakeup(auto a, auto b) const
     {
         if (a && b)
@@ -135,10 +149,9 @@ private:
 
         while (m_running)
         {
-            auto thread_wakeup = OnActivation();
-            auto timer_expiery = m_timer_manager.Expire();
+            auto time = RunLoop();
 
-            if (auto time = SelectWakeup(thread_wakeup, timer_expiery); time)
+            if (time)
             {
                 m_semaphore.try_acquire_for(*time);
             }

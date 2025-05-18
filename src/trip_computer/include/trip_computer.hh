@@ -11,10 +11,11 @@
 class TripComputer : public os::BaseThread
 {
 public:
-    TripComputer(const MapMetadata& metadata,
-                 ApplicationState& application_state,
+    TripComputer(ApplicationState& application_state,
                  std::unique_ptr<IGpsPort> gps_port,
-                 std::unique_ptr<IRouteListener> route_listener);
+                 std::unique_ptr<IRouteListener> route_listener,
+                 float meters_per_pixel,
+                 uint32_t land_mask_row_size);
 
 private:
     template <size_t Size>
@@ -44,13 +45,16 @@ private:
     std::optional<milliseconds> OnActivation() final;
 
     void HandleSpeed(float speed_knots);
+    uint32_t MeasureRoute();
 
     ApplicationState& m_application_state;
     std::unique_ptr<IGpsPort> m_gps_port;
     std::unique_ptr<IRouteListener> m_route_listener;
+    const float m_meters_per_pixel;
+    const uint32_t m_land_mask_row_size;
 
-    HistoryBuffer<60> m_second_history;
-    HistoryBuffer<5> m_minute_history;
+    HistoryBuffer<60> m_minute_history;
+    HistoryBuffer<5> m_five_minute_history;
 
-    os::TimerHandle m_gps_tick;
+    std::span<const IndexType> m_current_route {};
 };
