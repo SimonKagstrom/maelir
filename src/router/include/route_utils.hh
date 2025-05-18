@@ -1,3 +1,5 @@
+#pragma once
+
 #include "hal/i_gps.hh"
 #include "router.hh"
 #include "tile.hh"
