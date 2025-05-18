@@ -37,8 +37,12 @@ public:
         bool gps_connected {false};
         bool show_speedometer {true};
         ColorMode color_mode {ColorMode::kColor};
+        uint8_t minute_average_speed {0};
+        uint8_t five_minute_average_speed {0};
 
         IndexType home_position {0};
+        uint32_t route_passed_meters {0};
+        uint32_t route_total_meters {0};
         etl::deque<IndexType, kMaxStoredPositions> stored_positions {};
 
         bool operator==(const State& other) const = default;

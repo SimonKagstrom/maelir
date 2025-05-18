@@ -68,6 +68,7 @@ target_link_libraries(maelir_qt
     gps_simulator
     route_service
     storage
+    trip_computer
     uart_bridge
     uart_event_listener
     uart_event_forwarder
