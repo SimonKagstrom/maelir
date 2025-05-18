@@ -9,6 +9,7 @@ PUBLIC
 
 target_link_libraries(trip_computer
 PUBLIC
+    application_state
     route_service
     base_thread
     gps_reader
