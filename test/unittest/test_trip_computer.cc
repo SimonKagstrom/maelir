@@ -107,8 +107,8 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer average speed is updated")
 TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target position")
 {
     constexpr auto kRoute = std::array {ToIndex(0, 0), ToIndex(7, 0), ToIndex(15, 8)};
-    constexpr auto kRouteLength =
-        (kPathFinderTileSize * 8 + kPathFinderTileSize * 8) * kMetersPerPixel;
+    constexpr uint32_t kRouteLength =
+        (kPathFinderTileSize * 7 + kPathFinderTileSize * 8) * kMetersPerPixel;
 
     ALLOW_CALL(*gps_port, Poll()).RETURN(std::nullopt);
 
@@ -122,6 +122,7 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
         const auto kRouteEv = IRouteListener::Event {IRouteListener::EventType::kReady, kRoute};
 
         REQUIRE_CALL(*route_listener, Poll()).LR_RETURN(kRouteEv);
+        DoRunLoop();
 
         THEN("the distance to the target is updated")
         {

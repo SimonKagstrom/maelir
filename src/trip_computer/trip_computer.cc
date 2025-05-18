@@ -56,7 +56,7 @@ TripComputer::OnActivation()
         HandleSpeed(gps_data->speed);
     }
 
-    if (auto ev = m_route_listener->Poll(); m_route_listener)
+    if (auto ev = m_route_listener->Poll(); ev)
     {
         auto state = m_application_state.Checkout();
 
@@ -67,6 +67,8 @@ TripComputer::OnActivation()
 
         if (ev->type == IRouteListener::EventType::kReady)
         {
+            m_current_route = ev->route;
+            state->route_total_meters = MeasureRoute();
         }
     }
 
@@ -98,14 +100,42 @@ TripComputer::HandleSpeed(float speed_knots)
 }
 
 uint32_t
-TripComputer::MeasureRoute()
+TripComputer::MeasureRoute() const
 {
     uint32_t meters = 0;
 
     auto route_iterator = RouteIterator(m_current_route, m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
+    if (!last_point)
+    {
+        return 0;
+    }
+
+    while (auto cur_point = route_iterator.Next())
+    {
+        // Either diagonal, horizontal or vertical, so summing the pixel distance is OK
+        auto distance = PointDistance(*last_point, *cur_point);
+
+        meters += distance;
+
+        last_point = cur_point;
+    }
+
     return meters;
+}
+
+uint32_t
+TripComputer::PointDistance(Point a, Point b) const
+{
+    auto vec = PointPairToVector(a, b);
+
+    if (vec.IsDiagonal())
+    {
+        return std::abs(a.x - b.x) * m_meters_per_pixel;
+    }
+
+    return (std::abs(a.x - b.x) + std::abs(a.y - b.y)) * m_meters_per_pixel;
 }
 
 template class TripComputer::HistoryBuffer<60>;

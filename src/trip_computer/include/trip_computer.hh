@@ -45,7 +45,8 @@ private:
     std::optional<milliseconds> OnActivation() final;
 
     void HandleSpeed(float speed_knots);
-    uint32_t MeasureRoute();
+    uint32_t MeasureRoute() const;
+    uint32_t PointDistance(Point a, Point b) const;
 
     ApplicationState& m_application_state;
     std::unique_ptr<IGpsPort> m_gps_port;
