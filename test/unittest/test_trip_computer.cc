@@ -141,6 +141,19 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
         AND_WHEN("the route is dropped")
         {
             const auto kRouteDroppedEv =
+                IRouteListener::Event {IRouteListener::EventType::kReleased, {}};
+
+            REQUIRE_CALL(*route_listener, Poll()).LR_RETURN(kRouteDroppedEv);
+            DoRunLoop();
+
+            THEN("the distance to the target is zeroed")
+            {
+                REQUIRE(state->route_total_meters == 0);
+            }
+        }
+        AND_WHEN("a new route is calculated")
+        {
+            const auto kRouteDroppedEv =
                 IRouteListener::Event {IRouteListener::EventType::kCalculating, {}};
 
             REQUIRE_CALL(*route_listener, Poll()).LR_RETURN(kRouteDroppedEv);

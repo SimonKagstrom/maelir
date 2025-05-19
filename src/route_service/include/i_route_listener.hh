@@ -11,8 +11,9 @@ class IRouteListener
 public:
     enum class EventType
     {
-        kCalculating,
-        kReady,
+        kCalculating, // New route being calculated
+        kReady,       // The route is ready
+        kReleased,    // The route is released (dropped)
 
         kValueCount,
     };
