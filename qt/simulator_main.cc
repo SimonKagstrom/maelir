@@ -3,10 +3,12 @@
 #include "gps_simulator.hh"
 #include "nvm_host.hh"
 #include "route_service.hh"
+#include "route_utils.hh"
 #include "simulator_mainwindow.hh"
 #include "storage.hh"
 #include "tile_producer.hh"
 #include "time.hh"
+#include "trip_computer.hh"
 #include "uart_bridge.hh"
 #include "uart_event_forwarder.hh"
 #include "uart_event_listener.hh"
@@ -101,6 +103,11 @@ main(int argc, char* argv[])
     auto uart_event_listener = std::make_unique<UartEventListener>(uart_a);
     auto uart_event_forwarder = std::make_unique<UartEventForwarder>(uart_b, window, *gps_listener);
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *uart_event_listener);
+    auto trip_computer = std::make_unique<TripComputer>(state,
+                                                        gps_reader->AttachListener(),
+                                                        route_service->AttachListener(),
+                                                        LookupMetersPerPixel(*map_metadata),
+                                                        map_metadata->land_mask_row_size);
 
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
@@ -125,6 +132,7 @@ main(int argc, char* argv[])
     gps_reader->Start("gps_reader");
     producer->Start("tile_producer");
     route_service->Start("route_service");
+    trip_computer->Start("trip_computer");
     ui->Start("ui");
 
     window.show();

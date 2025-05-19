@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hal/i_gps.hh"
+#include "position_converter.hh"
 #include "router.hh"
 #include "tile.hh"
 
@@ -46,7 +47,6 @@ IndexPairToDirection(IndexType from, IndexType to, unsigned row_size)
 // From https://stackoverflow.com/questions/639695/how-to-convert-latitude-or-longitude-to-meters
 static float
 Wgs84DeltaToMeters(const GpsPosition& pos1, const GpsPosition& pos2)
-
 {
     auto lat1 = pos1.latitude;
     auto lon1 = pos1.longitude;
@@ -67,4 +67,22 @@ Wgs84DeltaToMeters(const GpsPosition& pos1, const GpsPosition& pos2)
     float d = R * c;
 
     return d * 1000.0f; // meters
+}
+
+static float
+LookupMetersPerPixel(const MapMetadata& metadata)
+{
+    auto gps_metadata = gps::PositionSpanFromMetadata(metadata);
+
+    for (auto cur : gps_metadata)
+    {
+        if (cur.latitude_offset != 0 && cur.longitude_offset != 0)
+        {
+            return Wgs84DeltaToMeters({cur.latitude, cur.longitude},
+                                      {cur.latitude + cur.latitude_offset, cur.longitude}) /
+                   kGpsPositionSize;
+        }
+    }
+
+    return 0;
 }

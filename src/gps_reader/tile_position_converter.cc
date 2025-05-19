@@ -5,16 +5,6 @@
 
 namespace
 {
-
-auto
-PositionSpanFromMetadata(const MapMetadata& metadata)
-{
-    const auto base = reinterpret_cast<const uint8_t*>(&metadata);
-    return std::span<const MapGpsRasterTile> {
-        reinterpret_cast<const MapGpsRasterTile*>(base + metadata.gps_position_offset),
-        metadata.gps_data_rows * metadata.gps_data_row_size};
-}
-
 std::optional<Point>
 PositionIsInTile(const MapGpsRasterTile& cur, int32_t x, int32_t y, const GpsPosition& gps_data)
 {
@@ -56,6 +46,14 @@ static CachedGpsTile g_current_tile {{0, 0, 0, 0}, 0, 0};
 namespace gps
 {
 
+std::span<const MapGpsRasterTile>
+PositionSpanFromMetadata(const MapMetadata& metadata)
+{
+    const auto base = reinterpret_cast<const uint8_t*>(&metadata);
+    return std::span<const MapGpsRasterTile> {
+        reinterpret_cast<const MapGpsRasterTile*>(base + metadata.gps_position_offset),
+        metadata.gps_data_rows * metadata.gps_data_row_size};
+}
 Point
 PositionToPoint(const MapMetadata& metadata, const GpsPosition& gps_data)
 {

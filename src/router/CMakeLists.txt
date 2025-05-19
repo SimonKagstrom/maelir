@@ -1,8 +1,11 @@
 add_library(router_interface INTERFACE)
+
 target_include_directories(router_interface INTERFACE
     include)
+
 target_link_libraries(router_interface INTERFACE
     maelir_interface
+    tile_position_converter
 )
 
 
