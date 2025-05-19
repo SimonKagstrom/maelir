@@ -107,12 +107,14 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer average speed is updated")
 TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target position")
 {
     constexpr auto kRoute = std::array {ToIndex(0, 0), ToIndex(7, 0), ToIndex(15, 8)};
-    constexpr uint32_t kRouteLength =
-        (kPathFinderTileSize * 7 + kPathFinderTileSize * 8) * kMetersPerPixel;
+    constexpr uint32_t kFirstLegLength = kPathFinderTileSize * 7 * kMetersPerPixel;
+    constexpr uint32_t kSecondLegLength = (kPathFinderTileSize * 8) * kMetersPerPixel;
+    constexpr uint32_t kRouteLength = kFirstLegLength + kSecondLegLength;
 
     auto gps_data = GpsData {.speed = 20.0f};
 
     ALLOW_CALL(*gps_port, Poll()).LR_RETURN(gps_data);
+    ALLOW_CALL(*route_listener, Poll()).RETURN(std::nullopt);
 
     auto state = m_application_state.CheckoutReadonly();
 
@@ -133,8 +135,29 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
 
         AND_WHEN("the boat moves along the route")
         {
+            gps_data.pixel_position = ToPoint(7, 0);
+
+            DoRunLoop();
+
             THEN("the passed distance is updated")
             {
+                REQUIRE(state->route_passed_meters == kFirstLegLength);
+                REQUIRE(state->route_total_meters == kRouteLength);
+            }
+
+            AND_WHEN("the target is almost reached")
+            {
+                auto target = ToPoint(15, 8);
+                target.x -= kPathFinderTileSize / 2;
+
+                gps_data.pixel_position = target;
+                DoRunLoop();
+
+                THEN("the passed distance is updated")
+                {
+                    REQUIRE(state->route_passed_meters == kRouteLength);
+                    REQUIRE(state->route_passed_meters == state->route_total_meters);
+                }
             }
         }
 

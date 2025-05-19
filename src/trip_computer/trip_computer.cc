@@ -51,17 +51,14 @@ TripComputer::HistoryBuffer<Size>::Average() const
 std::optional<milliseconds>
 TripComputer::OnActivation()
 {
-    if (auto gps_data = m_gps_port->Poll(); gps_data)
-    {
-        HandleSpeed(gps_data->speed);
-    }
-
     if (auto ev = m_route_listener->Poll(); ev)
     {
         auto state = m_application_state.Checkout();
 
         // Reset
         m_current_route = {};
+        m_passed_index = 0;
+
         state->route_total_meters = 0;
         state->route_passed_meters = 0;
 
@@ -70,6 +67,12 @@ TripComputer::OnActivation()
             m_current_route = ev->route;
             state->route_total_meters = MeasureRoute();
         }
+    }
+
+    if (auto gps_data = m_gps_port->Poll(); gps_data)
+    {
+        HandleSpeed(gps_data->speed);
+        HandleRoute(gps_data->pixel_position);
     }
 
     return std::nullopt;
@@ -97,6 +100,50 @@ TripComputer::HandleSpeed(float speed_knots)
 
     state->minute_average_speed = minute_average;
     state->five_minute_average_speed = m_five_minute_history.Average();
+}
+
+void
+TripComputer::HandleRoute(Point pixel_position)
+{
+    if (m_current_route.empty())
+    {
+        return;
+    }
+
+    auto route_iterator = RouteIterator(m_current_route, m_land_mask_row_size);
+    auto last_point = route_iterator.Next();
+
+    if (!last_point)
+    {
+        // Impossible case
+        return;
+    }
+
+    uint32_t passed_distance = 0;
+    auto index = 1;
+
+    while (auto cur_point = route_iterator.Next())
+    {
+        constexpr auto kThreshold = 3 * kPathFinderTileSize;
+        auto leg_distance = PointDistance(*last_point, *cur_point);
+
+        passed_distance += leg_distance;
+        if (std::abs(pixel_position.x - cur_point->x) < kThreshold &&
+            std::abs(pixel_position.y - cur_point->y) < kThreshold)
+        {
+            // The boat is on the route
+            if (m_passed_index < index)
+            {
+                m_passed_index = index;
+                break;
+            }
+        }
+        index++;
+        last_point = cur_point;
+    }
+    auto state = m_application_state.Checkout();
+
+    state->route_passed_meters = passed_distance;
 }
 
 uint32_t

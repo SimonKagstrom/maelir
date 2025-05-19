@@ -45,6 +45,7 @@ private:
     std::optional<milliseconds> OnActivation() final;
 
     void HandleSpeed(float speed_knots);
+    void HandleRoute(Point pixel_position);
     uint32_t MeasureRoute() const;
     uint32_t PointDistance(Point a, Point b) const;
 
@@ -58,4 +59,5 @@ private:
     HistoryBuffer<5> m_five_minute_history;
 
     std::span<const IndexType> m_current_route {};
+    IndexType m_passed_index {0};
 };
