@@ -18,6 +18,27 @@ public:
                  uint32_t land_mask_row_size);
 
 private:
+    struct RouteInfo
+    {
+        std::span<const IndexType> route {};
+        int passed_index {-1};
+        std::optional<std::pair<Point, Point>> current_leg;
+
+        void SetRoute(std::span<const IndexType> new_route)
+        {
+            Reset();
+
+            route = new_route;
+        }
+
+        void Reset()
+        {
+            route = {};
+            passed_index = -1;
+            current_leg = std::nullopt;
+        }
+    };
+
     template <size_t Size>
     class HistoryBuffer
     {
@@ -58,6 +79,5 @@ private:
     HistoryBuffer<60> m_minute_history;
     HistoryBuffer<5> m_five_minute_history;
 
-    std::span<const IndexType> m_current_route {};
-    IndexType m_passed_index {0};
+    RouteInfo m_current_route;
 };

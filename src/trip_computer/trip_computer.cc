@@ -1,5 +1,7 @@
 #include "trip_computer.hh"
 
+constexpr auto kResolution = 50; // Meters
+
 TripComputer::TripComputer(ApplicationState& application_state,
                            std::unique_ptr<IGpsPort> gps_port,
                            std::unique_ptr<IRouteListener> route_listener,
@@ -56,15 +58,14 @@ TripComputer::OnActivation()
         auto state = m_application_state.Checkout();
 
         // Reset
-        m_current_route = {};
-        m_passed_index = 0;
+        m_current_route.Reset();
 
         state->route_total_meters = 0;
         state->route_passed_meters = 0;
 
         if (ev->type == IRouteListener::EventType::kReady)
         {
-            m_current_route = ev->route;
+            m_current_route.SetRoute(ev->route);
             state->route_total_meters = MeasureRoute();
         }
     }
@@ -105,12 +106,12 @@ TripComputer::HandleSpeed(float speed_knots)
 void
 TripComputer::HandleRoute(Point pixel_position)
 {
-    if (m_current_route.empty())
+    if (m_current_route.route.empty())
     {
         return;
     }
 
-    auto route_iterator = RouteIterator(m_current_route, m_land_mask_row_size);
+    auto route_iterator = RouteIterator(m_current_route.route, m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
     if (!last_point)
@@ -120,30 +121,38 @@ TripComputer::HandleRoute(Point pixel_position)
     }
 
     uint32_t passed_distance = 0;
-    auto index = 1;
+    auto index = 0;
 
     while (auto cur_point = route_iterator.Next())
     {
-        constexpr auto kThreshold = 3 * kPathFinderTileSize;
+        constexpr auto kThreshold = 2 * kPathFinderTileSize;
         auto leg_distance = PointDistance(*last_point, *cur_point);
+        auto current_leg = std::pair {*last_point, *cur_point};
 
-        passed_distance += leg_distance;
-        if (std::abs(pixel_position.x - cur_point->x) < kThreshold &&
-            std::abs(pixel_position.y - cur_point->y) < kThreshold)
+        if (index <= m_current_route.passed_index)
         {
-            // The boat is on the route
-            if (m_passed_index < index)
-            {
-                m_passed_index = index;
-                break;
-            }
+            passed_distance += leg_distance;
         }
+        if (std::abs(pixel_position.x - cur_point->x) < kThreshold &&
+            std::abs(pixel_position.y - cur_point->y) < kThreshold &&
+            m_current_route.passed_index < index)
+        {
+            // Near a waypoint, mark it as passed
+            m_current_route.passed_index = index;
+            m_current_route.current_leg = current_leg;
+        }
+
+        if (m_current_route.current_leg == current_leg)
+        {
+            passed_distance += PointDistance(*last_point, pixel_position);
+        }
+
         index++;
         last_point = cur_point;
     }
     auto state = m_application_state.Checkout();
 
-    state->route_passed_meters = passed_distance;
+    state->route_passed_meters = passed_distance / kResolution * kResolution;
 }
 
 uint32_t
@@ -151,7 +160,7 @@ TripComputer::MeasureRoute() const
 {
     uint32_t meters = 0;
 
-    auto route_iterator = RouteIterator(m_current_route, m_land_mask_row_size);
+    auto route_iterator = RouteIterator(m_current_route.route, m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
     if (!last_point)
@@ -169,7 +178,7 @@ TripComputer::MeasureRoute() const
         last_point = cur_point;
     }
 
-    return meters;
+    return meters / kResolution * kResolution;
 }
 
 uint32_t
