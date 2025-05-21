@@ -8,6 +8,7 @@ target_link_libraries(${COMPONENT_TARGET}
     idf::esp_partition
     encoder_input
     tile_producer
+    trip_computer
     gps_simulator
     ui
     gps_reader
