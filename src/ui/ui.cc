@@ -166,7 +166,13 @@ UserInterface::OnActivation()
 
     m_map_screen->Update();
 
+    if (auto time_before = os::GetTimeStampRaw(); m_next_redraw_time > time_before)
+    {
+        // Wait for the next redraw
+        return milliseconds(m_next_redraw_time - time_before);
+    }
     auto delay = lv_timer_handler();
+    m_next_redraw_time = os::GetTimeStampRaw() + delay;
 
     return milliseconds(delay);
 }
