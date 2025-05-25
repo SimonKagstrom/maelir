@@ -137,6 +137,7 @@ UserInterface::OnActivation()
 
     while (auto route = m_route_listener->Poll())
     {
+        m_passed_route_index = -1;
         if (route->type == IRouteListener::EventType::kReady)
         {
             m_route.clear();
@@ -149,7 +150,6 @@ UserInterface::OnActivation()
             m_calculating_route = route->type == IRouteListener::EventType::kCalculating;
 
             m_route.clear();
-            m_passed_route_index = std::nullopt;
         }
     }
 

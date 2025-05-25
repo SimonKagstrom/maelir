@@ -3,11 +3,11 @@
 #include "application_state.hh"
 #include "base_thread.hh"
 #include "gps_port.hh"
-#include "timer_manager.hh"
 #include "hal/i_display.hh"
 #include "hal/i_input.hh"
 #include "route_service.hh"
 #include "tile_producer.hh"
+#include "timer_manager.hh"
 
 #include <etl/queue_spsc_atomic.h>
 #include <etl/vector.h>
@@ -56,7 +56,7 @@ public:
                   TileProducer& tile_producer,
                   hal::IDisplay& display,
                   hal::IInput& input,
-                  RouteService &route_service,
+                  RouteService& route_service,
                   std::unique_ptr<IGpsPort> gps_port,
                   std::unique_ptr<IRouteListener> route_listener);
 
@@ -78,7 +78,8 @@ private:
 
 
     static void StaticLvglEncoderRead(lv_indev_t* indev, lv_indev_data_t* data);
-    static void StaticLvglFlushCallback(lv_display_t * display, const lv_area_t * area, uint8_t * px_map);
+    static void
+    StaticLvglFlushCallback(lv_display_t* display, const lv_area_t* area, uint8_t* px_map);
 
 
     void EnterMenu();
@@ -95,7 +96,7 @@ private:
 
     hal::IDisplay& m_display;
     hal::IInput& m_input;
-    RouteService &m_route_service;
+    RouteService& m_route_service;
 
     lv_display_t* m_lvgl_display {nullptr};
     lv_indev_t* m_lvgl_input_dev {nullptr};
@@ -116,7 +117,7 @@ private:
 
 
     std::vector<IndexType> m_route;
-    std::optional<unsigned> m_passed_route_index;
+    int m_passed_route_index {-1};
 
     etl::queue_spsc_atomic<hal::IInput::Event, 4> m_input_queue;
 

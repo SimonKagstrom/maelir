@@ -121,35 +121,34 @@ TripComputer::HandleRoute(Point pixel_position)
     }
 
     uint32_t passed_distance = 0;
-    auto index = 0;
+    auto index = 1;
 
     while (auto cur_point = route_iterator.Next())
     {
         constexpr auto kThreshold = 2 * kPathFinderTileSize;
         auto leg_distance = PointDistance(*last_point, *cur_point);
-        auto current_leg = std::pair {*last_point, *cur_point};
 
-        if (index <= m_current_route.passed_index)
-        {
-            passed_distance += leg_distance;
-        }
         if (std::abs(pixel_position.x - cur_point->x) < kThreshold &&
             std::abs(pixel_position.y - cur_point->y) < kThreshold &&
             m_current_route.passed_index < index)
         {
             // Near a waypoint, mark it as passed
             m_current_route.passed_index = index;
-            m_current_route.current_leg = current_leg;
         }
 
-        if (m_current_route.current_leg == current_leg)
+        if (m_current_route.passed_index == index)
         {
             passed_distance += PointDistance(*last_point, pixel_position);
+        }
+        else if (index < m_current_route.passed_index)
+        {
+            passed_distance += leg_distance;
         }
 
         index++;
         last_point = cur_point;
     }
+
     auto state = m_application_state.Checkout();
 
     state->route_passed_meters = passed_distance / kResolution * kResolution;

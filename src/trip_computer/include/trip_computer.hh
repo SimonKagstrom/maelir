@@ -22,7 +22,6 @@ private:
     {
         std::span<const IndexType> route {};
         int passed_index {-1};
-        std::optional<std::pair<Point, Point>> current_leg;
 
         void SetRoute(std::span<const IndexType> new_route)
         {
@@ -34,8 +33,7 @@ private:
         void Reset()
         {
             route = {};
-            passed_index = -1;
-            current_leg = std::nullopt;
+            passed_index = 0;
         }
     };
 

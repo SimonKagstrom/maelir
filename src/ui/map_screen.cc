@@ -360,8 +360,8 @@ UserInterface::MapScreen::DrawSpeedometer()
 void
 UserInterface::MapScreen::AddRoutePoint(unsigned index, const Point& point) const
 {
-    auto has_passed_index = m_parent.m_passed_route_index && index < *m_parent.m_passed_route_index;
-    auto passing_index = m_parent.m_passed_route_index && index == *m_parent.m_passed_route_index;
+    auto has_passed_index = index < m_parent.m_passed_route_index;
+    auto passing_index = index == m_parent.m_passed_route_index;
 
     lv_point_precise_t lv_point;
 
@@ -435,7 +435,7 @@ UserInterface::MapScreen::DrawRoute()
         return;
     }
 
-    auto index = 0;
+    auto index = 1;
     auto route_iterator = RouteIterator(m_parent.m_route, m_parent.m_land_mask_row_size);
     auto last_point = route_iterator.Next();
 
@@ -447,27 +447,25 @@ UserInterface::MapScreen::DrawRoute()
 
     while (auto cur_point = route_iterator.Next())
     {
-        constexpr auto kThreshold = 3 * kPathFinderTileSize;
+        constexpr auto kThreshold = 2 * kPathFinderTileSize;
 
         // Mark the route as passed if the boat is close enough
         if (std::abs(m_parent.m_position.x - cur_point->x) < kThreshold &&
             std::abs(m_parent.m_position.y - cur_point->y) < kThreshold)
         {
-            if (!m_parent.m_passed_route_index || *m_parent.m_passed_route_index < index)
+            if (m_parent.m_passed_route_index < index)
             {
                 m_parent.m_passed_route_index = index;
             }
         }
 
-        if (!LineClipsDisplay(*last_point, *cur_point))
+        if (LineClipsDisplay(*last_point, *cur_point))
         {
-            last_point = cur_point;
-            index++;
-            continue;
+            AddRoutePoint(index - 1, *last_point);
+            AddRoutePoint(index, *cur_point);
         }
-        AddRoutePoint(index++, *last_point);
-        AddRoutePoint(index++, *cur_point);
 
+        index++;
         last_point = cur_point;
     }
 
