@@ -187,7 +187,7 @@ UserInterface::MapScreen::Update()
 
         auto meters_left = state->route_total_meters - state->route_passed_meters;
         auto minute_knots = state->minute_average_speed;
-        auto time_left = meters_left / (minute_knots * 1852 / 60);
+        uint32_t time_left = minute_knots == 0 ? 0u : meters_left / ((minute_knots * 1852) / 60);
 
         snprintf(buf,
                  sizeof(buf),
