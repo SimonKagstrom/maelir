@@ -185,10 +185,15 @@ UserInterface::MapScreen::Update()
         lv_obj_remove_flag(m_trip_computer_box, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_trip_computer_label, LV_OBJ_FLAG_HIDDEN);
 
+        auto meters_left = state->route_total_meters - state->route_passed_meters;
+        auto minute_knots = state->minute_average_speed;
+        auto time_left = meters_left / (minute_knots * 1852 / 60);
+
         snprintf(buf,
                  sizeof(buf),
-                 "%d m\n%d kn\n%d kn",
-                 state->route_total_meters - state->route_passed_meters,
+                 "%d m\n%d min\n%d / %d kn",
+                 meters_left,
+                 time_left,
                  state->minute_average_speed,
                  state->five_minute_average_speed);
         lv_label_set_text(m_trip_computer_label, buf);
