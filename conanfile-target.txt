@@ -1,5 +1,5 @@
 [requires]
-etl/20.38.10
+etl/20.39.4
 
 [generators]
 CMakeDeps
