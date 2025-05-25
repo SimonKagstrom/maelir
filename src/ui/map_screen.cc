@@ -116,6 +116,16 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     lv_obj_set_style_text_font(m_indicators, &lv_font_montserrat_30, LV_PART_MAIN);
     lv_obj_set_style_text_font(m_indicators_shadow, &lv_font_montserrat_30, LV_PART_MAIN);
 
+    // The trip computer (shown on the zoomed out maps)
+    m_trip_computer_box = lv_obj_create(m_screen);
+    lv_obj_align(m_trip_computer_box, LV_ALIGN_LEFT_MID, 10, 0);
+    lv_obj_set_size(m_trip_computer_box, 125, 125);
+    lv_obj_set_style_bg_color(m_trip_computer_box, lv_palette_main(LV_PALETTE_GREY), 0);
+    lv_obj_set_style_bg_opa(m_trip_computer_box, LV_OPA_70, 0);
+    lv_obj_set_style_radius(m_trip_computer_box, 10, 0);
+
+    m_trip_computer_label = lv_label_create(m_trip_computer_box);
+    lv_obj_set_style_text_font(m_trip_computer_label, &lv_font_montserrat_22, LV_PART_MAIN);
 
     lv_obj_align(m_indicators, LV_ALIGN_BOTTOM_MID, 0, -1);
 }
@@ -132,10 +142,11 @@ UserInterface::MapScreen::OnPosition(const GpsData& position)
 void
 UserInterface::MapScreen::Update()
 {
-    char buf[32];
+    char buf[64];
 
     auto state = m_parent.m_application_state.CheckoutReadonly();
     auto show_speedometer = state->show_speedometer;
+    auto show_trip_computer = m_zoom_level > 1 && m_state != State::kSelectDestination;
 
     if (m_state == State::kSelectDestination)
     {
@@ -163,6 +174,30 @@ UserInterface::MapScreen::Update()
                  m_parent.m_calculating_route ? " " : "",
                  m_parent.m_calculating_route ? LV_SYMBOL_LOOP : "");
     }
+    lv_label_set_text(m_indicators, buf);
+    lv_label_set_text(m_indicators_shadow, buf);
+    lv_obj_align_to(m_indicators_shadow, m_indicators, LV_ALIGN_TOP_LEFT, 2, 2);
+    lv_obj_remove_flag(m_indicators_shadow, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(m_indicators, LV_OBJ_FLAG_HIDDEN);
+
+    if (show_trip_computer)
+    {
+        lv_obj_remove_flag(m_trip_computer_box, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(m_trip_computer_label, LV_OBJ_FLAG_HIDDEN);
+
+        snprintf(buf,
+                 sizeof(buf),
+                 "%d m\n%d kn\n%d kn",
+                 state->route_total_meters - state->route_passed_meters,
+                 state->minute_average_speed,
+                 state->five_minute_average_speed);
+        lv_label_set_text(m_trip_computer_label, buf);
+    }
+    else
+    {
+        lv_obj_add_flag(m_trip_computer_box, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(m_trip_computer_label, LV_OBJ_FLAG_HIDDEN);
+    }
 
     if (show_speedometer)
     {
@@ -174,12 +209,6 @@ UserInterface::MapScreen::Update()
         lv_obj_add_flag(m_speedometer_scale, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(m_speedometer_arc, LV_OBJ_FLAG_HIDDEN);
     }
-
-    lv_label_set_text(m_indicators, buf);
-    lv_label_set_text(m_indicators_shadow, buf);
-    lv_obj_align_to(m_indicators_shadow, m_indicators, LV_ALIGN_TOP_LEFT, 2, 2);
-    lv_obj_remove_flag(m_indicators_shadow, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_remove_flag(m_indicators, LV_OBJ_FLAG_HIDDEN);
 
     RunStateMachine();
 
