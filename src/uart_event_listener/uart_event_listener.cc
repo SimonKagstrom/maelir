@@ -2,11 +2,12 @@
 
 namespace
 {
-class DummyListener : public hal::IInput::IListener
+class DummyListener final : public hal::IInput::IListener
 {
 public:
-    virtual void OnInput(const hal::IInput::Event& event)
+    void OnInput(const hal::IInput::Event& event) override
     {
+        // Do nothing
     }
 };
 
@@ -32,7 +33,7 @@ UartEventListener::OnActivation()
 
         if (std::holds_alternative<hal::RawGpsData>(v))
         {
-            auto gps_data = std::get<hal::RawGpsData>(v);
+            const auto& gps_data = std::get<hal::RawGpsData>(v);
 
             m_gps_queue.push(gps_data);
             m_gps_semaphore.release();
@@ -78,8 +79,7 @@ UartEventListener::WaitForData(os::binary_semaphore& semaphore)
     }
 
     std::optional<hal::RawGpsData> data;
-    hal::RawGpsData d;
-    if (m_gps_queue.pop(d))
+    if (hal::RawGpsData d; m_gps_queue.pop(d))
     {
         data = d;
     }
