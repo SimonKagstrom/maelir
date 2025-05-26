@@ -9,6 +9,7 @@ class Image
 public:
     Image(std::span<const uint8_t> data, uint16_t width, uint16_t height, bool has_alpha = false)
         : data(data)
+        , m_data16_size(data.size() / sizeof(uint16_t))
     {
         auto pixel_size = sizeof(uint16_t) + (has_alpha ? 2 : 0);
 
@@ -35,10 +36,13 @@ public:
 
     const std::span<const uint16_t> Data16() const
     {
-        return {reinterpret_cast<const uint16_t*>(data.data()), data.size() / sizeof(uint16_t)};
+        return {reinterpret_cast<const uint16_t*>(data.data()), m_data16_size};
     }
 
     std::span<const uint8_t> data;
 
     lv_image_dsc_t lv_image_dsc;
+
+private:
+    const size_t m_data16_size;
 };
