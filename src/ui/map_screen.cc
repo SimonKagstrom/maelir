@@ -186,14 +186,29 @@ UserInterface::MapScreen::Update()
         lv_obj_remove_flag(m_trip_computer_label, LV_OBJ_FLAG_HIDDEN);
 
         auto meters_left = state->route_total_meters - state->route_passed_meters;
-        auto minute_knots = state->minute_average_speed;
-        uint32_t time_left = minute_knots == 0 ? 0u : meters_left / ((minute_knots * 1852) / 60);
+        auto average_knots = state->five_minute_average_speed;
+        uint32_t time_left = average_knots == 0 ? 0u : meters_left / ((average_knots * 1852) / 60);
+        auto hours_left = time_left / 60;
+        auto minutes_left = time_left % 60;
+        auto distance_format = "m";
 
+        if (meters_left >= 5000)
+        {
+            meters_left /= 1000;
+            distance_format = "km";
+        }
+
+        if (time_left >= 60)
+        {
+            time_left /= 60;
+        }
         snprintf(buf,
                  sizeof(buf),
-                 "%d m\n%d min\n%d / %d kn",
+                 "%d %s\n%d:%02d\n%d / %d kn",
                  meters_left,
-                 time_left,
+                 distance_format,
+                 hours_left,
+                 minutes_left,
                  state->minute_average_speed,
                  state->five_minute_average_speed);
         lv_label_set_text(m_trip_computer_label, buf);
