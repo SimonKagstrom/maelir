@@ -109,5 +109,5 @@ private:
     os::TimerHandle m_select_timer;
 
     // Position selection data
-    Point m_crosshair_position;
+    Point m_crosshair_position {0, 0};
 };
