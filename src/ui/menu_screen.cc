@@ -58,13 +58,26 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
             LandIndexToPoint(state->home_position, m_parent.m_land_mask_row_size));
         m_on_close();
     });
-    AddEntry(main_page, "New route", [this](auto) {
-        // Disable demo mode in this case
-        m_parent.m_application_state.Checkout()->demo_mode = false;
 
-        m_parent.SelectPosition(PositionSelection::kNewRoute);
-        m_on_close();
-    });
+    if (m_parent.m_route.empty())
+    {
+        AddEntry(main_page, "New route", [this](auto) {
+            // Disable demo mode in this case
+            m_parent.m_application_state.Checkout()->demo_mode = false;
+
+            m_parent.SelectPosition(PositionSelection::kNewRoute);
+            m_on_close();
+        });
+    }
+    else
+    {
+        AddEntry(main_page, "Cancel route", [this](auto) {
+            m_parent.m_application_state.Checkout()->demo_mode = false;
+
+            m_parent.m_route.clear();
+            m_on_close();
+        });
+    }
     AddEntryToSubPage(main_page, "Recall route", route_page);
 
     for (auto i = 0u; i < state->stored_positions.size(); i++)
