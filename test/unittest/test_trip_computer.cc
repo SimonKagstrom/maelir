@@ -106,10 +106,14 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer average speed is updated")
 
 TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target position")
 {
+    auto NarrowResolution = [](uint32_t meters) {
+        return (meters / 50) * 50; // Round to the nearest 50 meters
+    };
+
     constexpr auto kRoute = std::array {ToIndex(0, 0), ToIndex(7, 0), ToIndex(15, 8)};
     constexpr uint32_t kFirstLegLength = kPathFinderTileSize * 7 * kMetersPerPixel;
     constexpr uint32_t kSecondLegLength = (kPathFinderTileSize * 8) * kMetersPerPixel;
-    constexpr uint32_t kRouteLength = kFirstLegLength + kSecondLegLength;
+    constexpr uint32_t kRouteLength = NarrowResolution(kFirstLegLength + kSecondLegLength);
 
     auto gps_data = GpsData {.speed = 20.0f};
 
@@ -141,14 +145,14 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
 
             THEN("the passed distance is updated")
             {
-                REQUIRE(state->route_passed_meters == kFirstLegLength);
+                REQUIRE(state->route_passed_meters == NarrowResolution(kFirstLegLength));
                 REQUIRE(state->route_total_meters == kRouteLength);
             }
 
             AND_WHEN("the target is almost reached")
             {
                 auto target = ToPoint(15, 8);
-                target.x -= kPathFinderTileSize / 2;
+                target.x -= kPathFinderTileSize / 8;
 
                 gps_data.pixel_position = target;
                 DoRunLoop();

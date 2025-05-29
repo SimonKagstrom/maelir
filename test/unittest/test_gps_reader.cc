@@ -74,7 +74,7 @@ private:
 
 TEST_CASE_FIXTURE(Fixture, "the gps-span-from-metadata helper works")
 {
-    auto s = PositionSpanFromMetadata(*metadata);
+    auto s = gps::PositionSpanFromMetadata(*metadata);
 
     REQUIRE(s.size() == 12);
     REQUIRE(s[0].latitude == 60);
