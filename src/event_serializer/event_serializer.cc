@@ -112,7 +112,7 @@ Deserializer::HandleEntry(std::span<const uint8_t> data)
     if (data.size() == 1 + 4 * sizeof(float))
     {
         // validity, lat, lon, heading, speed
-        hal::RawGpsData gps_data;
+        hal::RawGpsData gps_data {};
 
         auto valid = data[0];
         auto pos_valid = valid & 1;
@@ -150,13 +150,13 @@ Deserializer::HandleEntry(std::span<const uint8_t> data)
 std::variant<std::monostate, hal::RawGpsData, InputEventState>
 Deserializer::Deserialize()
 {
-    if (m_input_events.size() > 0)
+    if (m_input_events.empty() == false)
     {
         InputEventState event = m_input_events.front();
         m_input_events.pop();
         return event;
     }
-    if (m_gps_events.size() > 0)
+    if (m_gps_events.empty() == false)
     {
         hal::RawGpsData event = m_gps_events.front();
         m_gps_events.pop();
