@@ -27,6 +27,10 @@
 namespace
 {
 
+constexpr auto kPinButton = GPIO_NUM_5; // SCK
+constexpr auto kPinA = GPIO_NUM_6;      // MISO
+constexpr auto kPinB = GPIO_NUM_7;      // MOSI
+
 
 constexpr auto kTftDEPin = 2;
 constexpr auto kTftVSYNCPin = 42;
@@ -213,6 +217,17 @@ app_main(void)
     esp_partition_iterator_release(map_partition);
     srand(esp_random());
 
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_ANYEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = (1 << kPinA) | (1 << kPinB) | (1 << kPinButton);
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+
+    ESP_ERROR_CHECK(gpio_config(&io_conf));
+
+
     // Install the GPIO interrupt service
     gpio_install_isr_service(0);
 
@@ -226,9 +241,9 @@ app_main(void)
 
     auto button_debouncer = std::make_unique<ButtonDebouncer>();
 
-    auto pin_a_gpio = std::make_unique<TargetGpio>(GPIO_NUM_6);
-    auto pin_b_gpio = std::make_unique<TargetGpio>(GPIO_NUM_7);
-    auto button_gpio = button_debouncer->AddButton(std::make_unique<TargetGpio>(GPIO_NUM_5));
+    auto pin_a_gpio = std::make_unique<TargetGpio>(kPinA);
+    auto pin_b_gpio = std::make_unique<TargetGpio>(kPinB);
+    auto button_gpio = button_debouncer->AddButton(std::make_unique<TargetGpio>(kPinButton));
 
     auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
 
@@ -237,8 +252,8 @@ app_main(void)
     auto display = CreateDisplay();
     auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
                                                  9600,
-                                                 GPIO_NUM_17, // RX
-                                                 GPIO_NUM_8); // TX
+                                                 GPIO_NUM_17, // RX (A0)
+                                                 GPIO_NUM_8); // TX (SDA)
 
     auto gps_device = std::make_unique<UartGps>(*gps_uart);
 
