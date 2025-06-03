@@ -19,10 +19,8 @@ DummyListener g_dummy_listener;
 
 
 EncoderInput::EncoderInput(RotaryEncoder& rotary_encoder,
-                           hal::IGpio& button,
-                           hal::IGpio& switch_up_pin)
+                           hal::IGpio& button)
     : m_button(button)
-    , m_switch_up_pin(switch_up_pin)
     , m_listener(&g_dummy_listener)
 {
     m_rotary_listener =
@@ -54,15 +52,10 @@ EncoderInput::AttachListener(IListener* listener)
 IInput::State
 EncoderInput::GetState()
 {
-    auto switch_up_active = m_switch_up_pin.GetState();
     auto button = m_button.GetState();
 
     uint8_t state = 0;
 
-    if (switch_up_active)
-    {
-        state |= std::to_underlying(IInput::StateType::kSwitchUp);
-    }
     if (button)
     {
         state |= std::to_underlying(IInput::StateType::kButtonDown);

@@ -21,14 +21,6 @@ MainWindow::MainWindow(QWidget* parent)
     connect(m_ui->centerButton, &QPushButton::released, [this]() {
         ButtonEvent(EventType::kButtonUp);
     });
-    connect(
-        m_ui->switchUp, &QRadioButton::clicked, [this]() { ButtonEvent(EventType::kSwitchUp); });
-    connect(m_ui->switchNeutral, &QRadioButton::clicked, [this]() {
-        ButtonEvent(EventType::kSwitchNeutral);
-    });
-    connect(m_ui->switchDown, &QRadioButton::clicked, [this]() {
-        ButtonEvent(EventType::kSwitchDown);
-    });
 }
 
 MainWindow::~MainWindow()
@@ -71,19 +63,6 @@ MainWindow::ButtonEvent(hal::IInput::EventType type)
         break;
     case Ev::kButtonUp:
         m_state &= ~std::to_underlying(State::kButtonDown);
-        break;
-    case Ev::kSwitchDown:
-        m_state |= std::to_underlying(State::kSwitchDown);
-        m_state &= ~std::to_underlying(State::kSwitchUp);
-        break;
-    case Ev::kSwitchNeutral:
-        m_state &= ~std::to_underlying(State::kSwitchUp);
-        m_state &= ~std::to_underlying(State::kSwitchDown);
-        break;
-    case Ev::kSwitchUp:
-        m_state |= std::to_underlying(State::kSwitchUp);
-
-        m_state &= ~std::to_underlying(State::kSwitchDown);
         break;
 
     default:

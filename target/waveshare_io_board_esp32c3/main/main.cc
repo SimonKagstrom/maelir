@@ -14,7 +14,6 @@
 constexpr auto kPinButton = GPIO_NUM_7;
 constexpr auto kPinA = GPIO_NUM_9;
 constexpr auto kPinB = GPIO_NUM_8;
-constexpr auto kPinSwitchUp = GPIO_NUM_10;
 
 extern "C" void
 app_main(void)
@@ -37,13 +36,6 @@ app_main(void)
 
     ESP_ERROR_CHECK(gpio_config(&io_conf));
 
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = (1 << kPinSwitchUp);
-    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    ESP_ERROR_CHECK(gpio_config(&io_conf));
-
     // Install the GPIO interrupt service
     gpio_install_isr_service(0);
 
@@ -51,15 +43,12 @@ app_main(void)
 
     auto pin_a_gpio = std::make_unique<TargetGpio>(kPinA);
     auto pin_b_gpio = std::make_unique<TargetGpio>(kPinB);
-    auto switch_up_gpio = std::make_unique<TargetGpio>(kPinSwitchUp);
     auto button_gpio = button_debouncer->AddButton(
         std::make_unique<TargetGpio>(kPinButton, TargetGpio::Polarity::kActiveLow));
 
     auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
 
-    auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder,
-                                                        *button_gpio,     // Button
-                                                        *switch_up_gpio); // Switch up
+    auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder, *button_gpio);
     auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
                                                  9600,
                                                  GPIO_NUM_3,  // RX

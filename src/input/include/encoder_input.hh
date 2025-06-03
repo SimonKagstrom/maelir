@@ -7,7 +7,7 @@
 class EncoderInput : public hal::IInput
 {
 public:
-    EncoderInput(RotaryEncoder& rotary_encoder, hal::IGpio& button, hal::IGpio& switch_up_pin);
+    EncoderInput(RotaryEncoder& rotary_encoder, hal::IGpio& button);
 
 private:
     void AttachListener(hal::IInput::IListener* listener) final;
@@ -18,7 +18,6 @@ private:
 
 
     hal::IGpio& m_button;
-    hal::IGpio& m_switch_up_pin;
     hal::IInput::IListener* m_listener {nullptr};
 
     std::unique_ptr<ListenerCookie> m_button_listener;

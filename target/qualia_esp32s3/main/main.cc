@@ -228,14 +228,11 @@ app_main(void)
 
     auto pin_a_gpio = std::make_unique<TargetGpio>(GPIO_NUM_6);
     auto pin_b_gpio = std::make_unique<TargetGpio>(GPIO_NUM_7);
-    auto switch_up_gpio = std::make_unique<TargetGpio>(GPIO_NUM_16);
     auto button_gpio = button_debouncer->AddButton(std::make_unique<TargetGpio>(GPIO_NUM_5));
 
     auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
 
-    auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder,
-                                                        *button_gpio,     // Button
-                                                        *switch_up_gpio); // Switch up
+    auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder, *button_gpio);
 
     auto display = CreateDisplay();
     auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
