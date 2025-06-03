@@ -213,6 +213,9 @@ app_main(void)
     esp_partition_iterator_release(map_partition);
     srand(esp_random());
 
+    // Install the GPIO interrupt service
+    gpio_install_isr_service(0);
+
     auto map_metadata = reinterpret_cast<const MapMetadata*>(p);
 
     auto target_nvm = std::make_unique<NvmTarget>();
