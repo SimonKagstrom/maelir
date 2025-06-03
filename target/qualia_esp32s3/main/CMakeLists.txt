@@ -17,6 +17,7 @@ target_link_libraries(${COMPONENT_TARGET}
     target_display
     target_os
     target_nvm
+    trip_computer
     storage
     uart_gps
     i2c_gps

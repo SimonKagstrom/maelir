@@ -5,6 +5,7 @@
 #include "gps_simulator.hh"
 #include "i2c_gps.hh"
 #include "route_service.hh"
+#include "route_utils.hh"
 #include "sdkconfig.h"
 #include "storage.hh"
 #include "target_display.hh"
@@ -12,6 +13,7 @@
 #include "target_nvm.hh"
 #include "target_uart.hh"
 #include "tile_producer.hh"
+#include "trip_computer.hh"
 #include "uart_gps.hh"
 #include "ui.hh"
 
@@ -272,6 +274,11 @@ app_main(void)
     auto gps_mux = std::make_unique<GpsMux>(state, *gps_device, *gps_simulator);
 
     auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_mux);
+    auto trip_computer = std::make_unique<TripComputer>(state,
+                                                        gps_reader->AttachListener(),
+                                                        route_service->AttachListener(),
+                                                        LookupMetersPerPixel(*map_metadata),
+                                                        map_metadata->land_mask_row_size);
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
                                               *producer,
@@ -285,8 +292,9 @@ app_main(void)
     storage->Start("storage");
     gps_simulator->Start("gps_simulator", 4096);
     gps_reader->Start("gps_reader");
-    producer->Start("producer", os::ThreadCore::kCore1);
+    producer->Start("producer", os::ThreadPriority::kHigh);
     route_service->Start("route_service", 4096);
+    trip_computer->Start("trip_computer");
 
     // Time for the storage to read the home position
     os::Sleep(10ms);
