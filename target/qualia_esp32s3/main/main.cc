@@ -239,13 +239,14 @@ app_main(void)
 
     ApplicationState state;
 
-    state.Checkout()->demo_mode = true;
+    state.Checkout()->demo_mode = false;
 
     auto button_debouncer = std::make_unique<ButtonDebouncer>();
 
     auto pin_a_gpio = std::make_unique<TargetGpio>(kPinA);
     auto pin_b_gpio = std::make_unique<TargetGpio>(kPinB);
-    auto button_gpio = button_debouncer->AddButton(std::make_unique<TargetGpio>(kPinButton));
+    auto button_gpio = button_debouncer->AddButton(
+        std::make_unique<TargetGpio>(kPinButton, TargetGpio::Polarity::kActiveLow));
 
     auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
 
