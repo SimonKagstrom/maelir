@@ -128,15 +128,15 @@ CreateDisplay()
         .clk_src = LCD_CLK_SRC_PLL240M,
         .timings =
             {
-                .pclk_hz = 17 * 1000 * 1000,
+                .pclk_hz = 15 * 1000 * 1000,
                 .h_res = hal::kDisplayWidth,
                 .v_res = hal::kDisplayHeight,
-                .hsync_pulse_width = 2,
-                .hsync_back_porch = 44,
+                .hsync_pulse_width = 8,
+                .hsync_back_porch = 10,
                 .hsync_front_porch = 50,
                 .vsync_pulse_width = 2,
                 .vsync_back_porch = 18,
-                .vsync_front_porch = 50,
+                .vsync_front_porch = 8,
                 .flags {
                     .hsync_idle_low = false,
                     .vsync_idle_low = false,
@@ -260,9 +260,8 @@ app_main(void)
 
     auto gps_device = std::make_unique<UartGps>(*gps_uart);
 
-    //    auto gps_device = std::make_unique<I2cGps>(
-    //            18, // SCL
-    //            8); // SDA
+    //auto gps_device = std::make_unique<I2cGps>(GPIO_NUM_18, // SCL
+    //                                           GPIO_NUM_8); // SDA
 
 
     // Threads
