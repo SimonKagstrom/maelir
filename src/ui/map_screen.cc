@@ -283,6 +283,7 @@ UserInterface::MapScreen::RunStateMachine()
 
             if (m_parent.m_select_position)
             {
+                m_mode = Mode::kZoom2;
                 if (m_zoomed_out_map_tiles.empty())
                 {
                     m_state = State::kSelectDestination;
