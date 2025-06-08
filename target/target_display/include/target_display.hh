@@ -25,6 +25,8 @@ private:
         kHardware,
     };
 
+    void SetActive(bool active) final;
+
     void OnBounceBufferFill(void* bounce_buf, int pos_px, int len_bytes);
     void OnBounceBufferFinish();
 
@@ -37,10 +39,11 @@ private:
     async_memcpy_t m_async_mem_handle;
     esp_lcd_panel_handle_t m_panel_handle {nullptr};
     uint16_t* m_frame_buffers[2] {nullptr, nullptr};
-    uint8_t m_current_update_frame {0};
+    std::atomic<uint8_t> m_current_update_frame {0};
 
     std::atomic<FrameBufferOwner> m_owner {FrameBufferOwner::kDriver};
     std::atomic_bool m_flip_requested {false};
     std::atomic_bool m_vsync_requested {false};
+    std::atomic_bool m_active {true};
     os::binary_semaphore m_bounce_copy_end {0};
 };

@@ -17,7 +17,7 @@ private:
     i2c_master_bus_handle_t m_bus_handle;
     i2c_master_dev_handle_t m_dev_handle;
 
-    std::array<char, 32> m_line_buf;
+    std::array<char, 256> m_line_buf;
 
     std::unique_ptr<NmeaParser> m_parser;
 };

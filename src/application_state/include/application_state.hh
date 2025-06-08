@@ -36,6 +36,7 @@ public:
         bool demo_mode {false};
         bool gps_connected {false};
         bool show_speedometer {true};
+        bool ota_update_active {false};
         ColorMode color_mode {ColorMode::kColor};
         uint8_t minute_average_speed {0};
         uint8_t five_minute_average_speed {0};

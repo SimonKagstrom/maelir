@@ -40,11 +40,13 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
 
     lv_obj_t* route_page = lv_menu_page_create(m_menu, NULL);
+    lv_obj_t* settings_page = lv_menu_page_create(m_menu, NULL);
     lv_obj_t* color_mode_page = lv_menu_page_create(m_menu, NULL);
     lv_obj_t* main_page = lv_menu_page_create(m_menu, NULL);
 
     lv_obj_set_scrollbar_mode(main_page, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scrollbar_mode(route_page, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(settings_page, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scrollbar_mode(color_mode_page, LV_SCROLLBAR_MODE_OFF);
 
 
@@ -108,12 +110,10 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
         m_parent.SelectPosition(PositionSelection::kHome);
         m_on_close();
     });
-    AddBooleanEntry(main_page, "Show speedometer", state->show_speedometer, [this](auto) {
-        auto state = m_parent.m_application_state.Checkout();
-        state->show_speedometer = !state->show_speedometer;
-    });
+    AddSeparator(main_page);
+    AddEntryToSubPage(main_page, "Settings", settings_page);
 
-    AddEntryToSubPage(main_page, "Map color mode", color_mode_page);
+    AddEntryToSubPage(settings_page, "Map color mode", color_mode_page);
 
     auto on_color_mode = [this](auto wanted) {
         auto state = m_parent.m_application_state.Checkout();
@@ -133,9 +133,24 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
         on_color_mode(ApplicationState::ColorMode::kBlackRed);
     });
 
-    AddBooleanEntry(main_page, "Demo mode", state->demo_mode, [this](auto) {
+    AddBooleanEntry(settings_page, "Show speedometer", state->show_speedometer, [this](auto) {
+        auto state = m_parent.m_application_state.Checkout();
+        state->show_speedometer = !state->show_speedometer;
+    });
+
+    AddBooleanEntry(settings_page, "Demo mode", state->demo_mode, [this](auto) {
         auto state = m_parent.m_application_state.Checkout();
         state->demo_mode = !state->demo_mode;
+    });
+    AddSeparator(settings_page);
+
+    AddEntry(settings_page, "OTA update", [this](auto) {
+        auto state = m_parent.m_application_state.Checkout();
+        state->ota_update_active = true;
+
+        // Disable, to avoid cache conflicts
+        state->demo_mode = false;
+        m_on_close();
     });
 
     m_event_listeners.push_back(LvEventListener::Create(m_menu, LV_EVENT_RELEASED, [this](auto e) {

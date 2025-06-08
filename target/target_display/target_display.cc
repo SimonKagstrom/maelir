@@ -228,6 +228,11 @@ DisplayTarget::Flip()
     m_bounce_copy_end.acquire();
 }
 
+void
+DisplayTarget::SetActive(bool active)
+{
+    m_active = active;
+}
 
 bool IRAM_ATTR
 OnVsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t* edata, void* user_ctx)
@@ -238,13 +243,16 @@ OnVsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t* edat
 void IRAM_ATTR
 DisplayTarget::OnBounceBufferFill(void* bounce_buf, int pos_px, int len_bytes)
 {
-    // Fill bounce buffer with the frame buffer data
-    esp_async_memcpy(m_async_mem_handle,
-                     bounce_buf,
-                     reinterpret_cast<void*>(m_frame_buffers[!m_current_update_frame] + pos_px),
-                     len_bytes,
-                     nullptr,
-                     nullptr);
+    if (m_active)
+    {
+        // Fill bounce buffer with the frame buffer data
+        esp_async_memcpy(m_async_mem_handle,
+                         bounce_buf,
+                         reinterpret_cast<void*>(m_frame_buffers[!m_current_update_frame] + pos_px),
+                         len_bytes,
+                         nullptr,
+                         nullptr);
+    }
 }
 
 void IRAM_ATTR

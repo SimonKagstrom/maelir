@@ -8,7 +8,12 @@ NvmTarget::NvmTarget()
     auto err = Open();
     if (err == ESP_ERR_NVS_NOT_INITIALIZED)
     {
-        nvs_flash_init();
+        err = nvs_flash_init();
+        if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+        {
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            nvs_flash_init();
+        }
 
         err = Open();
     }

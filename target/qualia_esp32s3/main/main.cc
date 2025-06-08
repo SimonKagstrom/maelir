@@ -4,12 +4,14 @@
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
 #include "i2c_gps.hh"
+#include "ota_updater.hh"
 #include "route_service.hh"
 #include "route_utils.hh"
 #include "sdkconfig.h"
 #include "storage.hh"
 #include "target_display.hh"
 #include "target_gpio.hh"
+#include "target_httpd_ota_updater.hh"
 #include "target_nvm.hh"
 #include "target_uart.hh"
 #include "tile_producer.hh"
@@ -264,6 +266,8 @@ app_main(void)
     //                                           GPIO_NUM_8); // SDA
 
 
+    auto ota_updater_device = std::make_unique<TargetHttpdOtaUpdater>(*display);
+
     // Threads
     auto route_service = std::make_unique<RouteService>(*map_metadata);
     auto storage = std::make_unique<Storage>(*target_nvm, state, route_service->AttachListener());
@@ -279,6 +283,8 @@ app_main(void)
                                                         route_service->AttachListener(),
                                                         LookupMetersPerPixel(*map_metadata),
                                                         map_metadata->land_mask_row_size);
+
+    auto ota_updater = std::make_unique<OtaUpdater>(*ota_updater_device, state);
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
                                               *producer,
@@ -295,6 +301,7 @@ app_main(void)
     producer->Start("producer", os::ThreadPriority::kHigh);
     route_service->Start("route_service", 4096);
     trip_computer->Start("trip_computer");
+    ota_updater->Start("ota_updater", 4096);
 
     // Time for the storage to read the home position
     os::Sleep(10ms);

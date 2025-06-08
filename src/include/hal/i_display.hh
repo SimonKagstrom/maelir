@@ -31,6 +31,19 @@ public:
 
     // Inspired by SDL2
     virtual void Flip() = 0;
+
+    void Enable()
+    {
+        SetActive(true);
+    }
+
+    void Disable()
+    {
+        SetActive(false);
+    }
+
+protected:
+    virtual void SetActive(bool active) = 0;
 };
 
 } // namespace hal
