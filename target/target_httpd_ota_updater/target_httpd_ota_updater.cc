@@ -126,21 +126,25 @@ TargetHttpdOtaUpdater::UpdatePostHandler(httpd_req_t* req)
             return ESP_FAIL;
         }
 
+        m_progress(100 - (remaining * 100) / req->content_len);
         remaining -= recv_len;
     }
 
     // Validate and switch to new OTA image and reboot
+    m_display.Disable();
     if (esp_ota_end(ota_handle) != ESP_OK || esp_ota_set_boot_partition(ota_partition) != ESP_OK)
     {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Validation / Activation Error");
         return ESP_FAIL;
     }
+    m_display.Enable();
 
+    // Verwandelt
+    m_progress(100);
     httpd_resp_sendstr(req, "Firmware update complete, rebooting now!\n");
 
-    os::Sleep(400ms);
+    os::Sleep(500ms);
     m_display.Disable();
-    os::Sleep(100ms);
     esp_restart();
 
     // Unreachable
@@ -217,6 +221,7 @@ TargetHttpdOtaUpdater::SoftApInit(void)
 void
 TargetHttpdOtaUpdater::Setup(std::function<void(uint8_t)> progress)
 {
+    m_progress = progress;
     m_receive_buf = std::make_unique<char[]>(kBufSize);
 
     ESP_ERROR_CHECK(SoftApInit());

@@ -5,6 +5,7 @@
 #include "gps_port.hh"
 #include "hal/i_display.hh"
 #include "hal/i_input.hh"
+#include "ota_updater.hh"
 #include "route_service.hh"
 #include "tile_producer.hh"
 #include "timer_manager.hh"
@@ -57,6 +58,7 @@ public:
                   hal::IDisplay& display,
                   hal::IInput& input,
                   RouteService& route_service,
+                  OtaUpdater& ota_updater,
                   std::unique_ptr<IGpsPort> gps_port,
                   std::unique_ptr<IRouteListener> route_listener);
 
@@ -69,6 +71,7 @@ private:
 
     class MapScreen;
     class MenuScreen;
+    class UpdatingScreen;
 
     // From BaseThread
     void OnStartup() final;
@@ -84,6 +87,8 @@ private:
 
     void EnterMenu();
 
+    void EnterOtaUpdatingScreen();
+
     void SelectPosition(PositionSelection selection);
 
     const uint32_t m_tile_rows;
@@ -97,6 +102,7 @@ private:
     hal::IDisplay& m_display;
     hal::IInput& m_input;
     RouteService& m_route_service;
+    OtaUpdater& m_ota_updater;
 
     lv_display_t* m_lvgl_display {nullptr};
     lv_indev_t* m_lvgl_input_dev {nullptr};
@@ -124,6 +130,7 @@ private:
     // The map is always active, but the menu can be created/deleted
     std::unique_ptr<ScreenBase> m_map_screen;
     std::unique_ptr<ScreenBase> m_menu_screen;
+    std::unique_ptr<ScreenBase> m_updating_screen;
 
     int16_t m_enc_diff {0};
     lv_indev_state_t m_button_state {LV_INDEV_STATE_RELEASED};

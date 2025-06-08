@@ -5,6 +5,7 @@ add_library(ui EXCLUDE_FROM_ALL
     map_screen.cc
     menu_screen.cc
     ui.cc
+    updating_screen.cc
 )
 
 target_include_directories(ui
@@ -20,6 +21,7 @@ PUBLIC
     gps_reader
     route_service
     lvgl
+    ota_updater
 PRIVATE
     boat_library
     crosshair_library

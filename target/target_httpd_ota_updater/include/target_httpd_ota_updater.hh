@@ -23,6 +23,8 @@ private:
     hal::IDisplay& m_display;
     std::unique_ptr<char[]> m_receive_buf;
     httpd_handle_t m_http_server {nullptr};
+
+    std::function<void(uint8_t)> m_progress;
 };
 
 // TMP

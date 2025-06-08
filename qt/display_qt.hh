@@ -25,6 +25,8 @@ private slots:
 
 
 private:
+    void SetActive(bool active) final;
+
     std::unique_ptr<QImage> m_screen;
     QImage m_circle_mask;
     QGraphicsPixmapItem* m_pixmap;

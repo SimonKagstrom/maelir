@@ -5,6 +5,7 @@
 #include "route_iterator.hh"
 #include "route_utils.hh"
 #include "time.hh"
+#include "updating_screen.hh"
 
 #include <cmath>
 #include <numbers>
@@ -16,6 +17,7 @@ UserInterface::UserInterface(ApplicationState& application_state,
                              hal::IDisplay& display,
                              hal::IInput& input,
                              RouteService& route_service,
+                             OtaUpdater& ota_updater,
                              std::unique_ptr<IGpsPort> gps_port,
                              std::unique_ptr<IRouteListener> route_listener)
     : m_tile_rows(metadata.tile_rows)
@@ -27,6 +29,7 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_display(display)
     , m_input(input)
     , m_route_service(route_service)
+    , m_ota_updater(ota_updater)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
     , m_gps_position_timer(StartTimer(0ms)) // Timeout directly, but always valid
@@ -165,6 +168,10 @@ UserInterface::OnActivation()
     m_gps_position_valid = !m_gps_position_timer->IsExpired();
 
     m_map_screen->Update();
+    if (m_updating_screen)
+    {
+        m_updating_screen->Update();
+    }
 
     if (auto time_before = os::GetTimeStampRaw(); m_next_redraw_time > time_before)
     {
@@ -182,12 +189,26 @@ UserInterface::EnterMenu()
 {
     m_gps_port->DisableWakeup();
     m_menu_screen = std::make_unique<MenuScreen>(*this, [this]() {
-        m_map_screen->Activate();
+        if (m_updating_screen == nullptr)
+        {
+            // Ugly
+            m_map_screen->Activate();
+        }
         m_menu_screen = nullptr;
         m_gps_port->AwakeOn(GetSemaphore());
     });
 
     m_menu_screen->Activate();
+}
+
+void
+UserInterface::EnterOtaUpdatingScreen()
+{
+    m_gps_port->DisableWakeup();
+
+    m_updating_screen = std::make_unique<UpdatingScreen>(*this);
+
+    m_updating_screen->Activate();
 }
 
 void

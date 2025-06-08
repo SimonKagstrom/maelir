@@ -29,6 +29,12 @@ DisplayQt::Flip()
 }
 
 void
+DisplayQt::SetActive(bool)
+{
+    // Ignored here
+}
+
+void
 DisplayQt::UpdateScreen()
 {
     for (int y = 0; y < hal::kDisplayHeight; ++y)

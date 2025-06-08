@@ -55,6 +55,7 @@ PUBLIC
 
 add_executable(maelir_qt
     nvm_host.cc
+    ota_updater_host.cc
     simulator_main.cc
     simulator_mainwindow.ui
     simulator_mainwindow.cc

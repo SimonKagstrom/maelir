@@ -291,6 +291,7 @@ app_main(void)
                                               *display,
                                               *encoder_input,
                                               *route_service,
+                                              *ota_updater,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 

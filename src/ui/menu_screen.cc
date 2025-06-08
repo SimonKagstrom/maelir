@@ -150,6 +150,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
         // Disable, to avoid cache conflicts
         state->demo_mode = false;
+        m_parent.EnterOtaUpdatingScreen();
         m_on_close();
     });
 

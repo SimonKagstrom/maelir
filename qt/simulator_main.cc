@@ -2,6 +2,8 @@
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
 #include "nvm_host.hh"
+#include "ota_updater.hh"
+#include "ota_updater_host.hh"
 #include "route_service.hh"
 #include "route_utils.hh"
 #include "simulator_mainwindow.hh"
@@ -97,6 +99,8 @@ main(int argc, char* argv[])
     auto gps_listener = std::make_unique<GpsListener>(*gps_simulator);
 
 
+    auto ota_updater_device = std::make_unique<OtaUpdaterHost>();
+
     auto uart_bridge = std::make_unique<UartBridge>();
     auto [uart_a, uart_b] = uart_bridge->GetEndpoints();
 
@@ -109,12 +113,16 @@ main(int argc, char* argv[])
                                                         LookupMetersPerPixel(*map_metadata),
                                                         map_metadata->land_mask_row_size);
 
+
+    auto ota_updater = std::make_unique<OtaUpdater>(*ota_updater_device, state);
+
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
                                               *producer,
                                               window.GetDisplay(),
                                               *uart_event_listener,
                                               *route_service,
+                                              *ota_updater,
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
@@ -133,6 +141,7 @@ main(int argc, char* argv[])
     producer->Start("tile_producer");
     route_service->Start("route_service");
     trip_computer->Start("trip_computer");
+    ota_updater->Start("ota_updater");
     ui->Start("ui");
 
     window.show();
