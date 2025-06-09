@@ -1,0 +1,1 @@
+../lvgl_setup/lv_conf.h
