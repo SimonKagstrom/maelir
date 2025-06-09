@@ -12,7 +12,9 @@ target_link_libraries(${COMPONENT_TARGET}
     gps_simulator
     ui
     gps_reader
+    ota_updater
     target_display
+    target_httpd_ota_updater
     target_os
     target_nvm
     storage
