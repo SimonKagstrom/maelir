@@ -15,16 +15,19 @@ public:
     std::unique_ptr<ListenerCookie>
     SubscribeOnProgress(const std::function<void(uint8_t)>& progress);
 
+    bool ApplicationHasBeenUpdated() const;
+
 private:
     std::optional<milliseconds> OnActivation() final;
 
     hal::IOtaUpdater& m_updater;
     ApplicationState& m_application_state;
     bool m_doing_update {false};
+    const bool m_has_been_updated;
 
     std::unique_ptr<ApplicationState::IListener> m_state_listener;
     std::function<void(uint8_t)> m_progress;
-
+    os::TimerHandle m_application_valid_timer;
 
     etl::mutex m_mutex;
 };

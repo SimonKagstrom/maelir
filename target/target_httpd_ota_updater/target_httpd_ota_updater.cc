@@ -79,9 +79,29 @@ constexpr const char* index_html = R"VOBB(<!DOCTYPE html>
 TargetHttpdOtaUpdater::TargetHttpdOtaUpdater(hal::IDisplay& display)
     : m_display(display)
 {
-    const esp_partition_t* partition = esp_ota_get_running_partition();
-    printf("Currently running partition: %s\r\n", partition->label);
 }
+
+bool
+TargetHttpdOtaUpdater::ApplicationHasBeenUpdated() const
+{
+    esp_ota_img_states_t ota_state_running_part;
+
+    const esp_partition_t* partition = esp_ota_get_running_partition();
+
+    if (esp_ota_get_state_partition(partition, &ota_state_running_part) == ESP_OK)
+    {
+        return ota_state_running_part == ESP_OTA_IMG_PENDING_VERIFY;
+    }
+
+    return false;
+}
+
+void
+TargetHttpdOtaUpdater::MarkApplicationAsValid()
+{
+    esp_ota_mark_app_valid_cancel_rollback();
+}
+
 
 esp_err_t
 TargetHttpdOtaUpdater::IndexGetHandler(httpd_req_t* req)
@@ -219,7 +239,7 @@ TargetHttpdOtaUpdater::SoftApInit(void)
 
 
 void
-TargetHttpdOtaUpdater::Setup(std::function<void(uint8_t)> progress)
+TargetHttpdOtaUpdater::Update(std::function<void(uint8_t)> progress)
 {
     m_progress = progress;
     m_receive_buf = std::make_unique<char[]>(kBufSize);

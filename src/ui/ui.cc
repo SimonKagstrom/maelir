@@ -84,6 +84,21 @@ UserInterface::OnStartup()
     lv_indev_set_user_data(m_lvgl_input_dev, this);
     lv_indev_set_read_cb(m_lvgl_input_dev, StaticLvglEncoderRead);
 
+    if (m_ota_updater.ApplicationHasBeenUpdated())
+    {
+        auto mbox = lv_msgbox_create(NULL);
+
+        lv_msgbox_add_title(mbox, "New software installed");
+
+        lv_msgbox_add_text(mbox,
+                           "The software has been updated. Will be marked valid after 10 seconds");
+
+        m_updated_timer = StartTimer(5s, [mbox]() {
+            lv_msgbox_close(mbox);
+            return std::nullopt;
+        });
+    }
+
     m_map_screen = std::make_unique<MapScreen>(*this);
     m_map_screen->Activate();
 }
@@ -124,16 +139,13 @@ UserInterface::OnActivation()
             break;
         }
 
+        auto on_map_screen = m_menu_screen == nullptr && m_updating_screen == nullptr;
+        lv_indev_read(m_lvgl_input_dev);
+
         // Ugly
-        if (m_menu_screen == nullptr)
+        if (on_map_screen)
         {
             m_map_screen->OnInput(event);
-        }
-        else
-        {
-            // Also ugly
-            m_menu_screen->Update();
-            lv_indev_read(m_lvgl_input_dev);
         }
     }
 

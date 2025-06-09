@@ -302,7 +302,7 @@ app_main(void)
     producer->Start("producer", os::ThreadPriority::kHigh);
     route_service->Start("route_service", 4096);
     trip_computer->Start("trip_computer");
-    ota_updater->Start("ota_updater", 4096);
+    ota_updater->Start("ota_updater");
 
     // Time for the storage to read the home position
     os::Sleep(10ms);

@@ -11,7 +11,11 @@ class TargetHttpdOtaUpdater : public hal::IOtaUpdater
 public:
     TargetHttpdOtaUpdater(hal::IDisplay& display);
 
-    void Setup(std::function<void(uint8_t)> progress) final;
+    void Update(std::function<void(uint8_t)> progress) final;
+
+    bool ApplicationHasBeenUpdated() const final;
+
+    void MarkApplicationAsValid() final;
 
 private:
     esp_err_t IndexGetHandler(httpd_req_t* req);

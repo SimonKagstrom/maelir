@@ -5,9 +5,25 @@
 OtaUpdater::OtaUpdater(hal::IOtaUpdater& updater, ApplicationState& application_state)
     : m_updater(updater)
     , m_application_state(application_state)
+    , m_has_been_updated(m_updater.ApplicationHasBeenUpdated())
     , m_state_listener(application_state.AttachListener(GetSemaphore()))
     , m_progress([](auto) { /* Do nothing by default */ })
 {
+    if (m_has_been_updated)
+    {
+        // Wait 10s and then mark the application as valid if it has been updated
+        m_application_valid_timer = StartTimer(10s, [this]() {
+            m_updater.MarkApplicationAsValid();
+            return std::nullopt;
+        });
+    }
+}
+
+bool
+OtaUpdater::ApplicationHasBeenUpdated() const
+{
+    // Context: Probably another thread
+    return m_has_been_updated;
 }
 
 std::optional<milliseconds>
@@ -25,7 +41,7 @@ OtaUpdater::OnActivation()
         if (m_application_state.CheckoutReadonly()->ota_update_active)
         {
             m_doing_update = true;
-            m_updater.Setup([this](auto progress) {
+            m_updater.Update([this](auto progress) {
                 std::scoped_lock lock(m_mutex);
                 m_progress(progress);
             });

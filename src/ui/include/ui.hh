@@ -119,7 +119,8 @@ private:
     // Icon states
     bool m_calculating_route {false};
     bool m_gps_position_valid {false};
-    std::unique_ptr<os::ITimer> m_gps_position_timer;
+    os::TimerHandle m_gps_position_timer;
+    os::TimerHandle m_updated_timer;
 
 
     std::vector<IndexType> m_route;
