@@ -9,6 +9,12 @@ OtaUpdater::OtaUpdater(hal::IOtaUpdater& updater, ApplicationState& application_
     , m_state_listener(application_state.AttachListener(GetSemaphore()))
     , m_progress([](auto) { /* Do nothing by default */ })
 {
+    snprintf(m_instructions,
+             sizeof(m_instructions),
+             "Connect to the Wifi AP %s\nand go to http://192.168.4.1",
+             m_updater.GetSsid());
+
+
     if (m_has_been_updated)
     {
         // Wait 10s and then mark the application as valid if it has been updated
@@ -17,6 +23,12 @@ OtaUpdater::OtaUpdater(hal::IOtaUpdater& updater, ApplicationState& application_
             return std::nullopt;
         });
     }
+}
+
+const char*
+OtaUpdater::GetInstructions() const
+{
+    return m_instructions;
 }
 
 bool

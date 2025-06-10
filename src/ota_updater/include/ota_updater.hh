@@ -17,6 +17,8 @@ public:
 
     bool ApplicationHasBeenUpdated() const;
 
+    const char *GetInstructions() const;
+
 private:
     std::optional<milliseconds> OnActivation() final;
 
@@ -30,4 +32,5 @@ private:
     os::TimerHandle m_application_valid_timer;
 
     etl::mutex m_mutex;
+    char m_instructions[80];
 };

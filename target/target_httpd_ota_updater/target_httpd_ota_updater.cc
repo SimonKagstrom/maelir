@@ -93,7 +93,7 @@ TargetHttpdOtaUpdater::TargetHttpdOtaUpdater(hal::IDisplay& display)
     uint8_t mac[8];
     if (esp_read_mac(mac, esp_mac_type_t::ESP_MAC_BASE) == ESP_OK)
     {
-        char buf[4];
+        char buf[5];
         snprintf(buf, sizeof(buf), "%02x%02x");
         m_wifi_ssid = m_wifi_ssid + "_" + buf;
     }
@@ -238,12 +238,12 @@ TargetHttpdOtaUpdater::SoftApInit(void)
     res |= esp_wifi_init(&cfg);
 
     wifi_config_t wifi_config = {
-        .ap = {.ssid = WIFI_SSID,
-               .ssid_len = strlen(WIFI_SSID),
+        .ap = {.ssid_len = static_cast<uint8_t>(m_wifi_ssid.size()),
                .channel = 6,
                .authmode = WIFI_AUTH_OPEN,
                .max_connection = 3},
     };
+    strcpy(reinterpret_cast<char*>(wifi_config.ap.ssid), m_wifi_ssid.c_str());
 
     res |= esp_wifi_set_mode(WIFI_MODE_AP);
     res |= esp_wifi_set_config(WIFI_IF_AP, &wifi_config);

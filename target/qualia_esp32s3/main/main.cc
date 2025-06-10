@@ -241,8 +241,6 @@ app_main(void)
 
     ApplicationState state;
 
-    state.Checkout()->demo_mode = false;
-
     auto button_debouncer = std::make_unique<ButtonDebouncer>();
 
     auto pin_a_gpio = std::make_unique<TargetGpio>(kPinA);

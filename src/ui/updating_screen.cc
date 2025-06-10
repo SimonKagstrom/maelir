@@ -33,11 +33,12 @@ ProgressToString(uint8_t progress)
 
 UserInterface::UpdatingScreen::UpdatingScreen(UserInterface& parent)
 {
+    auto instructions = parent.m_ota_updater.GetInstructions();
     m_label = lv_label_create(m_screen);
 
     lv_obj_set_style_text_font(m_label, &lv_font_montserrat_22, LV_PART_MAIN);
 
-    lv_label_set_text(m_label, "Connect to the Maelir AP\nand go to http://192.168.4.1");
+    lv_label_set_text(m_label, instructions);
 
     lv_obj_set_style_text_align(m_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(m_label, LV_ALIGN_CENTER, 0, 0);
