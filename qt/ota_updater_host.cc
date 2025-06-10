@@ -30,3 +30,9 @@ OtaUpdaterHost::MarkApplicationAsValid()
 {
     printf("OtaUpdater: MarkApplicationAsValid\n");
 }
+
+const char*
+OtaUpdaterHost::GetSsid()
+{
+    return "Maelir";
+}

@@ -14,5 +14,7 @@ private:
 
     void MarkApplicationAsValid() final;
 
+    const char* GetSsid() final;
+
     const bool m_updated;
 };

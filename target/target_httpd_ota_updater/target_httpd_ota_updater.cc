@@ -3,6 +3,7 @@
 
 #include "time.hh"
 
+#include <esp_mac.h>
 #include <esp_ota_ops.h>
 #include <esp_system.h>
 #include <esp_wifi.h>
@@ -23,7 +24,7 @@ constexpr const char* index_html = R"VOBB(<!DOCTYPE html>
 <html>
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<title>ESP32 OTA Update</title>
+		<title>Maelir OTA Update</title>
 		<script>
 			function startUpload() {
 				var otafile = document.getElementById("otafile").files;
@@ -63,7 +64,7 @@ constexpr const char* index_html = R"VOBB(<!DOCTYPE html>
 		</script>
 	</head>
 	<body>
-		<h1>ESP32 OTA Firmware Update</h1>
+		<h1>Maelir OTA Firmware Update</h1>
 		<div>
 			<label for="otafile">Firmware file:</label>
 			<input type="file" id="otafile" name="otafile" />
@@ -79,21 +80,35 @@ constexpr const char* index_html = R"VOBB(<!DOCTYPE html>
 TargetHttpdOtaUpdater::TargetHttpdOtaUpdater(hal::IDisplay& display)
     : m_display(display)
 {
-}
-
-bool
-TargetHttpdOtaUpdater::ApplicationHasBeenUpdated() const
-{
     esp_ota_img_states_t ota_state_running_part;
 
     const esp_partition_t* partition = esp_ota_get_running_partition();
 
     if (esp_ota_get_state_partition(partition, &ota_state_running_part) == ESP_OK)
     {
-        return ota_state_running_part == ESP_OTA_IMG_PENDING_VERIFY;
+        m_application_has_been_updated = ota_state_running_part == ESP_OTA_IMG_PENDING_VERIFY;
     }
 
-    return false;
+    m_wifi_ssid = "Maelir";
+    uint8_t mac[8];
+    if (esp_read_mac(mac, esp_mac_type_t::ESP_MAC_BASE) == ESP_OK)
+    {
+        char buf[4];
+        snprintf(buf, sizeof(buf), "%02x%02x");
+        m_wifi_ssid = m_wifi_ssid + "_" + buf;
+    }
+}
+
+bool
+TargetHttpdOtaUpdater::ApplicationHasBeenUpdated() const
+{
+    return m_application_has_been_updated;
+}
+
+const char*
+TargetHttpdOtaUpdater::GetSsid()
+{
+    return m_wifi_ssid.c_str();
 }
 
 void
