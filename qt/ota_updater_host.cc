@@ -28,5 +28,5 @@ OtaUpdaterHost::ApplicationHasBeenUpdated() const
 void
 OtaUpdaterHost::MarkApplicationAsValid()
 {
-    // NOP on the host
+    printf("OtaUpdater: MarkApplicationAsValid\n");
 }

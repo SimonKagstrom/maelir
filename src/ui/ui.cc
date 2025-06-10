@@ -88,8 +88,7 @@ UserInterface::OnStartup()
     {
         auto mbox = lv_msgbox_create(NULL);
 
-        lv_msgbox_add_title(mbox, "New software installed");
-
+        lv_msgbox_add_title(mbox, "Software updated");
         lv_msgbox_add_text(mbox,
                            "The software has been updated. Will be marked valid after 10 seconds");
 
