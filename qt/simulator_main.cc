@@ -30,6 +30,7 @@ main(int argc, char* argv[])
 
     parser.addOptions({
         {{"s", "seed"}, "Random seed", "seed"},
+        {{"u", "updated"}, "Set the application updated flag"},
         {{"m", "map"}, "Path to the map file", "map_file"},
     });
 
@@ -44,6 +45,11 @@ main(int argc, char* argv[])
     if (parser.isSet("seed"))
     {
         seed = parser.value("seed").toInt();
+    }
+    bool updated = false;
+    if (parser.isSet("updated"))
+    {
+        updated = true;
     }
 
     MainWindow window;
@@ -99,7 +105,7 @@ main(int argc, char* argv[])
     auto gps_listener = std::make_unique<GpsListener>(*gps_simulator);
 
 
-    auto ota_updater_device = std::make_unique<OtaUpdaterHost>();
+    auto ota_updater_device = std::make_unique<OtaUpdaterHost>(updated);
 
     auto uart_bridge = std::make_unique<UartBridge>();
     auto [uart_a, uart_b] = uart_bridge->GetEndpoints();

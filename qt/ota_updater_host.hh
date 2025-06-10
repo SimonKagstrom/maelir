@@ -4,6 +4,9 @@
 
 class OtaUpdaterHost : public hal::IOtaUpdater
 {
+public:
+    OtaUpdaterHost(bool updated);
+
 private:
     void Update(std::function<void(uint8_t)> progress) final;
 
@@ -11,5 +14,5 @@ private:
 
     void MarkApplicationAsValid() final;
 
-    uint8_t m_progress {0};
+    const bool m_updated;
 };

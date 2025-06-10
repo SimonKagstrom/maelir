@@ -2,6 +2,12 @@
 
 #include "time.hh"
 
+OtaUpdaterHost::OtaUpdaterHost(bool updated)
+    : m_updated(updated)
+{
+}
+
+
 void
 OtaUpdaterHost::Update(std::function<void(uint8_t)> progress)
 {
@@ -16,7 +22,7 @@ OtaUpdaterHost::Update(std::function<void(uint8_t)> progress)
 bool
 OtaUpdaterHost::ApplicationHasBeenUpdated() const
 {
-    return false;
+    return m_updated;
 }
 
 void
