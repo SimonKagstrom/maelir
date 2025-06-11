@@ -94,7 +94,7 @@ TargetHttpdOtaUpdater::TargetHttpdOtaUpdater(hal::IDisplay& display)
     if (esp_read_mac(mac, esp_mac_type_t::ESP_MAC_BASE) == ESP_OK)
     {
         char buf[5];
-        snprintf(buf, sizeof(buf), "%02x%02x");
+        snprintf(buf, sizeof(buf), "%02x%02x", mac[4], mac[5]);
         m_wifi_ssid = m_wifi_ssid + "_" + buf;
     }
 }
