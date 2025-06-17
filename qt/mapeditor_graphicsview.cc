@@ -5,7 +5,6 @@
 #include "route_utils.hh"
 
 #include <QPainter>
-#include <fmt/format.h>
 
 MapEditorGraphicsView::MapEditorGraphicsView(QWidget* parent)
     : QGraphicsView(parent)
@@ -164,7 +163,7 @@ MapEditorGraphicsView::drawGpsTileRects(QPainter* painter, const QRectF& visible
                              x / kGpsPositionSize;
                 const auto& position = m_owner->m_gps_positions[index];
 
-                auto l1 = fmt::format("{:.4f}, {:.4f} -> {:.4f}, {:.4f}\nx,y: {},{}",
+                auto l1 = std::format("{:.4f}, {:.4f} -> {:.4f}, {:.4f}\nx,y: {},{}",
                                       position.latitude,
                                       position.longitude,
                                       position.latitude + position.latitude_offset,

@@ -9,10 +9,8 @@ OtaUpdater::OtaUpdater(hal::IOtaUpdater& updater, ApplicationState& application_
     , m_state_listener(application_state.AttachListener(GetSemaphore()))
     , m_progress([](auto) { /* Do nothing by default */ })
 {
-    snprintf(m_instructions,
-             sizeof(m_instructions),
-             "Connect to the Wifi AP %s\nand go to http://192.168.4.1",
-             m_updater.GetSsid());
+    m_instructions =
+        std::format("Connect to the Wifi AP {}\nand go to http://192.168.4.1", m_updater.GetSsid());
 
 
     if (m_has_been_updated)
@@ -28,7 +26,7 @@ OtaUpdater::OtaUpdater(hal::IOtaUpdater& updater, ApplicationState& application_
 const char*
 OtaUpdater::GetInstructions() const
 {
-    return m_instructions;
+    return m_instructions.c_str();
 }
 
 bool

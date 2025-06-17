@@ -382,7 +382,7 @@ UserInterface::MapScreen::DrawBoat()
 
     lv_obj_align(
         m_boat, LV_ALIGN_TOP_LEFT, x - m_boat_data->Width() / 2, y - m_boat_data->Height() / 2);
-}
+    }
 
 void
 UserInterface::MapScreen::DrawDestinationCrosshair()

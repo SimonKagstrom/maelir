@@ -7,7 +7,6 @@
 #include <QImageReader>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <fmt/format.h>
 #include <fstream>
 
 namespace
@@ -213,7 +212,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
     if (selectedAction == action_add_land_color)
     {
         auto color = m_map->pixelColor(x, y);
-        fmt::print("Color at {},{}: R: {}, G: {}, B: {}\n",
+        std::print("Color at {},{}: R: {}, G: {}, B: {}\n",
                    x,
                    y,
                    color.red(),
@@ -257,7 +256,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             auto stats = m_router->GetStats();
             if (!m_current_route.empty())
             {
-                fmt::print(
+                std::print(
                     "Route from {},{} to {},{} with {} expanded nodes for {} partial paths\n",
                     from.x,
                     from.y,
@@ -268,7 +267,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
             }
             else
             {
-                fmt::print("No route found between {},{} and {},{} with {} expanded nodes\n",
+                std::print("No route found between {},{} and {},{} with {} expanded nodes\n",
                            from.x,
                            from.y,
                            to.x,
@@ -286,7 +285,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
         auto stats = m_router->GetStats();
         if (!m_current_route.empty())
         {
-            fmt::print("Route from {},{} to {},{} with {} expanded nodes for {} partial paths\n",
+            std::print("Route from {},{} to {},{} with {} expanded nodes for {} partial paths\n",
                        from.x,
                        from.y,
                        to.x,
@@ -296,7 +295,7 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
         }
         else
         {
-            fmt::print("No route found between {},{} and {},{} with {} expanded nodes\n",
+            std::print("No route found between {},{} and {},{} with {} expanded nodes\n",
                        from.x,
                        from.y,
                        to.x,

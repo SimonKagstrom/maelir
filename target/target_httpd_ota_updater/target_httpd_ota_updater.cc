@@ -89,13 +89,14 @@ TargetHttpdOtaUpdater::TargetHttpdOtaUpdater(hal::IDisplay& display)
         m_application_has_been_updated = ota_state_running_part == ESP_OTA_IMG_PENDING_VERIFY;
     }
 
-    m_wifi_ssid = "Maelir";
-    uint8_t mac[8];
+    uint8_t mac[8] = {};
     if (esp_read_mac(mac, esp_mac_type_t::ESP_MAC_BASE) == ESP_OK)
     {
-        char buf[5];
-        snprintf(buf, sizeof(buf), "%02x%02x", mac[4], mac[5]);
-        m_wifi_ssid = m_wifi_ssid + "_" + buf;
+        m_wifi_ssid = std::format("Maelir_{:2x}{:2x}", mac[4], mac[5]);
+    }
+    else
+    {
+        m_wifi_ssid = "Maelir";
     }
 }
 

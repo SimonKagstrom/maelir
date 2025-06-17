@@ -4,8 +4,6 @@
 #include "test.hh"
 #include "route_test_utils.hh"
 
-#include <fmt/format.h>
-
 using namespace route_test;
 
 class Fixture

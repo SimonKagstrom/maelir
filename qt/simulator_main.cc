@@ -19,7 +19,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QFile>
-#include <fmt/format.h>
+#include <print>
 #include <stdlib.h>
 
 int
@@ -58,14 +58,14 @@ main(int argc, char* argv[])
     auto rv = bin_file.open(QIODevice::ReadOnly);
     if (!rv)
     {
-        fmt::print("Failed to open {}\n", map_file.toStdString());
+        std::print("Failed to open {}\n", map_file.toStdString());
         return 1;
     }
 
     auto mmap_bin = bin_file.map(0, bin_file.size());
     if (!mmap_bin)
     {
-        fmt::print("Failed to map {}\n", map_file.toStdString());
+        std::print("Failed to map {}\n", map_file.toStdString());
         return 1;
     }
 
@@ -78,7 +78,7 @@ main(int argc, char* argv[])
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
 
-    fmt::print("Metadata @ {}..{}:\n  {}x{} tiles\n  {}x{} land mask\n  {}x{} GPS data\n  0x{:x} "
+    std::print("Metadata @ {}..{}:\n  {}x{} tiles\n  {}x{} land mask\n  {}x{} GPS data\n  0x{:x} "
                "tile_data_offset\n  0x{:x}  land_mask_data_offset\n  0x{:x} "
                "gps_position_offset\n  latitude between {}..{}\n  longitude between {}..{}\n",
                (const void*)map_metadata,

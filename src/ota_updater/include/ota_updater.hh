@@ -6,6 +6,7 @@
 #include "listener_cookie.hh"
 
 #include <etl/mutex.h>
+#include <string>
 
 class OtaUpdater : public os::BaseThread
 {
@@ -17,7 +18,7 @@ public:
 
     bool ApplicationHasBeenUpdated() const;
 
-    const char *GetInstructions() const;
+    const char* GetInstructions() const;
 
 private:
     std::optional<milliseconds> OnActivation() final;
@@ -32,5 +33,5 @@ private:
     os::TimerHandle m_application_valid_timer;
 
     etl::mutex m_mutex;
-    char m_instructions[80];
+    std::string m_instructions;
 };

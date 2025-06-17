@@ -1,7 +1,7 @@
 #include "mapeditor_mainwindow.hh"
 
 #include <QApplication>
-#include <fmt/format.h>
+#include <print>
 #include <stdlib.h>
 
 int
@@ -9,7 +9,7 @@ main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-        fmt::print("Usage: {} <map_data_yaml>\n", argv[0]);
+        std::print("Usage: {} <map_data_yaml>\n", argv[0]);
         return 1;
     }
 

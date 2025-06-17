@@ -140,7 +140,7 @@ GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
 
     semaphore.release();
 
-//    fmt::print("Returning position: {}, {} from {}, {}\n",
+//    std::print("Returning position: {}, {} from {}, {}\n",
 //               position.latitude,
 //               position.longitude,
 //               m_position.x,
