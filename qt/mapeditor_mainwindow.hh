@@ -49,9 +49,7 @@ class MapEditorMainWindow : public QMainWindow
     friend class MapEditorGraphicsView;
 
 public:
-    explicit MapEditorMainWindow(const QString& map_name,
-                                 const QString& out_yaml,
-                                 QWidget* parent = nullptr);
+    explicit MapEditorMainWindow(const QString& yaml_file, QWidget* parent = nullptr);
     ~MapEditorMainWindow() final;
 
 protected:
@@ -71,6 +69,7 @@ private:
     void AddSkipTile(int x, int y);
     unsigned CountLandPixels(QImage& image);
 
+    void LoadMapImageFromYaml(const char* filename);
     void LoadYaml(const char* filename);
     void SaveYaml();
 
@@ -78,7 +77,7 @@ private:
 
     std::unique_ptr<QGraphicsScene> m_scene;
     std::unique_ptr<QImage> m_map;
-    const QString m_map_name;
+    std::string m_map_name;
     const QString m_out_yaml;
     QGraphicsPixmapItem* m_pixmap;
 

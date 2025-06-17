@@ -7,15 +7,15 @@
 int
 main(int argc, char* argv[])
 {
-    if (argc < 3)
+    if (argc < 2)
     {
-        fmt::print("Usage: {} <map_png> <out_headerfile>\n", argv[0]);
+        fmt::print("Usage: {} <map_data_yaml>\n", argv[0]);
         return 1;
     }
 
     QApplication a(argc, argv);
 
-    MapEditorMainWindow window(argv[1], argv[2]);
+    MapEditorMainWindow window(argv[1]);
 
     window.show();
 

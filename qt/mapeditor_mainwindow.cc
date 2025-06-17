@@ -37,21 +37,18 @@ InterpolateGpsPosition(std::span<const MapGpsRasterTile> positions, auto map_wid
 } // namespace
 
 
-MapEditorMainWindow::MapEditorMainWindow(const QString& map_name,
-                                         const QString& out_yaml,
-                                         QWidget* parent)
+MapEditorMainWindow::MapEditorMainWindow(const QString& out_yaml, QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
-    , m_map_name(map_name)
     , m_out_yaml(out_yaml)
     , m_scene(std::make_unique<QGraphicsScene>())
 {
     QImageReader::setAllocationLimit(4096);
 
-    m_map = std::make_unique<QImage>(map_name);
+    LoadMapImageFromYaml(m_out_yaml.toStdString().c_str());
     if (m_map->isNull())
     {
-        fmt::print("Failed to load image: {}\n", map_name.toStdString());
+        std::print("Map image can't be loaded\n");
         exit(1);
     }
 
@@ -318,6 +315,30 @@ MapEditorMainWindow::RightClickContextMenu(QPoint mouse_position, QPoint map_pos
 }
 
 void
+MapEditorMainWindow::LoadMapImageFromYaml(const char* filename)
+{
+    try
+    {
+        auto node = YAML::LoadFile(filename);
+
+        if (node["map_filename"])
+        {
+            m_map_name = node["map_filename"].as<std::string>();
+
+            m_map = std::make_unique<QImage>(m_map_name.c_str());
+            if (m_map == nullptr)
+            {
+                std::print("Failed to load image: {}\n", filename);
+                exit(1);
+            }
+        }
+    } catch (const YAML::BadFile& e)
+    {
+        // Just ignore this
+    }
+}
+
+void
 MapEditorMainWindow::LoadYaml(const char* filename)
 {
     try
@@ -429,7 +450,7 @@ MapEditorMainWindow::SaveYaml()
     YAML::Node node;
 
     // Globals
-    node["map_filename"] = m_map_name.toStdString();
+    node["map_filename"] = m_map_name;
     node["tile_size"] = kTileSize;
     node["path_finder_tile_size"] = kPathFinderTileSize;
 
