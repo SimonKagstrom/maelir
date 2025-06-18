@@ -2,6 +2,7 @@
 
 #include "painter.hh"
 #include "route_utils.hh"
+#include "version.hh"
 
 UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void()> on_close)
     : m_parent(parent)
@@ -144,7 +145,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     });
     AddSeparator(settings_page);
 
-    AddEntry(settings_page, "OTA update", [this](auto) {
+    AddEntry(settings_page, std::format("OTA update ({})", kSoftwareVersion), [this](auto) {
         auto state = m_parent.m_application_state.Checkout();
         state->ota_update_active = true;
 

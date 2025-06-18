@@ -7,9 +7,8 @@ if (EXISTS "${SOURCE_DIRECTORY}/.git")
             "--git-dir=${SOURCE_DIRECTORY}/.git"
             describe
             --always
-            --abbrev=8
-            --tags
-            HEAD
+            --abbrev=6
+            --dirty
         OUTPUT_VARIABLE GIT_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
