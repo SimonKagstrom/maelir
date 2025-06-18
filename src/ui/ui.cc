@@ -6,6 +6,7 @@
 #include "route_utils.hh"
 #include "time.hh"
 #include "updating_screen.hh"
+#include "version.hh"
 
 #include <cmath>
 #include <numbers>
@@ -89,8 +90,12 @@ UserInterface::OnStartup()
         auto mbox = lv_msgbox_create(NULL);
 
         lv_msgbox_add_title(mbox, "Software updated");
-        lv_msgbox_add_text(mbox,
-                           "The software has been updated. Will be marked valid after 10 seconds");
+        lv_msgbox_add_text(
+            mbox,
+            std::format(
+                "The software has been updated to {}. Will be marked valid after 10 seconds",
+                kSoftwareVersion)
+                .c_str());
 
         m_updated_timer = StartTimer(5s, [mbox]() {
             lv_msgbox_close(mbox);

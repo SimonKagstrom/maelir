@@ -27,4 +27,5 @@ PRIVATE
     crosshair_library
     painter
     route_iterator
+    git_version_header
 )
