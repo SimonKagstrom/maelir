@@ -21,6 +21,7 @@ Storage::Storage(hal::INvm& nvm,
     , m_application_state(application_state)
     , m_state_listener(application_state.AttachListener(GetSemaphore()))
     , m_route_listener(std::move(route_listener))
+    , m_commit_timer(StartTimer(0ms)) // Must be valid
 {
     m_route_listener->AwakeOn(GetSemaphore());
 }
@@ -76,8 +77,8 @@ Storage::OnStartup()
     m_stored_state = *state;
 }
 
-std::optional<milliseconds>
-Storage::OnActivation()
+void
+Storage::CommitState()
 {
     auto current_state = m_application_state.Checkout();
     auto schedule_commit = false;
@@ -133,6 +134,19 @@ Storage::OnActivation()
 
     // The stored state is now written to flash
     m_stored_state = *current_state;
+}
+
+std::optional<milliseconds>
+Storage::OnActivation()
+{
+    // Schedule a write in a few seconds
+    if (m_commit_timer->IsExpired())
+    {
+        m_commit_timer = StartTimer(5s, [this]() {
+            CommitState();
+            return std::nullopt;
+        });
+    }
 
     return std::nullopt;
 }

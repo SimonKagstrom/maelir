@@ -27,6 +27,8 @@ private:
                    const char* key,
                    M ApplicationState::State::* member);
 
+    void CommitState();
+
     std::optional<milliseconds> OnActivation() final;
 
     hal::INvm& m_nvm;
@@ -35,4 +37,6 @@ private:
 
     std::unique_ptr<ApplicationState::IListener> m_state_listener;
     std::unique_ptr<IRouteListener> m_route_listener;
+
+    os::TimerHandle m_commit_timer;
 };
