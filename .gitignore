@@ -2,6 +2,7 @@
 *.pro*
 *.old
 *.lock
+.vscode
 managed_components
 *.DS_Store
 *.code-workspace
