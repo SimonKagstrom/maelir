@@ -2,10 +2,11 @@
 Maelir is a round screen GPS plotter for classic boats. It's based on an ESP32S3 and an
 ESP32C3, both from waveshare, plus a UBLOX Neo-7M GPS module and a rotary encoder.
 
-![the hardware on the table](doc/maelir_open.jpg)
+![the hardware on the desk](doc/maelir_open.jpg)
+![the GPS plotter in the boat](doc/finished_product.jpg)
 
 -----
-The rest of hte document is just for me to remember commands, for now. TODO: More description...
+The rest of the document is just for me to remember commands, for now. TODO: More description...
 
 
 Qt:
@@ -38,7 +39,7 @@ Create the map data:
 ```
 ulimit -n 65536
 tools/image_save.py image_cache out_dir <path-to-saved-har-json-file>
-<qt-build>/map_editor out_dir/test.png maelir_metadata.yaml
+<qt-build>/map_editor maelir_metadata.yaml
 tools/tiler.py maelir_metadata.yaml map.bin
 ```
 
