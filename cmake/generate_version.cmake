@@ -9,6 +9,7 @@ if (EXISTS "${SOURCE_DIRECTORY}/.git")
             --always
             --abbrev=6
             --dirty
+        WORKING_DIRECTORY ${SOURCE_DIRECTORY}
         OUTPUT_VARIABLE GIT_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
