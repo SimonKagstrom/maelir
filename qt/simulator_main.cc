@@ -112,7 +112,7 @@ main(int argc, char* argv[])
 
     auto uart_event_listener = std::make_unique<UartEventListener>(uart_a);
     auto uart_event_forwarder = std::make_unique<UartEventForwarder>(uart_b, window, *gps_listener);
-    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *uart_event_listener);
+    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, state, *uart_event_listener);
     auto trip_computer = std::make_unique<TripComputer>(state,
                                                         gps_reader->AttachListener(),
                                                         route_service->AttachListener(),

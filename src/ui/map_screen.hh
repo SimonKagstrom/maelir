@@ -23,6 +23,8 @@ private:
         kOverviewMap,
         kSelectDestination,
         kDestinationSelected,
+        kAdjustGps,
+        kGpsAdjusted,
 
         kValueCount,
     };
@@ -70,6 +72,7 @@ private:
     void RunStateMachine();
 
     void OnInputSelectDestination(hal::IInput::Event event);
+    void OnInputAdjustGps(hal::IInput::Event event);
     void OnInputViewMap(hal::IInput::Event event);
 
     UserInterface& m_parent;

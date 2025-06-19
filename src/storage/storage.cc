@@ -5,6 +5,8 @@
 constexpr auto kHome = "H";
 constexpr auto kSpeedometer = "S";
 constexpr auto kColorMode = "C";
+constexpr auto kLatitudeAdjustment = "Y";
+constexpr auto kLongitudeAdjustment = "X";
 
 constexpr auto kRoutes = std::array {
     "R0",
@@ -61,6 +63,9 @@ Storage::OnStartup()
     UpdateFromNvm(state.get(), kHome, &ApplicationState::State::home_position);
     UpdateFromNvm(state.get(), kSpeedometer, &ApplicationState::State::show_speedometer);
     UpdateFromNvm(state.get(), kColorMode, &ApplicationState::State::color_mode);
+    UpdateFromNvm(state.get(), kLatitudeAdjustment, &ApplicationState::State::latitude_adjustment);
+    UpdateFromNvm(
+        state.get(), kLongitudeAdjustment, &ApplicationState::State::longitude_adjustment);
 
     // Read the stored routes
     for (auto i = 0u; i < kRoutes.size(); i++)
@@ -126,6 +131,10 @@ Storage::CommitState()
         WriteBack(current_state.get(), kSpeedometer, &ApplicationState::State::show_speedometer);
     schedule_commit |=
         WriteBack(current_state.get(), kColorMode, &ApplicationState::State::color_mode);
+    schedule_commit |= WriteBack(
+        current_state.get(), kLatitudeAdjustment, &ApplicationState::State::latitude_adjustment);
+    schedule_commit |= WriteBack(
+        current_state.get(), kLongitudeAdjustment, &ApplicationState::State::longitude_adjustment);
 
     if (schedule_commit)
     {

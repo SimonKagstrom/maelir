@@ -103,6 +103,10 @@ ApplicationState::Commit(const ApplicationState::StateImpl* state)
     updated |= UpdateIfChanged(
         &ApplicationState::State::five_minute_average_speed, state, &m_global_state);
     updated |=
+        UpdateIfChanged(&ApplicationState::State::latitude_adjustment, state, &m_global_state);
+    updated |=
+        UpdateIfChanged(&ApplicationState::State::longitude_adjustment, state, &m_global_state);
+    updated |=
         UpdateIfChanged(&ApplicationState::State::route_passed_meters, state, &m_global_state);
     updated |=
         UpdateIfChanged(&ApplicationState::State::route_total_meters, state, &m_global_state);

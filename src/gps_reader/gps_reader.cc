@@ -58,8 +58,11 @@ private:
 };
 
 
-GpsReader::GpsReader(const MapMetadata& metadata, hal::IGps& gps)
+GpsReader::GpsReader(const MapMetadata& metadata,
+                     ApplicationState& application_state,
+                     hal::IGps& gps)
     : m_map_metadata(metadata)
+    , m_application_state(application_state)
     , m_gps(gps)
 {
 }
@@ -99,12 +102,17 @@ GpsReader::OnActivation()
         return std::nullopt;
     }
 
+    auto state = m_application_state.CheckoutReadonly();
     GpsData mangled;
 
     mangled.position = *m_position;
     mangled.heading = *m_heading;
     mangled.speed = *m_speed;
     mangled.pixel_position = gps::PositionToPoint(m_map_metadata, *m_position);
+
+    // Adjust the GPS data
+    mangled.pixel_position.x += state->longitude_adjustment;
+    mangled.pixel_position.y += state->latitude_adjustment;
 
     for (auto i = 0u; i < m_stale_listeners.size(); i++)
     {

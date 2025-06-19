@@ -165,6 +165,33 @@ UserInterface::MapScreen::Update()
 
         show_speedometer = false;
     }
+    else if (m_state == State::kAdjustGps)
+    {
+        auto state = m_parent.m_application_state.CheckoutReadonly();
+
+        lv_obj_add_flag(m_route_line->lv_passed_line, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
+
+        auto first_sym = LV_SYMBOL_LEFT;
+        auto second_sym = LV_SYMBOL_RIGHT;
+
+        if (m_parent.m_position_select_vertical)
+        {
+            first_sym = LV_SYMBOL_UP;
+            second_sym = LV_SYMBOL_DOWN;
+        }
+
+        snprintf(buf,
+                 sizeof(buf),
+                 "x %d, y %d\n%s\n%s",
+                 state->longitude_adjustment,
+                 state->latitude_adjustment,
+                 first_sym,
+                 second_sym);
+
+        show_speedometer = false;
+    }
     else
     {
         snprintf(buf,
@@ -264,6 +291,10 @@ UserInterface::MapScreen::RunStateMachine()
                 m_crosshair_position = m_parent.m_position;
                 m_state = State::kInitialOverviewMap;
             }
+            else if (m_parent.m_adjust_gps)
+            {
+                m_state = State::kAdjustGps;
+            }
             else if (m_mode != Mode::kMap)
             {
                 // Always go through this
@@ -347,6 +378,21 @@ UserInterface::MapScreen::RunStateMachine()
             }
             break;
 
+        case State::kAdjustGps:
+            m_zoom_level = 1;
+            m_mode = Mode::kMap;
+            DrawMapTiles(m_map_position);
+
+            if (m_parent.m_adjust_gps == false)
+            {
+                m_state = State::kGpsAdjusted;
+            }
+
+            break;
+
+        case State::kGpsAdjusted:
+            [[fallthrough]];
+
         case State::kDestinationSelected:
             m_mode = Mode::kMap;
             m_crosshair_position = Point {0, 0};
@@ -369,7 +415,7 @@ UserInterface::MapScreen::DrawBoat()
     int32_t x;
     int32_t y;
 
-    if (m_state == State::kMap)
+    if (m_state == State::kMap || m_state == State::kAdjustGps)
     {
         x = m_parent.m_position.x - m_map_position.x;
         y = m_parent.m_position.y - m_map_position.y;
@@ -670,6 +716,10 @@ UserInterface::MapScreen::OnInput(hal::IInput::Event event)
     {
         OnInputSelectDestination(event);
     }
+    else if (m_state == State::kAdjustGps)
+    {
+        OnInputAdjustGps(event);
+    }
     else
     {
         OnInputViewMap(event);
@@ -743,6 +793,42 @@ UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
     case hal::IInput::EventType::kRight:
         m_crosshair_position =
             Point {m_crosshair_position.x + x_diff, m_crosshair_position.y + y_diff};
+        break;
+    default:
+        break;
+    }
+}
+
+void
+UserInterface::MapScreen::OnInputAdjustGps(hal::IInput::Event event)
+{
+    auto state = m_parent.m_application_state.Checkout();
+    int8_t long_diff = m_parent.m_position_select_vertical ? 0 : 1;
+    int8_t lat_diff = m_parent.m_position_select_vertical ? 1 : 0;
+
+    switch (event.type)
+    {
+    case hal::IInput::EventType::kButtonDown:
+        m_select_timer = m_parent.StartTimer(1s, [this]() {
+            m_parent.m_position_select_vertical = !m_parent.m_position_select_vertical;
+
+            return std::nullopt;
+        });
+        break;
+    case hal::IInput::EventType::kButtonUp:
+        // Only select unless the timer has expired (otherwise it's a change of direction)
+        if (m_parent.m_adjust_gps && m_select_timer->IsExpired() == false)
+        {
+            m_parent.m_adjust_gps = false;
+        }
+        break;
+    case hal::IInput::EventType::kLeft:
+        state->latitude_adjustment += -1 * lat_diff;
+        state->longitude_adjustment += -1 * long_diff;
+        break;
+    case hal::IInput::EventType::kRight:
+        state->latitude_adjustment += lat_diff;
+        state->longitude_adjustment += long_diff;
         break;
     default:
         break;

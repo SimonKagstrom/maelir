@@ -28,4 +28,5 @@ PUBLIC
     base_thread
     # For now, this could be an interface with several converters in the future.
     tile_position_converter
+    application_state
 )

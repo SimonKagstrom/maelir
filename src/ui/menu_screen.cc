@@ -145,6 +145,14 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     });
     AddSeparator(settings_page);
 
+    AddEntry(settings_page, "Adjust GPS", [this](auto) {
+        auto state = m_parent.m_application_state.Checkout();
+        state->demo_mode = false;
+
+        m_parent.m_adjust_gps = true;
+        m_on_close();
+    });
+
     AddEntry(settings_page, std::format("OTA update ({})", kSoftwareVersion), [this](auto) {
         auto state = m_parent.m_application_state.Checkout();
         state->ota_update_active = true;

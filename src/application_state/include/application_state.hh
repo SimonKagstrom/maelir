@@ -40,6 +40,8 @@ public:
         ColorMode color_mode {ColorMode::kColor};
         uint8_t minute_average_speed {0};
         uint8_t five_minute_average_speed {0};
+        int8_t latitude_adjustment {0}; // In pixels
+        int8_t longitude_adjustment {0};
 
         IndexType home_position {0};
         uint32_t route_passed_meters {0};
