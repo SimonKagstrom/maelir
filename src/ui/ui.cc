@@ -144,12 +144,12 @@ UserInterface::OnActivation()
         }
 
         auto on_map_screen = m_menu_screen == nullptr && m_updating_screen == nullptr;
-        lv_indev_read(m_lvgl_input_dev);
+        m_current_screen->OnInput(event);
 
-        // Ugly
-        if (on_map_screen)
+        if (!on_map_screen)
         {
-            m_map_screen->OnInput(event);
+            // OnInput on the main screen can trigger a menu entry, so avoid an immediate exit
+            lv_indev_read(m_lvgl_input_dev);
         }
     }
 
@@ -183,11 +183,7 @@ UserInterface::OnActivation()
     }
     m_gps_position_valid = !m_gps_position_timer->IsExpired();
 
-    m_map_screen->Update();
-    if (m_updating_screen)
-    {
-        m_updating_screen->Update();
-    }
+    m_current_screen->Update();
 
     if (auto time_before = os::GetTimeStampRaw(); m_next_redraw_time > time_before)
     {
@@ -223,7 +219,6 @@ UserInterface::EnterOtaUpdatingScreen()
     m_gps_port->DisableWakeup();
 
     m_updating_screen = std::make_unique<UpdatingScreen>(*this);
-
     m_updating_screen->Activate();
 }
 
@@ -239,4 +234,24 @@ UserInterface::SelectPosition(PositionSelection selection)
 {
     m_select_position = selection;
     m_position_select_vertical = false;
+}
+
+
+ScreenBase::ScreenBase(UserInterface& parent)
+    : m_parent(parent)
+    , m_screen(lv_obj_create(nullptr))
+{
+}
+
+
+ScreenBase::~ScreenBase()
+{
+    lv_obj_delete(m_screen);
+}
+
+void
+ScreenBase::Activate()
+{
+    lv_screen_load(m_screen);
+    m_parent.m_current_screen = this;
 }

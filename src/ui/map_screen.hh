@@ -75,7 +75,6 @@ private:
     void OnInputAdjustGps(hal::IInput::Event event);
     void OnInputViewMap(hal::IInput::Event event);
 
-    UserInterface& m_parent;
     std::unique_ptr<Image> m_boat_data;
     std::unique_ptr<Image> m_crosshair_data;
 

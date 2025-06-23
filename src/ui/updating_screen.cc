@@ -32,6 +32,7 @@ ProgressToString(uint8_t progress)
 } // namespace
 
 UserInterface::UpdatingScreen::UpdatingScreen(UserInterface& parent)
+    : ScreenBase(parent)
 {
     auto instructions = parent.m_ota_updater.GetInstructions();
     m_label = lv_label_create(m_screen);

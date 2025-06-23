@@ -16,7 +16,7 @@ public:
 
     ~MenuScreen();
 
-    void Update() final;
+    void OnInput(hal::IInput::Event event) final;
 
 private:
     // Return the container object
@@ -38,7 +38,8 @@ private:
                          bool default_value,
                          std::function<void(lv_event_t*)> on_click);
 
-    UserInterface& m_parent;
+    void BumpExitTimer();
+
     std::function<void()> m_on_close;
 
     lv_style_t m_style_selected;

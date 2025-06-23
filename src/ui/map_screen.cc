@@ -10,7 +10,7 @@ constexpr auto kMaxKnots = 30;
 constexpr auto kSpeedometerMaxAngle = 202;
 
 UserInterface::MapScreen::MapScreen(UserInterface& parent)
-    : m_parent(parent)
+    : ScreenBase(parent)
     , m_boat_data(DecodePngMask(boat_data, 0))
     , m_crosshair_data(DecodePngMask(crosshair_data, 0))
     , m_select_timer(m_parent.StartTimer(0ms))

@@ -14,37 +14,34 @@
 #include <etl/vector.h>
 #include <lvgl.h>
 
+class UserInterface;
+
 class ScreenBase
 {
 public:
-    ScreenBase()
-        : m_screen(lv_obj_create(nullptr))
-    {
-    }
+    explicit ScreenBase(UserInterface& parent);
 
-    virtual ~ScreenBase()
-    {
-        lv_obj_delete(m_screen);
-    }
+    virtual ~ScreenBase();
 
-    virtual void Activate()
-    {
-        lv_screen_load(m_screen);
-    }
+    void Activate();
 
     virtual void OnPosition(const GpsData& position)
     {
+        // Default NOP
     }
 
     virtual void OnInput(hal::IInput::Event event)
     {
+        // Default NOP
     }
 
     virtual void Update()
     {
+        // Default NOP
     }
 
 protected:
+    UserInterface& m_parent;
     lv_obj_t* m_screen;
 };
 
@@ -52,6 +49,8 @@ protected:
 class UserInterface : public os::BaseThread, public hal::IInput::IListener
 {
 public:
+    friend class ScreenBase;
+
     UserInterface(ApplicationState& application_state,
                   const MapMetadata& metadata,
                   TileProducer& tile_producer,
@@ -132,6 +131,7 @@ private:
     std::unique_ptr<ScreenBase> m_map_screen;
     std::unique_ptr<ScreenBase> m_menu_screen;
     std::unique_ptr<ScreenBase> m_updating_screen;
+    ScreenBase* m_current_screen {nullptr}; // Set when switched
 
     int16_t m_enc_diff {0};
     lv_indev_state_t m_button_state {LV_INDEV_STATE_RELEASED};

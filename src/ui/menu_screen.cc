@@ -5,7 +5,7 @@
 #include "version.hh"
 
 UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void()> on_close)
-    : m_parent(parent)
+    : ScreenBase(parent)
     , m_on_close(on_close)
 
 {
@@ -174,7 +174,8 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_menu_set_page(m_menu, main_page);
     lv_indev_set_group(m_parent.m_lvgl_input_dev, m_input_group);
 
-    Update();
+    // Start the exit timer (10 seconds unless input is done)
+    BumpExitTimer();
 }
 
 UserInterface::MenuScreen::~MenuScreen()
@@ -189,14 +190,19 @@ UserInterface::MenuScreen::~MenuScreen()
 }
 
 void
-UserInterface::MenuScreen::Update()
+UserInterface::MenuScreen::OnInput(hal::IInput::Event event)
+{
+    BumpExitTimer();
+}
+
+void
+UserInterface::MenuScreen::BumpExitTimer()
 {
     m_exit_timer = m_parent.StartTimer(10s, [this]() {
         m_on_close();
         return std::nullopt;
     });
 }
-
 
 lv_obj_t*
 UserInterface::MenuScreen::AddEntry(lv_obj_t* page,
