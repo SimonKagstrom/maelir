@@ -245,7 +245,7 @@ app_main(void)
     // Selects between the real and demo GPS
     auto gps_mux = std::make_unique<GpsMux>(state, *uart_event_listener, *gps_simulator);
 
-    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, *gps_mux);
+    auto gps_reader = std::make_unique<GpsReader>(*map_metadata, state, *gps_mux);
     auto trip_computer = std::make_unique<TripComputer>(state,
                                                         gps_reader->AttachListener(),
                                                         route_service->AttachListener(),
