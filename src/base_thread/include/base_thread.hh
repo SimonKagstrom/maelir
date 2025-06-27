@@ -99,6 +99,13 @@ protected:
     /// @brief the thread has been awoken
     virtual std::optional<milliseconds> OnActivation() = 0;
 
+    /**
+     * @brief Start a timer in this thread.
+     *
+     * @param timeout the timeout of the timer
+     * @param on_timeout the function to call on timeout
+     * @return a handle to the started timer.
+     */
     TimerHandle StartTimer(
         milliseconds timeout, std::function<std::optional<milliseconds>()> on_timeout = []() {
             return std::optional<milliseconds>();
@@ -107,6 +114,13 @@ protected:
         return m_timer_manager.StartTimer(timeout, on_timeout);
     }
 
+    /**
+     * @brief Defer the execution of a function.
+     *
+     * @param deferred_job the function to execute
+     *
+     * @return a handle to the started job
+     */
     TimerHandle Defer(std::function<std::optional<milliseconds>()> deferred_job)
     {
         return m_timer_manager.StartTimer(0ms, deferred_job);
