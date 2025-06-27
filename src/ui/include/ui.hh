@@ -120,6 +120,7 @@ private:
     bool m_gps_position_valid {false};
     os::TimerHandle m_gps_position_timer;
     os::TimerHandle m_updated_timer;
+    os::TimerHandle m_deferred_deletion;
 
 
     std::vector<IndexType> m_route;

@@ -107,6 +107,11 @@ protected:
         return m_timer_manager.StartTimer(timeout, on_timeout);
     }
 
+    TimerHandle Defer(std::function<std::optional<milliseconds>()> deferred_job)
+    {
+        return m_timer_manager.StartTimer(0ms, deferred_job);
+    }
+
     os::binary_semaphore& GetSemaphore()
     {
         return m_semaphore;

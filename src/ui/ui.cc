@@ -206,7 +206,11 @@ UserInterface::EnterMenu()
             // Ugly
             m_map_screen->Activate();
         }
-        m_menu_screen = nullptr;
+        m_deferred_deletion = Defer([this]() {
+            m_menu_screen = nullptr;
+
+            return std::nullopt;
+        });
         m_gps_port->AwakeOn(GetSemaphore());
     });
 
