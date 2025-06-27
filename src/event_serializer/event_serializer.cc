@@ -152,13 +152,13 @@ Deserializer::Deserialize()
 {
     if (m_input_events.empty() == false)
     {
-        InputEventState event = m_input_events.back();
+        InputEventState event = m_input_events.front();
         m_input_events.pop();
         return event;
     }
     if (m_gps_events.empty() == false)
     {
-        hal::RawGpsData event = m_gps_events.back();
+        hal::RawGpsData event = m_gps_events.front();
         m_gps_events.pop();
         return event;
     }

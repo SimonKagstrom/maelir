@@ -131,9 +131,7 @@ TimerManager::RemoveDeletedTimers()
     for (auto index = m_pending_removals.find_first(true); index != m_pending_removals.npos;
          index = m_pending_removals.find_next(true, index + 1))
     {
-        auto it = std::find(m_active_timers.begin(), m_active_timers.end(), index);
-
-        if (it != m_active_timers.end())
+        if (auto it = std::ranges::find(m_active_timers, index); it != m_active_timers.end())
         {
             m_active_timers.erase(it);
         }
