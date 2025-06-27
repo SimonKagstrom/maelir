@@ -61,6 +61,7 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
 
     lv_obj_set_style_arc_width(m_speedometer_arc, 22, LV_PART_INDICATOR);
     lv_obj_set_style_arc_rounded(m_speedometer_arc, false, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(m_speedometer_arc, lv_palette_main(LV_PALETTE_LIGHT_GREEN), LV_PART_INDICATOR);
     lv_arc_set_rotation(m_speedometer_arc, 135);
     lv_arc_set_value(m_speedometer_arc, 100);
     lv_obj_center(m_speedometer_arc);
