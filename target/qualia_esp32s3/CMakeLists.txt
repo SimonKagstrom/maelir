@@ -13,4 +13,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 
 add_subdirectory(.. maelir_target)
-add_subdirectory(../target_display maelir_target_display)
+add_subdirectory(../../external/libmaelir/esp32/st7701_esp32 maelir_target_display)

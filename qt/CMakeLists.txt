@@ -32,25 +32,13 @@ endif()
 add_compile_definitions(LV_CONF_INCLUDE_SIMPLE=1)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
-find_package(fmt REQUIRED)
 find_package(etl REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 add_subdirectory(.. maelir)
+add_subdirectory(../external/libmaelir/qt libmaelir_qt)
 add_subdirectory(uart_bridge)
 
-add_library(os_qt EXCLUDE_FROM_ALL
-    os/base_thread_qt.cc
-    os/semaphore_qt.cc
-)
-
-target_link_libraries(os_qt
-PUBLIC
-    Qt6::Widgets
-    fmt::fmt
-    timer_manager
-    base_thread
-)
 
 add_executable(maelir_qt
     nvm_host.cc
@@ -58,10 +46,10 @@ add_executable(maelir_qt
     simulator_main.cc
     simulator_mainwindow.ui
     simulator_mainwindow.cc
-    display_qt.cc
 )
 
 target_link_libraries(maelir_qt
+    display_qt
     os_qt
     ui
     tile_producer
@@ -73,6 +61,7 @@ target_link_libraries(maelir_qt
     uart_event_listener
     uart_event_forwarder
     lvgl
+    Qt6::Widgets
 )
 
 add_executable(map_editor
@@ -85,8 +74,10 @@ target_include_directories(map_editor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(map_editor
     os_qt
+    display_qt
     yaml-cpp
     route_iterator
     router
     router_interface
+    Qt6::Widgets
 )

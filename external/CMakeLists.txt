@@ -1,3 +1,4 @@
+# libmaelir is included in the target-specific parts
 add_subdirectory(lvgl)
 
 if ("${IDF_TARGET}" STREQUAL "")

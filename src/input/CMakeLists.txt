@@ -11,4 +11,5 @@ target_link_libraries(encoder_input
 PUBLIC
     rotary_encoder
     button_debouncer
+    maelir_interface
 )

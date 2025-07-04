@@ -8,3 +8,6 @@
 [submodule "external/maelir_data"]
 	path = external/maelir_data
 	url = https://github.com/SimonKagstrom/maelir_data.git
+[submodule "external/libmaelir"]
+	path = external/libmaelir
+	url = git@github.com:SimonKagstrom/libmaelir.git
