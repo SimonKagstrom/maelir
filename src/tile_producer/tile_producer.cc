@@ -65,25 +65,6 @@ struct DecodeHelperGrayscale : DecodeHelper
     const uint16_t land_slant_color;
 };
 
-class StandaloneImage : public Image
-{
-public:
-    StandaloneImage(std::unique_ptr<uint8_t[]> data,
-                    size_t width,
-                    size_t height,
-                    unsigned pixel_size)
-        : Image(std::span<const uint8_t>({data.get(), width * height * pixel_size}),
-                width,
-                height,
-                pixel_size != 2)
-        , m_data(std::move(data))
-    {
-    }
-
-private:
-    std::unique_ptr<uint8_t[]> m_data;
-};
-
 
 void
 PngDraw(PNGDRAW* pDraw)
