@@ -66,7 +66,7 @@ struct DecodeHelperGrayscale : DecodeHelper
 };
 
 
-void
+int
 PngDraw(PNGDRAW* pDraw)
 {
     auto helper = static_cast<DecodeHelper*>(pDraw->pUser);
@@ -74,9 +74,11 @@ PngDraw(PNGDRAW* pDraw)
     helper->png.getLineAsRGB565(
         pDraw, helper->dst + helper->offset, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
     helper->offset += pDraw->iWidth;
+
+    return 1;
 }
 
-void
+int
 PngDrawMask(PNGDRAW* pDraw)
 {
     auto helper = static_cast<DecodeHelperMask*>(pDraw->pUser);
@@ -100,9 +102,11 @@ PngDrawMask(PNGDRAW* pDraw)
         dst[helper->offset++] = (b * 255) / 31;
         dst[helper->offset++] = alpha_value;
     }
+
+    return 1;
 }
 
-void
+int
 PngDrawGrayscale(PNGDRAW* pDraw)
 {
     auto helper = static_cast<DecodeHelperGrayscale*>(pDraw->pUser);
@@ -139,6 +143,8 @@ PngDrawGrayscale(PNGDRAW* pDraw)
     }
 
     helper->line_number++;
+
+    return 1;
 }
 
 class TileHandle : public ITileHandle
