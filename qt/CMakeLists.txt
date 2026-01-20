@@ -38,6 +38,7 @@ find_package(yaml-cpp REQUIRED)
 add_subdirectory(.. maelir)
 add_subdirectory(../external/libmaelir/qt libmaelir_qt)
 add_subdirectory(uart_bridge)
+add_library(display_properties ALIAS display_480x480)
 
 
 add_executable(maelir_qt

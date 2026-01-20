@@ -14,3 +14,4 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_subdirectory(.. maelir_target)
 add_subdirectory(../display_jd9365 maelir_target_display)
+add_library(display_properties ALIAS display_800x800)
