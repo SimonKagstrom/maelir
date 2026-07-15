@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 project(maelir_qt LANGUAGES CXX C ASM)
 
+include(FetchContent)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 
@@ -9,6 +11,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG yaml-cpp-0.9.0
+)
+FetchContent_MakeAvailable(yaml-cpp)
 # Ignore some irritating warnings on MacOS
 if(APPLE)
     add_link_options(-Wl,-no_warn_duplicate_libraries)
@@ -32,8 +40,6 @@ endif()
 add_compile_definitions(LV_CONF_INCLUDE_SIMPLE=1)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
-find_package(etl REQUIRED)
-find_package(yaml-cpp REQUIRED)
 
 add_subdirectory(.. maelir)
 add_subdirectory(../external/libmaelir/qt libmaelir_qt)
@@ -76,7 +82,7 @@ target_include_directories(map_editor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(map_editor
     os_qt
     display_qt
-    yaml-cpp
+    yaml_cpp::yaml-cpp
     route_iterator
     router
     router_interface
