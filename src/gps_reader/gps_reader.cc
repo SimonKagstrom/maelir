@@ -6,7 +6,7 @@
 #include <etl/queue_spsc_atomic.h>
 #include <span>
 
-class GpsReader::GpsPortImpl : public IGpsPort
+class GpsReader::GpsPortImpl final : public IGpsPort
 {
 public:
     GpsPortImpl(GpsReader* parent, uint8_t index)
@@ -102,32 +102,31 @@ GpsReader::OnActivation()
         return std::nullopt;
     }
 
-    auto state = m_application_state.CheckoutReadonly();
-    GpsData mangled;
-
-    mangled.position = *m_position;
-    mangled.heading = *m_heading;
-    mangled.speed = *m_speed;
-    mangled.pixel_position = gps::PositionToPoint(m_map_metadata, *m_position);
-
-    // Adjust the GPS data
-    mangled.pixel_position.x += state->longitude_adjustment;
-    mangled.pixel_position.y += state->latitude_adjustment;
-
-    for (auto i = 0u; i < m_stale_listeners.size(); i++)
+    if (m_application_state.CheckoutReadonly().Get<AS::demo_mode>() == false)
     {
-        if (m_stale_listeners[i].exchange(false))
-        {
-            m_listeners.erase(m_listeners.begin() + i);
-        }
-    }
+        auto conf = m_application_state.CheckoutReadonly().Get<AS::configuration>();
+        auto qw =
+            m_application_state
+                .CheckoutQueuedWriter<AS::position, AS::pixel_position, AS::gps_position_valid>();
 
-    for (auto& l : m_listeners)
-    {
-        l->PushGpsData(mangled);
-    }
+        GpsData mangled;
 
-    Reset();
+        mangled.position = *m_position;
+        mangled.heading = *m_heading;
+        mangled.speed = *m_speed;
+
+        auto pixel_position = gps::PositionToPoint(m_map_metadata, *m_position);
+
+        // Adjust the GPS data
+        pixel_position.x += conf->longitude_adjustment;
+        pixel_position.y += conf->latitude_adjustment;
+
+        qw.Set<AS::position>(mangled);
+        qw.Set<AS::pixel_position>(pixel_position);
+        qw.Set<AS::gps_position_valid>(true);
+
+        Reset();
+    }
 
     return std::nullopt;
 }

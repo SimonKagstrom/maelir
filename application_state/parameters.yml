@@ -25,9 +25,12 @@ parameters:
 
   route_total_meters:
     type: uint32_t
-    default: 0
 
+  configuration:
+    type: struct ConfigurationSettings
 
   stored_positions:
     type: struct StoredPositions
 
+  pixel_position:
+    type: struct Point
