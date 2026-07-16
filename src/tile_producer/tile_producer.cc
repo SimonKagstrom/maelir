@@ -147,7 +147,7 @@ PngDrawGrayscale(PNGDRAW* pDraw)
     return 1;
 }
 
-class TileHandle : public ITileHandle
+class TileHandle final : public ITileHandle
 {
 public:
     explicit TileHandle(ImageImpl& image,
@@ -188,7 +188,8 @@ TileProducer::TileProducer(ApplicationState& application_state, const MapMetadat
     , m_tile_row_size(map_metadata.tile_row_size)
     , m_tile_rows(map_metadata.tile_rows)
     , m_application_state(application_state)
-    , m_state_listener(application_state.AttachListener(GetSemaphore()))
+    , m_state_listener(application_state.AttachListener<AS::configuration>(GetSemaphore()))
+    , m_state_cache(application_state)
 {
     // Including the default land/empty tile
     assert(m_tile_count == m_tile_row_size * m_tile_rows + 1);
@@ -253,21 +254,23 @@ TileProducer::IsCached(const Point& point) const
 std::optional<milliseconds>
 TileProducer::OnActivation()
 {
+    auto& co = m_state_cache.Pull();
     uint32_t requested_index = 0;
 
-    auto color_mode = m_application_state.CheckoutReadonly()->color_mode;
-    if (color_mode != m_color_mode)
-    {
-        m_color_mode = color_mode;
+    co.OnChangedValue<AS::configuration>([this](auto& old_conf, auto& new_conf) {
+        if (new_conf.color_mode != old_conf.color_mode)
+        {
+            m_color_mode = new_conf.color_mode;
 
-        // Drop all cached data
-        std::scoped_lock lock(m_mutex);
-        m_tiles.clear();
-        m_tile_request_order.clear();
-        m_tile_index_to_cache.clear();
-        m_tile_index_to_cache.resize(m_tile_count);
-        std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
-    }
+            // Drop all cached data
+            std::scoped_lock lock(m_mutex);
+            m_tiles.clear();
+            m_tile_request_order.clear();
+            m_tile_index_to_cache.clear();
+            m_tile_index_to_cache.resize(m_tile_count);
+            std::ranges::fill(m_tile_index_to_cache, kInvalidTileIndex);
+        }
+    });
 
     while (m_tile_requests.pop(requested_index))
     {
@@ -369,7 +372,7 @@ TileProducer::DecodeTile(unsigned index)
 
     int rc;
 
-    if (m_color_mode == ApplicationState::ColorMode::kColor)
+    if (m_color_mode == ColorMode::kColor)
     {
         rc = png->openFLASH(in_psram.get(), tile_size, PngDraw);
     }
@@ -384,7 +387,7 @@ TileProducer::DecodeTile(unsigned index)
     }
     auto img = std::make_unique<ImageImpl>(index);
 
-    if (m_color_mode == ApplicationState::ColorMode::kColor)
+    if (m_color_mode == ColorMode::kColor)
     {
         DecodeHelper priv(*png, reinterpret_cast<uint16_t*>(img->rgb565_data.data()));
         rc = png->decode((void*)&priv, 0);
@@ -393,8 +396,7 @@ TileProducer::DecodeTile(unsigned index)
     {
         DecodeHelperGrayscale priv(*png,
                                    reinterpret_cast<uint16_t*>(img->rgb565_data.data()),
-                                   m_color_mode == ApplicationState::ColorMode::kBlackRed ? 0xf800
-                                                                                          : 0x0000);
+                                   m_color_mode == ColorMode::kBlackRed ? 0xf800 : 0x0000);
 
         rc = png->decode((void*)&priv, 0);
     }

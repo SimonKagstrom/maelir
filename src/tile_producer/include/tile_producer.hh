@@ -71,7 +71,7 @@ private:
     const uint32_t m_tile_rows;
 
     ApplicationState &m_application_state;
-    std::unique_ptr<ApplicationState::IListener> m_state_listener;
+    std::unique_ptr<ListenerCookie> m_state_listener;
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     etl::list<uint32_t, kTileCacheSize> m_tile_request_order;
@@ -81,8 +81,8 @@ private:
     etl::queue_spsc_atomic<uint32_t, kTileCacheSize> m_tile_requests;
     os::binary_semaphore m_tile_request_semaphore {0};
 
-    // Invalid to start with
-    ApplicationState::ColorMode m_color_mode {ApplicationState::ColorMode::kValueCount};
+    ApplicationState::PartialReadOnlyCache<AS::configuration> m_state_cache;
+    ColorMode m_color_mode {ColorMode::kColor};
 
     mutable etl::mutex m_mutex;
 };

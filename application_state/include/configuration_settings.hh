@@ -22,4 +22,6 @@ struct ConfigurationSettings
     int8_t longitude_adjustment {0};
 
     IndexType home_position {0};
+
+    bool operator==(const ConfigurationSettings& other) const = default;
 };
