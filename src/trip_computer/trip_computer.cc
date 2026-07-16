@@ -55,25 +55,26 @@ TripComputer::OnActivation()
 {
     if (auto ev = m_route_listener->Poll(); ev)
     {
-        auto state = m_application_state.Checkout();
+        auto rw = m_application_state.CheckoutReadWrite();
 
         // Reset
         m_current_route.Reset();
 
-        state->route_total_meters = 0;
-        state->route_passed_meters = 0;
+        rw.Set<AS::route_total_meters>(0);
+        rw.Set<AS::route_passed_meters>(0);
 
         if (ev->type == IRouteListener::EventType::kReady)
         {
             m_current_route.SetRoute(ev->route);
-            state->route_total_meters = MeasureRoute();
+            rw.Set<AS::route_total_meters>(MeasureRoute());
         }
     }
 
-    if (auto gps_data = m_gps_port->Poll(); gps_data)
+    auto ro = m_application_state.CheckoutReadonly();
+    if (ro.Get<AS::gps_position_valid>())
     {
-        HandleSpeed(gps_data->speed);
-        HandleRoute(gps_data->pixel_position);
+        HandleSpeed(ro.Get<AS::position>()->speed);
+        HandleRoute(*ro.Get<AS::pixel_position>());
     }
 
     return std::nullopt;
@@ -97,10 +98,10 @@ TripComputer::HandleSpeed(float speed_knots)
         m_five_minute_history.Push(minute_average);
     }
 
-    auto state = m_application_state.Checkout();
+    auto qw = m_application_state.CheckoutQueuedWriter<AS::minute_average_speed, AS::five_minute_average_speed>();
 
-    state->minute_average_speed = minute_average;
-    state->five_minute_average_speed = m_five_minute_history.Average();
+    qw.Set<AS::minute_average_speed>(minute_average);
+    qw.Set<AS::five_minute_average_speed>(m_five_minute_history.Average());
 }
 
 void
@@ -149,9 +150,9 @@ TripComputer::HandleRoute(Point pixel_position)
         last_point = cur_point;
     }
 
-    auto state = m_application_state.Checkout();
+    auto rw = m_application_state.CheckoutReadWrite();
 
-    state->route_passed_meters = passed_distance / kResolution * kResolution;
+    rw.Set<AS::route_passed_meters>(passed_distance / kResolution * kResolution);
 }
 
 uint32_t
