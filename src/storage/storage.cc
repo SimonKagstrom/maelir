@@ -1,7 +1,8 @@
 #include "storage.hh"
 
 #include <cstddef>
-
+#include <ranges>
+#include <string_view>
 
 enum class Key
 {
@@ -41,19 +42,19 @@ constexpr auto kKeyToString = std::array {
     },
     std::pair {
         Key::kRoute0,
-        "R0",
+        "0",
     },
     std::pair {
         Key::kRoute1,
-        "R1",
+        "1",
     },
     std::pair {
         Key::kRoute2,
-        "R2",
+        "2",
     },
     std::pair {
         Key::kRoute3,
-        "R3",
+        "3",
     },
 };
 
@@ -72,7 +73,7 @@ KeysAreUnique()
 }
 static_assert(KeysAreUnique(), "Keys must be unique in their string representation");
 
-consteval auto
+constexpr auto
 KeyToString(Key key)
 {
     return std::find_if(kKeyToString.begin(),
@@ -89,9 +90,10 @@ Storage::Storage(hal::INvm& nvm,
     , m_state_listener(
           application_state.AttachListener<AS::configuration, AS::stored_positions>(GetSemaphore()))
     , m_route_listener(std::move(route_listener))
-    , m_commit_timer(StartTimer(0ms)) // Must be valid
+    , m_state_cache(application_state)
 {
-    auto ps = m_application_state.CheckoutPartialSnapshot<AS::configuration>();
+    auto ps =
+        m_application_state.CheckoutPartialSnapshot<AS::configuration, AS::stored_positions>();
     auto& conf = ps.GetWritableReference<AS::configuration>();
     auto& stored_positions = ps.GetWritableReference<AS::stored_positions>();
 
@@ -100,9 +102,10 @@ Storage::Storage(hal::INvm& nvm,
 
     conf.home_position = m_nvm.Get<IndexType>(KeyToString(Key::kHome)).value_or(0);
     conf.latitude_adjustment = m_nvm.Get<int8_t>(KeyToString(Key::kLatitudeAdjustment)).value_or(0);
-    conf.longitude_adjustment = m_nvm.Get<int8_t>(KeyToString(Key::kLongitudeAdjustment)).value_or(
+    conf.longitude_adjustment = m_nvm.Get<int8_t>(KeyToString(Key::kLongitudeAdjustment)).value_or(0);
     conf.show_speedometer = m_nvm.Get<bool>(KeyToString(Key::kSpeedometer)).value_or(true);
 
+    stored_positions.positions.clear();
     for (unsigned i = 0; i < kMaxStoredPositions; i++)
     {
         auto key = KeyToString(static_cast<Key>(std::to_underlying(Key::kRoute0) + i));
@@ -110,7 +113,7 @@ Storage::Storage(hal::INvm& nvm,
 
         if (position)
         {
-            stored_positions.push_back(*position);
+            stored_positions.positions.push_back(*position);
         }
     }
 
@@ -160,14 +163,14 @@ Storage::OnActivation()
         }
     });
 
-    co.OnNewValue<AS::stored_positions>([this](auto& new_stored_positions) {
+    co.OnNewValue<AS::stored_positions>([this](const auto& new_stored_positions) {
         for (unsigned i = 0; i < kMaxStoredPositions; i++)
         {
             auto key = KeyToString(static_cast<Key>(std::to_underlying(Key::kRoute0) + i));
 
-            if (i < new_stored_positions.size())
+            if (i < new_stored_positions.positions.size())
             {
-                m_nvm.Set<IndexType>(key, new_stored_positions[i]);
+                m_nvm.Set<IndexType>(key, new_stored_positions.positions[i]);
             }
         }
     });
