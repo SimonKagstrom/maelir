@@ -1,0 +1,9 @@
+# This is the list of all used parameters, and their default values
+application_state:
+  gps_connected: false
+  ota_update_active: false
+  minute_average_speed: 0
+  five_minute_average_speed: 0
+  route_passed_meters: 0
+  route_total_meters: 0
+  stored_positions: {}

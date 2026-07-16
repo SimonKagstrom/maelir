@@ -45,6 +45,7 @@ add_subdirectory(.. maelir)
 add_subdirectory(../external/libmaelir/qt libmaelir_qt)
 add_subdirectory(uart_bridge)
 add_library(display_properties ALIAS display_480x480)
+add_library(generated_application_state ALIAS maelir_application_state)
 
 
 add_executable(maelir_qt
@@ -82,7 +83,7 @@ target_include_directories(map_editor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(map_editor
     os_qt
     display_qt
-    yaml_cpp::yaml-cpp
+    yaml-cpp::yaml-cpp
     route_iterator
     router
     router_interface

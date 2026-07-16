@@ -1,0 +1,33 @@
+cpp_includes:
+  - "configuration_settings.hh"
+  - "stored_positions.hh"
+
+parameters:
+  gps_connected:
+    type: bool
+    default: false
+
+  ota_update_active:
+    type: bool
+    default: false
+
+  minute_average_speed:
+    type: uint8_t
+    default: 0
+
+  five_minute_average_speed:
+    type: uint8_t
+    default: 0
+
+  route_passed_meters:
+    type: uint32_t
+    default: 0
+
+  route_total_meters:
+    type: uint32_t
+    default: 0
+
+
+  stored_positions:
+    type: struct StoredPositions
+

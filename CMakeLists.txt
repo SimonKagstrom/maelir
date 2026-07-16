@@ -1,6 +1,7 @@
 include (cmake/bin_to_source.cmake)
 
 add_subdirectory(external)
+add_subdirectory(application_state)
 add_subdirectory(src)
 
 add_custom_target(generate_git_version
