@@ -15,28 +15,13 @@ public:
 private:
     void OnStartup() final;
 
-    // Read a value from NVM
-    template <typename M>
-    void UpdateFromNvm(ApplicationState::State* current_state,
-                       const char* key,
-                       M ApplicationState::State::* member);
-
-    // Write back changes to the NVM
-    template <typename M>
-    bool WriteBack(const ApplicationState::State* current_state,
-                   const char* key,
-                   M ApplicationState::State::* member);
-
-    void CommitState();
-
     std::optional<milliseconds> OnActivation() final;
 
     hal::INvm& m_nvm;
     ApplicationState& m_application_state;
-    ApplicationState::State m_stored_state;
 
-    std::unique_ptr<ApplicationState::IListener> m_state_listener;
+    std::unique_ptr<ListenerCookie> m_state_listener;
     std::unique_ptr<IRouteListener> m_route_listener;
 
-    os::TimerHandle m_commit_timer;
+    ApplicationState::PartialReadOnlyCache<AS::configuration, AS::stored_positions> m_state_cache;
 };

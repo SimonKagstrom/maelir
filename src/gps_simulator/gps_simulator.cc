@@ -12,7 +12,7 @@ GpsSimulator::GpsSimulator(const MapMetadata& metadata,
     , m_application_state(application_state)
     , m_route_service(route_service)
 {
-    m_application_state_listener = m_application_state.AttachListener(GetSemaphore());
+    m_application_state_listener = m_application_state.AttachListener<AS::demo_mode>(GetSemaphore());
 
     m_route_listener = m_route_service.AttachListener();
     m_route_listener->AwakeOn(GetSemaphore());
@@ -53,7 +53,7 @@ GpsSimulator::OnActivation()
         }
     }
 
-    auto application_state = m_application_state.CheckoutReadonly();
+    auto ro = m_application_state.CheckoutReadonly();
 
     auto before = m_state;
     do
@@ -62,7 +62,7 @@ GpsSimulator::OnActivation()
         switch (m_state)
         {
         case State::kIdle:
-            if (application_state->demo_mode)
+            if (ro.Get<AS::demo_mode>())
             {
                 m_state = State::kRequestRoute;
                 break;
@@ -89,7 +89,7 @@ GpsSimulator::OnActivation()
             break;
 
         case State::kWaitForRoute:
-            if (application_state->demo_mode == false)
+            if (ro.Get<AS::demo_mode>() == false)
             {
                 m_state = State::kExitDemo;
                 break;
@@ -103,7 +103,7 @@ GpsSimulator::OnActivation()
             return std::nullopt;
 
         case State::kDemo:
-            if (application_state->demo_mode == false)
+            if (ro.Get<AS::demo_mode>() == false)
             {
                 m_state = State::kExitDemo;
                 break;
@@ -132,13 +132,13 @@ GpsSimulator::OnActivation()
 }
 
 std::optional<hal::RawGpsData>
-GpsSimulator::WaitForData(os::binary_semaphore& semaphore)
+GpsSimulator::WaitForData(IEventNotifier& notifier)
 {
     m_has_data_semaphore.acquire();
 
     auto position = gps::PointToPosition(m_map_metadata, m_position);
 
-    semaphore.release();
+    notifier.Notify();
 
 //    std::print("Returning position: {}, {} from {}, {}\n",
 //               position.latitude,

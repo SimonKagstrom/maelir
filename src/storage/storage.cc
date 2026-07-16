@@ -2,160 +2,175 @@
 
 #include <cstddef>
 
-constexpr auto kHome = "H";
-constexpr auto kSpeedometer = "S";
-constexpr auto kColorMode = "C";
-constexpr auto kLatitudeAdjustment = "Y";
-constexpr auto kLongitudeAdjustment = "X";
 
-constexpr auto kRoutes = std::array {
-    "R0",
-    "R1",
-    "R2",
-    "R3",
+enum class Key
+{
+    kHome,
+    kSpeedometer,
+    kColorMode,
+    kLatitudeAdjustment,
+    kLongitudeAdjustment,
+    kRoute0,
+    kRoute1,
+    kRoute2,
+    kRoute3,
+
+    kValueCount,
 };
-static_assert(kRoutes.size() == ApplicationState::kMaxStoredPositions);
+
+constexpr auto kKeyToString = std::array {
+    std::pair {
+        Key::kHome,
+        "H",
+    },
+    std::pair {
+        Key::kSpeedometer,
+        "S",
+    },
+    std::pair {
+        Key::kColorMode,
+        "C",
+    },
+    std::pair {
+        Key::kLatitudeAdjustment,
+        "Y",
+    },
+    std::pair {
+        Key::kLongitudeAdjustment,
+        "X",
+    },
+    std::pair {
+        Key::kRoute0,
+        "R0",
+    },
+    std::pair {
+        Key::kRoute1,
+        "R1",
+    },
+    std::pair {
+        Key::kRoute2,
+        "R2",
+    },
+    std::pair {
+        Key::kRoute3,
+        "R3",
+    },
+};
+
+static_assert(kKeyToString.size() == std::to_underlying(Key::kValueCount));
+
+consteval bool
+KeysAreUnique()
+{
+    auto cpy = kKeyToString;
+    std::ranges::sort(cpy, [](const auto& a, const auto& b) { return a.second[0] < b.second[0]; });
+
+    auto [begin, end] = std::ranges::unique(
+        cpy, [](const auto& a, const auto& b) { return a.second[0] == b.second[0]; });
+
+    return begin == end;
+}
+static_assert(KeysAreUnique(), "Keys must be unique in their string representation");
+
+consteval auto
+KeyToString(Key key)
+{
+    return std::find_if(kKeyToString.begin(),
+                        kKeyToString.end(),
+                        [key](const auto& pair) { return pair.first == key; })
+        ->second;
+}
 
 Storage::Storage(hal::INvm& nvm,
                  ApplicationState& application_state,
                  std::unique_ptr<IRouteListener> route_listener)
     : m_nvm(nvm)
     , m_application_state(application_state)
-    , m_state_listener(application_state.AttachListener(GetSemaphore()))
+    , m_state_listener(
+          application_state.AttachListener<AS::configuration, AS::stored_positions>(GetSemaphore()))
     , m_route_listener(std::move(route_listener))
     , m_commit_timer(StartTimer(0ms)) // Must be valid
 {
+    auto ps = m_application_state.CheckoutPartialSnapshot<AS::configuration>();
+    auto& conf = ps.GetWritableReference<AS::configuration>();
+    auto& stored_positions = ps.GetWritableReference<AS::stored_positions>();
+
+    conf.color_mode =
+        m_nvm.Get<ColorMode>(KeyToString(Key::kColorMode)).value_or(ColorMode::kColor);
+
+    conf.home_position = m_nvm.Get<IndexType>(KeyToString(Key::kHome)).value_or(0);
+    conf.latitude_adjustment = m_nvm.Get<int8_t>(KeyToString(Key::kLatitudeAdjustment)).value_or(0);
+    conf.longitude_adjustment = m_nvm.Get<int8_t>(KeyToString(Key::kLongitudeAdjustment)).value_or(
+    conf.show_speedometer = m_nvm.Get<bool>(KeyToString(Key::kSpeedometer)).value_or(true);
+
+    for (unsigned i = 0; i < kMaxStoredPositions; i++)
+    {
+        auto key = KeyToString(static_cast<Key>(std::to_underlying(Key::kRoute0) + i));
+        auto position = m_nvm.Get<IndexType>(key);
+
+        if (position)
+        {
+            stored_positions.push_back(*position);
+        }
+    }
+
     m_route_listener->AwakeOn(GetSemaphore());
 }
 
-template <typename M>
-void
-Storage::UpdateFromNvm(ApplicationState::State* current_state,
-                       const char* key,
-                       M ApplicationState::State::* member)
-{
-    if (auto value = m_nvm.Get<typeof(current_state->*member)>(key); value)
-    {
-        current_state->*member = *value;
-    }
-}
-
-template <typename M>
-bool
-Storage::WriteBack(const ApplicationState::State* current_state,
-                   const char* key,
-                   M ApplicationState::State::* member)
-{
-    if (current_state->*member != m_stored_state.*member)
-    {
-        m_nvm.Set(key, current_state->*member);
-        return true;
-    }
-
-    return false;
-}
 
 void
 Storage::OnStartup()
 {
-    auto state = m_application_state.Checkout();
-
-    UpdateFromNvm(state.get(), kHome, &ApplicationState::State::home_position);
-    UpdateFromNvm(state.get(), kSpeedometer, &ApplicationState::State::show_speedometer);
-    UpdateFromNvm(state.get(), kColorMode, &ApplicationState::State::color_mode);
-    UpdateFromNvm(state.get(), kLatitudeAdjustment, &ApplicationState::State::latitude_adjustment);
-    UpdateFromNvm(
-        state.get(), kLongitudeAdjustment, &ApplicationState::State::longitude_adjustment);
-
-    // Read the stored routes
-    for (auto i = 0u; i < kRoutes.size(); i++)
-    {
-        if (auto position =
-                m_nvm.Get<decltype(ApplicationState::State::stored_positions)::value_type>(
-                    kRoutes[i]);
-            position)
-        {
-            state->stored_positions.push_back(*position);
-        }
-    }
-
-    m_stored_state = *state;
-}
-
-void
-Storage::CommitState()
-{
-    auto current_state = m_application_state.Checkout();
-    auto schedule_commit = false;
-
-    std::optional<IndexType> new_route_destination;
-    while (auto route = m_route_listener->Poll())
-    {
-        if (route->type == IRouteListener::EventType::kReady && route->route.size() > 1 &&
-            current_state->demo_mode == false)
-        {
-            new_route_destination = route->route.back();
-        }
-    }
-
-    if (new_route_destination)
-    {
-        auto it = std::find(current_state->stored_positions.begin(),
-                            current_state->stored_positions.end(),
-                            *new_route_destination);
-        if (it == current_state->stored_positions.end())
-        {
-            if (current_state->stored_positions.full())
-            {
-                current_state->stored_positions.pop_back();
-            }
-            current_state->stored_positions.push_front(*new_route_destination);
-        }
-        else
-        {
-            current_state->stored_positions.erase(it);
-            current_state->stored_positions.push_front(*new_route_destination);
-        }
-
-        for (unsigned i = 0; i < current_state->stored_positions.size(); i++)
-        {
-            m_nvm.Set(kRoutes[i], current_state->stored_positions[i]);
-        }
-
-        schedule_commit = true;
-    }
-
-    schedule_commit |=
-        WriteBack(current_state.get(), kHome, &ApplicationState::State::home_position);
-    schedule_commit |=
-        WriteBack(current_state.get(), kSpeedometer, &ApplicationState::State::show_speedometer);
-    schedule_commit |=
-        WriteBack(current_state.get(), kColorMode, &ApplicationState::State::color_mode);
-    schedule_commit |= WriteBack(
-        current_state.get(), kLatitudeAdjustment, &ApplicationState::State::latitude_adjustment);
-    schedule_commit |= WriteBack(
-        current_state.get(), kLongitudeAdjustment, &ApplicationState::State::longitude_adjustment);
-
-    if (schedule_commit)
-    {
-        m_nvm.Commit();
-    }
-
-    // The stored state is now written to flash
-    m_stored_state = *current_state;
+    m_state_cache.Pull();
 }
 
 std::optional<milliseconds>
 Storage::OnActivation()
 {
-    // Schedule a write in a few seconds
-    if (m_commit_timer->IsExpired())
+    auto ro = m_application_state.CheckoutReadonly();
+    auto& co = m_state_cache.Pull();
+
+
+    if (co.IsChanged<AS::configuration>() || co.IsChanged<AS::stored_positions>())
     {
-        m_commit_timer = StartTimer(5s, [this]() {
-            CommitState();
-            return std::nullopt;
-        });
+        printf("Configuration changed, writing to NVM...\n");
     }
+
+    co.OnChangedValue<AS::configuration>([this](auto& old_conf, auto& new_conf) {
+        if (old_conf.home_position != new_conf.home_position)
+        {
+            m_nvm.Set<IndexType>(KeyToString(Key::kHome), new_conf.home_position);
+        }
+        if (old_conf.latitude_adjustment != new_conf.latitude_adjustment)
+        {
+            m_nvm.Set<int8_t>(KeyToString(Key::kLatitudeAdjustment), new_conf.latitude_adjustment);
+        }
+        if (old_conf.longitude_adjustment != new_conf.longitude_adjustment)
+        {
+            m_nvm.Set<int8_t>(KeyToString(Key::kLongitudeAdjustment),
+                              new_conf.longitude_adjustment);
+        }
+        if (old_conf.show_speedometer != new_conf.show_speedometer)
+        {
+            m_nvm.Set<bool>(KeyToString(Key::kSpeedometer), new_conf.show_speedometer);
+        }
+        if (old_conf.color_mode != new_conf.color_mode)
+        {
+            m_nvm.Set<ColorMode>(KeyToString(Key::kColorMode), new_conf.color_mode);
+        }
+    });
+
+    co.OnNewValue<AS::stored_positions>([this](auto& new_stored_positions) {
+        for (unsigned i = 0; i < kMaxStoredPositions; i++)
+        {
+            auto key = KeyToString(static_cast<Key>(std::to_underlying(Key::kRoute0) + i));
+
+            if (i < new_stored_positions.size())
+            {
+                m_nvm.Set<IndexType>(key, new_stored_positions[i]);
+            }
+        }
+    });
 
     return std::nullopt;
 }

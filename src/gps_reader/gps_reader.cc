@@ -102,31 +102,27 @@ GpsReader::OnActivation()
         return std::nullopt;
     }
 
-    if (m_application_state.CheckoutReadonly().Get<AS::demo_mode>() == false)
-    {
-        auto conf = m_application_state.CheckoutReadonly().Get<AS::configuration>();
-        auto qw =
-            m_application_state
-                .CheckoutQueuedWriter<AS::position, AS::pixel_position, AS::gps_position_valid>();
+    auto conf = m_application_state.CheckoutReadonly().Get<AS::configuration>();
+    auto qw = m_application_state
+                  .CheckoutQueuedWriter<AS::position, AS::pixel_position, AS::gps_position_valid>();
 
-        GpsData mangled;
+    GpsData mangled;
 
-        mangled.position = *m_position;
-        mangled.heading = *m_heading;
-        mangled.speed = *m_speed;
+    mangled.position = *m_position;
+    mangled.heading = *m_heading;
+    mangled.speed = *m_speed;
 
-        auto pixel_position = gps::PositionToPoint(m_map_metadata, *m_position);
+    auto pixel_position = gps::PositionToPoint(m_map_metadata, *m_position);
 
-        // Adjust the GPS data
-        pixel_position.x += conf->longitude_adjustment;
-        pixel_position.y += conf->latitude_adjustment;
+    // Adjust the GPS data
+    pixel_position.x += conf->longitude_adjustment;
+    pixel_position.y += conf->latitude_adjustment;
 
-        qw.Set<AS::position>(mangled);
-        qw.Set<AS::pixel_position>(pixel_position);
-        qw.Set<AS::gps_position_valid>(true);
+    qw.Set<AS::position>(mangled);
+    qw.Set<AS::pixel_position>(pixel_position);
+    qw.Set<AS::gps_position_valid>(true);
 
-        Reset();
-    }
+    Reset();
 
     return std::nullopt;
 }

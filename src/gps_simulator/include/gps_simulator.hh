@@ -25,16 +25,16 @@ private:
     };
 
     std::optional<milliseconds> OnActivation() final;
-    std::optional<hal::RawGpsData> WaitForData(os::binary_semaphore& semaphore) final;
+    std::optional<hal::RawGpsData> WaitForData(IEventNotifier& notifier) final;
 
     void RunDemo();
 
-    const MapMetadata &m_map_metadata;
+    const MapMetadata& m_map_metadata;
     ApplicationState& m_application_state;
     RouteService& m_route_service;
 
     std::unique_ptr<IRouteListener> m_route_listener;
-    std::unique_ptr<ApplicationState::IListener> m_application_state_listener;
+    std::unique_ptr<ListenerCookie> m_application_state_listener;
 
     std::unique_ptr<RouteIterator> m_route_iterator;
     bool m_route_pending {false};
