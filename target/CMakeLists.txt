@@ -1,5 +1,3 @@
-find_package(etl REQUIRED)
-
 add_compile_options(-Wdouble-promotion)
 
 add_subdirectory(.. maelir)

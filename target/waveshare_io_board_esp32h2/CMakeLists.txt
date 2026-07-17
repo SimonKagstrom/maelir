@@ -13,6 +13,4 @@ project (maelir_waveshare_io_board_esp32h2 LANGUAGES CXX C ASM)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 
-find_package(etl REQUIRED)
-
 add_subdirectory(.. maelir)
