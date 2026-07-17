@@ -611,12 +611,13 @@ UserInterface::MapScreen::PositionToMapCenter(const Point& pixel_position) const
     auto x = pixel_position.x;
     auto y = pixel_position.y;
 
-    x = std::clamp(static_cast<int>(x - hal::kDisplayWidth / 2),
-                   0,
-                   static_cast<int>(m_parent.m_tile_row_size) * kTileSize - hal::kDisplayWidth);
-    y = std::clamp(static_cast<int>(y - hal::kDisplayHeight / 2),
-                   0,
-                   static_cast<int>(m_parent.m_tile_row_size) * kTileSize - hal::kDisplayHeight);
+    const auto map_pixel_width = static_cast<int>(m_parent.m_tile_row_size * kTileSize);
+    const auto map_pixel_height = static_cast<int>(m_parent.m_tile_rows * kTileSize);
+    const auto max_x = std::max(0, map_pixel_width - hal::kDisplayWidth);
+    const auto max_y = std::max(0, map_pixel_height - hal::kDisplayHeight);
+
+    x = std::clamp(static_cast<int>(x - hal::kDisplayWidth / 2), 0, max_x);
+    y = std::clamp(static_cast<int>(y - hal::kDisplayHeight / 2), 0, max_y);
 
     return {x, y};
 }
