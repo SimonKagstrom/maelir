@@ -7,6 +7,7 @@
 #include <QImageReader>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <filesystem>
 #include <fstream>
 #include <print>
 
@@ -324,6 +325,14 @@ MapEditorMainWindow::LoadMapImageFromYaml(const char* filename)
         if (node["map_filename"])
         {
             m_map_name = node["map_filename"].as<std::string>();
+
+            auto map_path = std::filesystem::path {m_map_name};
+            if (!map_path.is_absolute())
+            {
+                map_path = std::filesystem::path {filename}.parent_path() / map_path;
+            }
+
+            m_map_name = map_path.lexically_normal().string();
 
             m_map = std::make_unique<QImage>(m_map_name.c_str());
             if (m_map == nullptr)
