@@ -42,7 +42,7 @@ namespace Ui
 class MainWindow;
 }
 
-class MapEditorMainWindow : public QMainWindow
+class MapEditorMainWindow final : public QMainWindow
 {
     Q_OBJECT
 
