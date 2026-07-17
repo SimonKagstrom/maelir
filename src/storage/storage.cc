@@ -175,5 +175,7 @@ Storage::OnActivation()
         }
     });
 
+    m_nvm.Commit();
+
     return std::nullopt;
 }

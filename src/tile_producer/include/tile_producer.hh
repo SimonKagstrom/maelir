@@ -55,6 +55,7 @@ public:
     bool IsCached(const Point& point) const;
 
 private:
+    void OnStartup() final;
     std::optional<milliseconds> OnActivation() final;
 
     std::unique_ptr<ImageImpl> DecodeTile(unsigned index);

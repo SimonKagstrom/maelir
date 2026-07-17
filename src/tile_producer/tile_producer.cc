@@ -250,6 +250,11 @@ TileProducer::IsCached(const Point& point) const
     return m_tile_index_to_cache[*index] != kInvalidTileIndex;
 }
 
+void
+TileProducer::OnStartup()
+{
+    m_color_mode = m_application_state.CheckoutReadonly().Get<AS::configuration>()->color_mode;
+}
 
 std::optional<milliseconds>
 TileProducer::OnActivation()
