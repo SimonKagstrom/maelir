@@ -33,7 +33,6 @@ UserInterface::UserInterface(ApplicationState& application_state,
     , m_ota_updater(ota_updater)
     , m_gps_port(std::move(gps_port))
     , m_route_listener(std::move(route_listener))
-    , m_gps_position_timer(StartTimer(0ms)) // Timeout directly, but always valid
 {
     input.AttachListener(this);
     m_gps_port->AwakeOn(GetSemaphore());
@@ -172,16 +171,11 @@ UserInterface::OnActivation()
         }
     }
 
-    if (auto position = m_gps_port->Poll())
-    {
-        m_position = *m_application_state.CheckoutReadonly().Get<AS::pixel_position>();
-        m_speed = position->speed;
+    m_position = *m_application_state.CheckoutReadonly().Get<AS::pixel_position>();
+    auto position = m_application_state.CheckoutReadonly().Get<AS::position>();
+    m_speed = position->speed;
 
-        m_gps_position_timer = StartTimer(5s);
-
-        m_map_screen->OnPosition(*position);
-    }
-    m_gps_position_valid = !m_gps_position_timer->IsExpired();
+    m_map_screen->OnPosition(*position);
 
     m_current_screen->Update();
 
