@@ -49,7 +49,7 @@ private:
     std::vector<std::unique_ptr<LvEventListener>> m_event_listeners;
 
     std::unique_ptr<uint8_t[]> m_thumbnail_buffer;
-    etl::vector<Image, ApplicationState::kMaxStoredPositions> m_thumbnails;
+    etl::vector<Image, kMaxStoredPositions> m_thumbnails;
 
     os::TimerHandle m_exit_timer;
 };

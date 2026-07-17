@@ -70,7 +70,7 @@ UartEventListener::GetState()
 
 
 std::optional<hal::RawGpsData>
-UartEventListener::WaitForData(os::binary_semaphore& semaphore)
+UartEventListener::WaitForData(IEventNotifier& notifier)
 {
     if (m_gps_queue.empty())
     {
@@ -84,6 +84,6 @@ UartEventListener::WaitForData(os::binary_semaphore& semaphore)
         data = d;
     }
 
-    semaphore.release();
+    notifier.Notify();
     return data;
 }

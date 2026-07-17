@@ -61,7 +61,8 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
 
     lv_obj_set_style_arc_width(m_speedometer_arc, 22, LV_PART_INDICATOR);
     lv_obj_set_style_arc_rounded(m_speedometer_arc, false, LV_PART_INDICATOR);
-    lv_obj_set_style_arc_color(m_speedometer_arc, lv_palette_main(LV_PALETTE_LIGHT_GREEN), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(
+        m_speedometer_arc, lv_palette_main(LV_PALETTE_LIGHT_GREEN), LV_PART_INDICATOR);
     lv_arc_set_rotation(m_speedometer_arc, 135);
     lv_arc_set_value(m_speedometer_arc, 100);
     lv_obj_center(m_speedometer_arc);
@@ -145,8 +146,9 @@ UserInterface::MapScreen::Update()
 {
     char buf[64];
 
-    auto state = m_parent.m_application_state.CheckoutReadonly();
-    auto show_speedometer = state->show_speedometer;
+    auto ro = m_parent.m_application_state.CheckoutReadonly();
+    auto conf = ro.Get<AS::configuration>();
+    auto show_speedometer = conf->show_speedometer;
     auto show_trip_computer = m_zoom_level > 1 && m_state != State::kSelectDestination;
 
     if (m_state == State::kSelectDestination)
@@ -168,8 +170,6 @@ UserInterface::MapScreen::Update()
     }
     else if (m_state == State::kAdjustGps)
     {
-        auto state = m_parent.m_application_state.CheckoutReadonly();
-
         lv_obj_add_flag(m_route_line->lv_passed_line, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
@@ -186,8 +186,8 @@ UserInterface::MapScreen::Update()
         snprintf(buf,
                  sizeof(buf),
                  "x %d, y %d\n%s\n%s",
-                 state->longitude_adjustment,
-                 state->latitude_adjustment,
+                 conf->longitude_adjustment,
+                 conf->latitude_adjustment,
                  first_sym,
                  second_sym);
 
@@ -213,8 +213,8 @@ UserInterface::MapScreen::Update()
         lv_obj_remove_flag(m_trip_computer_box, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_trip_computer_label, LV_OBJ_FLAG_HIDDEN);
 
-        auto meters_left = state->route_total_meters - state->route_passed_meters;
-        auto average_knots = state->five_minute_average_speed;
+        auto meters_left = ro.Get<AS::route_total_meters>() - ro.Get<AS::route_passed_meters>();
+        auto average_knots = ro.Get<AS::five_minute_average_speed>();
         uint32_t time_left = average_knots == 0 ? 0u : meters_left / ((average_knots * 1852) / 60);
         auto hours_left = time_left / 60;
         auto minutes_left = time_left % 60;
@@ -237,8 +237,8 @@ UserInterface::MapScreen::Update()
                  distance_format,
                  hours_left,
                  minutes_left,
-                 state->minute_average_speed,
-                 state->five_minute_average_speed);
+                 ro.Get<AS::minute_average_speed>(),
+                 ro.Get<AS::five_minute_average_speed>());
         lv_label_set_text(m_trip_computer_label, buf);
     }
     else
@@ -776,7 +776,9 @@ UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
         {
             if (m_parent.m_select_position == PositionSelection::kHome)
             {
-                m_parent.m_application_state.Checkout()->home_position =
+                auto ps = m_parent.m_application_state.CheckoutPartialSnapshot<AS::configuration>();
+
+                ps.GetWritableReference<AS::configuration>().home_position =
                     PointToLandIndex(m_crosshair_position, m_parent.m_land_mask_row_size);
             }
             else if (m_parent.m_select_position == PositionSelection::kNewRoute)
@@ -803,7 +805,8 @@ UserInterface::MapScreen::OnInputSelectDestination(hal::IInput::Event event)
 void
 UserInterface::MapScreen::OnInputAdjustGps(hal::IInput::Event event)
 {
-    auto state = m_parent.m_application_state.Checkout();
+    auto ps = m_parent.m_application_state.CheckoutPartialSnapshot<AS::configuration>();
+    auto& conf = ps.GetWritableReference<AS::configuration>();
     int8_t long_diff = m_parent.m_position_select_vertical ? 0 : 1;
     int8_t lat_diff = m_parent.m_position_select_vertical ? 1 : 0;
 
@@ -824,12 +827,12 @@ UserInterface::MapScreen::OnInputAdjustGps(hal::IInput::Event event)
         }
         break;
     case hal::IInput::EventType::kLeft:
-        state->latitude_adjustment += -1 * lat_diff;
-        state->longitude_adjustment += -1 * long_diff;
+        conf.latitude_adjustment += -1 * lat_diff;
+        conf.longitude_adjustment += -1 * long_diff;
         break;
     case hal::IInput::EventType::kRight:
-        state->latitude_adjustment += lat_diff;
-        state->longitude_adjustment += long_diff;
+        conf.latitude_adjustment += lat_diff;
+        conf.longitude_adjustment += long_diff;
         break;
     default:
         break;

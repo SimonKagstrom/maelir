@@ -13,7 +13,7 @@ namespace Ui
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow, public hal::IInput
+class MainWindow final : public QMainWindow, public hal::IInput
 {
     Q_OBJECT
 

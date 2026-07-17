@@ -23,7 +23,7 @@ private:
     hal::IInput::State GetState() final;
 
     // IGps Context: Another thread
-    std::optional<hal::RawGpsData> WaitForData(os::binary_semaphore& semaphore) final;
+    std::optional<hal::RawGpsData> WaitForData(IEventNotifier& notifier) final;
 
     hal::IUart& m_uart;
     hal::IInput::State m_state {0};

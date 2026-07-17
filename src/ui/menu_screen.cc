@@ -9,9 +9,8 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     , m_on_close(on_close)
 
 {
-    m_thumbnail_buffer =
-        std::make_unique<uint8_t[]>((kTileSize / 3) * (kTileSize / 3) * sizeof(uint16_t) *
-                                    ApplicationState::kMaxStoredPositions);
+    m_thumbnail_buffer = std::make_unique<uint8_t[]>((kTileSize / 3) * (kTileSize / 3) *
+                                                     sizeof(uint16_t) * kMaxStoredPositions);
 
     auto state = m_parent.m_application_state.CheckoutReadonly();
 
@@ -31,7 +30,8 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     lv_menu_set_mode_root_back_button(m_menu, LV_MENU_ROOT_BACK_BUTTON_ENABLED);
 
     auto back_button = lv_menu_get_main_header_back_button(m_menu);
-    lv_obj_set_style_bg_color(m_screen, lv_obj_get_style_bg_color(m_menu, 0), 0);
+    lv_obj_set_style_bg_color(
+        m_screen, lv_obj_get_style_bg_color(m_menu, lv_part_t::LV_PART_MAIN), 0);
 
     // Apply the style to the back button when it is focused
     lv_obj_add_style(back_button, &m_style_selected, LV_STATE_FOCUSED);
@@ -53,12 +53,13 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     // TODO: If a home position is set
     AddEntry(main_page, "Navigate home", [this](auto) {
-        auto state = m_parent.m_application_state.Checkout();
-        state->demo_mode = false;
+        auto rw = m_parent.m_application_state.CheckoutReadWrite();
+        rw.Set<AS::demo_mode>(false);
 
         m_parent.m_route_service.RequestRoute(
             m_parent.m_position,
-            LandIndexToPoint(state->home_position, m_parent.m_land_mask_row_size));
+            LandIndexToPoint(rw.Get<AS::configuration>()->home_position,
+                             m_parent.m_land_mask_row_size));
         m_on_close();
     });
 
@@ -66,7 +67,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     {
         AddEntry(main_page, "New route", [this](auto) {
             // Disable demo mode in this case
-            m_parent.m_application_state.Checkout()->demo_mode = false;
+            m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
 
             m_parent.SelectPosition(PositionSelection::kNewRoute);
             m_on_close();
@@ -75,7 +76,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     else
     {
         AddEntry(main_page, "Cancel route", [this](auto) {
-            m_parent.m_application_state.Checkout()->demo_mode = false;
+            m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
 
             m_parent.m_route.clear();
             m_on_close();
@@ -83,9 +84,13 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     }
     AddEntryToSubPage(main_page, "Recall route", route_page);
 
-    for (auto i = 0u; i < state->stored_positions.size(); i++)
+    auto ro = m_parent.m_application_state.CheckoutReadonly();
+    auto stored_positions = ro.Get<AS::stored_positions>();
+    auto conf = ro.Get<AS::configuration>();
+    for (auto i = 0u; i < stored_positions->positions.size(); i++)
     {
-        auto point = LandIndexToPoint(state->stored_positions[i], m_parent.m_land_mask_row_size);
+        auto point =
+            LandIndexToPoint(stored_positions->positions[i], m_parent.m_land_mask_row_size);
         auto buffer =
             m_thumbnail_buffer.get() + i * (kTileSize / 3) * (kTileSize / 3) * sizeof(uint16_t);
 
@@ -95,12 +100,14 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
             buffer,
             "Route to " + std::to_string(point.x) + "," + std::to_string(point.y),
             [this, i](auto) {
-                auto state = m_parent.m_application_state.Checkout();
-                state->demo_mode = false;
+                m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
+                auto stored_positions =
+                    m_parent.m_application_state.CheckoutReadonly().Get<AS::stored_positions>();
 
                 m_parent.m_route_service.RequestRoute(
                     m_parent.m_position,
-                    LandIndexToPoint(state->stored_positions[i], m_parent.m_land_mask_row_size));
+                    LandIndexToPoint(stored_positions->positions[i],
+                                     m_parent.m_land_mask_row_size));
                 m_on_close();
             });
     }
@@ -117,48 +124,48 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     AddEntryToSubPage(settings_page, "Map color mode", color_mode_page);
 
     auto on_color_mode = [this](auto wanted) {
-        auto state = m_parent.m_application_state.Checkout();
+        auto ps = m_parent.m_application_state.CheckoutPartialSnapshot<AS::configuration>();
+        auto& conf = ps.GetWritableReference<AS::configuration>();
 
-        state->color_mode = wanted;
+        conf.color_mode = wanted;
 
         m_on_close();
     };
 
-    AddEntry(color_mode_page, "Color", [on_color_mode](auto) {
-        on_color_mode(ApplicationState::ColorMode::kColor);
-    });
+    AddEntry(color_mode_page, "Color", [on_color_mode](auto) { on_color_mode(ColorMode::kColor); });
     AddEntry(color_mode_page, "Black/white", [on_color_mode](auto) {
-        on_color_mode(ApplicationState::ColorMode::kBlackWhite);
+        on_color_mode(ColorMode::kBlackWhite);
     });
     AddEntry(color_mode_page, "Black/white + red", [on_color_mode](auto) {
-        on_color_mode(ApplicationState::ColorMode::kBlackRed);
+        on_color_mode(ColorMode::kBlackRed);
     });
 
-    AddBooleanEntry(settings_page, "Show speedometer", state->show_speedometer, [this](auto) {
-        auto state = m_parent.m_application_state.Checkout();
-        state->show_speedometer = !state->show_speedometer;
+    AddBooleanEntry(settings_page, "Show speedometer", conf->show_speedometer, [this](auto) {
+        auto ps = m_parent.m_application_state.CheckoutPartialSnapshot<AS::configuration>();
+        auto& conf = ps.GetWritableReference<AS::configuration>();
+
+        conf.show_speedometer = !conf.show_speedometer;
     });
 
-    AddBooleanEntry(settings_page, "Demo mode", state->demo_mode, [this](auto) {
-        auto state = m_parent.m_application_state.Checkout();
-        state->demo_mode = !state->demo_mode;
+    AddBooleanEntry(settings_page, "Demo mode", ro.Get<AS::demo_mode>(), [this](auto) {
+        auto rw = m_parent.m_application_state.CheckoutReadWrite();
+        rw.Set<AS::demo_mode>(!rw.Get<AS::demo_mode>());
     });
     AddSeparator(settings_page);
 
     AddEntry(settings_page, "Adjust GPS", [this](auto) {
-        auto state = m_parent.m_application_state.Checkout();
-        state->demo_mode = false;
+        m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
 
         m_parent.m_adjust_gps = true;
         m_on_close();
     });
 
     AddEntry(settings_page, std::format("OTA update ({})", kSoftwareVersion), [this](auto) {
-        auto state = m_parent.m_application_state.Checkout();
-        state->ota_update_active = true;
+        auto rw = m_parent.m_application_state.CheckoutReadWrite();
+        rw.Set<AS::ota_update_active>(true);
 
         // Disable, to avoid cache conflicts
-        state->demo_mode = false;
+        rw.Set<AS::demo_mode>(false);
         m_parent.EnterOtaUpdatingScreen();
         m_on_close();
     });
@@ -300,7 +307,8 @@ UserInterface::MenuScreen::AddBooleanEntry(lv_obj_t* page,
     lv_label_set_text(label, text);
 
     auto boolean_switch = lv_switch_create(cont);
-    lv_obj_add_state(boolean_switch, default_value ? LV_STATE_CHECKED : 0);
+    lv_obj_add_state(boolean_switch,
+                     default_value ? LV_STATE_CHECKED : lv_state_t::LV_STATE_DEFAULT);
     // Highlight the label as well
     lv_obj_add_flag(boolean_switch, LV_OBJ_FLAG_EVENT_BUBBLE);
     lv_obj_set_style_bg_color(

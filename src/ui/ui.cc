@@ -60,8 +60,9 @@ UserInterface::OnStartup()
 {
     assert(m_lvgl_display == nullptr);
 
-    m_position = LandIndexToPoint(m_application_state.CheckoutReadonly()->home_position,
-                                  m_land_mask_row_size);
+    m_position = LandIndexToPoint(
+        m_application_state.CheckoutReadonly().Get<AS::configuration>()->home_position,
+        m_land_mask_row_size);
 
     lv_init();
     lv_tick_set_cb(os::GetTimeStampRaw);
@@ -90,12 +91,11 @@ UserInterface::OnStartup()
         auto mbox = lv_msgbox_create(NULL);
 
         lv_msgbox_add_title(mbox, "Software updated");
-        lv_msgbox_add_text(
-            mbox,
-            std::format(
-                "The software has been updated to {}. Will be marked valid after 10 seconds",
-                kSoftwareVersion)
-                .c_str());
+        lv_msgbox_add_text(mbox,
+                           std::format("The software has been updated to {}. Will "
+                                       "be marked valid after 10 seconds",
+                                       kSoftwareVersion)
+                               .c_str());
 
         m_updated_timer = StartTimer(5s, [mbox]() {
             lv_msgbox_close(mbox);
@@ -174,7 +174,7 @@ UserInterface::OnActivation()
 
     if (auto position = m_gps_port->Poll())
     {
-        m_position = position->pixel_position;
+        m_position = *m_application_state.CheckoutReadonly().Get<AS::pixel_position>();
         m_speed = position->speed;
 
         m_gps_position_timer = StartTimer(5s);

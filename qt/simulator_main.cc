@@ -74,7 +74,7 @@ main(int argc, char* argv[])
     ApplicationState state;
 
     srand(seed);
-    state.Checkout()->demo_mode = true;
+    state.CheckoutReadWrite().Set<AS::demo_mode>(true);
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
 
