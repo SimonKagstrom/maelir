@@ -6,11 +6,11 @@ dependencies:
   espressif/esp_lcd_st7701:
     version: "^2.0.2"
   espressif/esp_io_expander_tca9554:
-    version: "==2.0.0"
+    version: "^2.0.3"
   espressif/esp_lcd_panel_io_additions:
-    version: "==1.0.0"
+    version: "^1.0.1~1"
   espressif/network_provisioning:
-    version: "^1.1.0"
+    version: "^1.2.4"
 
   ## Required IDF version
   idf:
