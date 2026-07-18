@@ -223,11 +223,11 @@ app_main(void)
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(p);
 
-    auto target_nvm = std::make_unique<NvmTarget>();
+    auto target_nvm = std::make_unique<NvmEsp32>();
 
     ApplicationState state;
 
-    auto io_board_uart = std::make_unique<TargetUart>(UART_NUM_0,
+    auto io_board_uart = std::make_unique<UartEsp32>(UART_NUM_0,
                                                       115200,
                                                       GPIO_NUM_44,  // RX
                                                       GPIO_NUM_43); // TX

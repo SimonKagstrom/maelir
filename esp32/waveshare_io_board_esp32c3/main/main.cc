@@ -41,21 +41,21 @@ app_main(void)
 
     auto button_debouncer = std::make_unique<ButtonDebouncer>();
 
-    auto pin_a_gpio = std::make_unique<TargetGpio>(kPinA);
-    auto pin_b_gpio = std::make_unique<TargetGpio>(kPinB);
+    auto pin_a_gpio = std::make_unique<GpioEsp32>(kPinA);
+    auto pin_b_gpio = std::make_unique<GpioEsp32>(kPinB);
     auto button_gpio = button_debouncer->AddButton(
-        std::make_unique<TargetGpio>(kPinButton, TargetGpio::Polarity::kActiveLow));
+        std::make_unique<GpioEsp32>(kPinButton, GpioEsp32::Polarity::kActiveLow));
 
     auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
 
     auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder, *button_gpio);
-    auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
+    auto gps_uart = std::make_unique<UartEsp32>(UART_NUM_1,
                                                  9600,
                                                  GPIO_NUM_3,  // RX
                                                  GPIO_NUM_4); // TX
 
     auto gps_device = std::make_unique<UartGps>(*gps_uart);
-    auto lcd_uart = std::make_unique<TargetUart>(UART_NUM_0,
+    auto lcd_uart = std::make_unique<UartEsp32>(UART_NUM_0,
                                                  115200,
                                                  GPIO_NUM_20,  // RX
                                                  GPIO_NUM_21); // TX

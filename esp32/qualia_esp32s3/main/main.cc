@@ -237,26 +237,26 @@ app_main(void)
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(p);
 
-    auto target_nvm = std::make_unique<NvmTarget>();
+    auto target_nvm = std::make_unique<NvmEsp32>();
 
     ApplicationState state;
 
     auto button_debouncer = std::make_unique<ButtonDebouncer>();
 
-    auto pin_a_gpio = std::make_unique<TargetGpio>(kPinA);
-    auto pin_b_gpio = std::make_unique<TargetGpio>(kPinB);
+    auto pin_a_gpio = std::make_unique<GpioEsp32>(kPinA);
+    auto pin_b_gpio = std::make_unique<GpioEsp32>(kPinB);
     auto button_gpio = button_debouncer->AddButton(
-        std::make_unique<TargetGpio>(kPinButton, TargetGpio::Polarity::kActiveLow));
+        std::make_unique<GpioEsp32>(kPinButton, GpioEsp32::Polarity::kActiveLow));
 
     auto rotary_encoder = std::make_unique<RotaryEncoder>(*pin_a_gpio, *pin_b_gpio);
 
     auto encoder_input = std::make_unique<EncoderInput>(*rotary_encoder, *button_gpio);
 
     auto display = CreateDisplay();
-    auto gps_uart = std::make_unique<TargetUart>(UART_NUM_1,
-                                                 9600,
-                                                 GPIO_NUM_17, // RX (A0)
-                                                 GPIO_NUM_8); // TX (SDA)
+    auto gps_uart = std::make_unique<UartEsp32>(UART_NUM_1,
+                                                9600,
+                                                GPIO_NUM_17, // RX (A0)
+                                                GPIO_NUM_8); // TX (SDA)
 
     auto gps_device = std::make_unique<UartGps>(*gps_uart);
 
