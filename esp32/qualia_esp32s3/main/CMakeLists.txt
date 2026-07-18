@@ -16,7 +16,7 @@ target_link_libraries(${COMPONENT_TARGET}
     nvm_esp32
     os_esp32
     ota_updater
-    st7701_display_esp32
+    st7701_rgb_esp32
     storage
     tile_producer
     trip_computer

@@ -11,7 +11,7 @@
 #include "route_service.hh"
 #include "route_utils.hh"
 #include "sdkconfig.h"
-#include "st7701_display_esp32.hh"
+#include "st7701_rgb_esp32.hh"
 #include "storage.hh"
 #include "tile_producer.hh"
 #include "trip_computer.hh"
@@ -36,26 +36,26 @@ constexpr auto kPinA = GPIO_NUM_6;      // MISO
 constexpr auto kPinB = GPIO_NUM_7;      // MOSI
 
 
-constexpr auto kTftDEPin = 2;
-constexpr auto kTftVSYNCPin = 42;
-constexpr auto kTftHSYNCPin = 41;
-constexpr auto kTftPCLKPin = 1;
-constexpr auto kTftR1Pin = 11;
-constexpr auto kTftR2Pin = 10;
-constexpr auto kTftR3Pin = 9;
-constexpr auto kTftR4Pin = 46;
-constexpr auto kTftR5Pin = 3;
-constexpr auto kTftG0Pin = 48;
-constexpr auto kTftG1Pin = 47;
-constexpr auto kTftG2Pin = 21;
-constexpr auto kTftG3Pin = 14;
-constexpr auto kTftG4Pin = 13;
-constexpr auto kTftG5Pin = 12;
-constexpr auto kTftB1Pin = 40;
-constexpr auto kTftB2Pin = 39;
-constexpr auto kTftB3Pin = 38;
-constexpr auto kTftB4Pin = 0;
-constexpr auto kTftB5Pin = 45;
+constexpr auto kTftDEPin = GPIO_NUM_2;
+constexpr auto kTftVSYNCPin = GPIO_NUM_42;
+constexpr auto kTftHSYNCPin = GPIO_NUM_41;
+constexpr auto kTftPCLKPin = GPIO_NUM_1;
+constexpr auto kTftR1Pin = GPIO_NUM_11;
+constexpr auto kTftR2Pin = GPIO_NUM_10;
+constexpr auto kTftR3Pin = GPIO_NUM_9;
+constexpr auto kTftR4Pin = GPIO_NUM_46;
+constexpr auto kTftR5Pin = GPIO_NUM_3;
+constexpr auto kTftG0Pin = GPIO_NUM_48;
+constexpr auto kTftG1Pin = GPIO_NUM_47;
+constexpr auto kTftG2Pin = GPIO_NUM_21;
+constexpr auto kTftG3Pin = GPIO_NUM_14;
+constexpr auto kTftG4Pin = GPIO_NUM_13;
+constexpr auto kTftG5Pin = GPIO_NUM_12;
+constexpr auto kTftB1Pin = GPIO_NUM_40;
+constexpr auto kTftB2Pin = GPIO_NUM_39;
+constexpr auto kTftB3Pin = GPIO_NUM_38;
+constexpr auto kTftB4Pin = GPIO_NUM_0;
+constexpr auto kTftB5Pin = GPIO_NUM_45;
 
 constexpr auto kI2cBus = I2C_NUM_0;
 constexpr auto kI2cSdaPin = GPIO_NUM_8;
@@ -70,7 +70,7 @@ constexpr auto kExpanderTftSck = IO_EXPANDER_PIN_NUM_0;
 constexpr auto kExpanderTftMosi = IO_EXPANDER_PIN_NUM_7;
 
 
-std::unique_ptr<DisplayTarget>
+std::unique_ptr<St7701RgbEsp32>
 CreateDisplay()
 {
     i2c_master_bus_handle_t bus_handle = nullptr;
@@ -148,10 +148,11 @@ CreateDisplay()
                 },
             },
         .data_width = 16,
-        .bits_per_pixel = 16,
+        .in_color_format = LCD_COLOR_FMT_RGB565,
+        .out_color_format = LCD_COLOR_FMT_RGB565,
         .num_fbs = 0,
+        .user_fbs = nullptr,
         .bounce_buffer_size_px = hal::kDisplayWidth * 10,
-        .sram_trans_align = 64, // Deprecated
         .dma_burst_size = 64,
         .hsync_gpio_num = kTftHSYNCPin,
         .vsync_gpio_num = kTftVSYNCPin,
@@ -187,7 +188,7 @@ CreateDisplay()
         },
     };
 
-    auto out = std::make_unique<DisplayTarget>(io_config, rgb_config);
+    auto out = std::make_unique<St7701RgbEsp32>(io_config, rgb_config);
 
     // Turn on the backlight
     esp_io_expander_set_level(expander_handle, kExpanderTftBacklight, 1);

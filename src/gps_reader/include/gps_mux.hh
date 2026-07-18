@@ -13,14 +13,14 @@ public:
     {
     }
 
-    std::optional<hal::RawGpsData> WaitForData(os::binary_semaphore& semaphore) final
+    std::optional<hal::RawGpsData> WaitForData(IEventNotifier& notifier) final
     {
-        if (m_application_state.CheckoutReadonly()->demo_mode)
+        if (m_application_state.CheckoutReadonly().Get<AS::demo_mode>())
         {
-            return m_simulator.WaitForData(semaphore);
+            return m_simulator.WaitForData(notifier);
         }
 
-        return m_uart.WaitForData(semaphore);
+        return m_uart.WaitForData(notifier);
     }
 
 private:
