@@ -49,7 +49,6 @@ add_library(generated_application_state ALIAS maelir_application_state)
 
 
 add_executable(maelir_qt
-    ota_updater_host.cc
     simulator_main.cc
     simulator_mainwindow.ui
     simulator_mainwindow.cc
@@ -62,6 +61,7 @@ target_link_libraries(maelir_qt
     tile_producer
     gps_simulator
     route_service
+    ota_updater_host
     nvm_host
     storage
     trip_computer
