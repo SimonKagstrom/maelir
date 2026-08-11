@@ -8,7 +8,6 @@ ESP32C3, both from waveshare, plus a UBLOX Neo-7M GPS module and a rotary encode
 -----
 The rest of the document is just for me to remember commands, for now. TODO: More description...
 
-
 Qt:
 
 ```
@@ -25,6 +24,9 @@ cmake -B maelir_unittest -GNinja -DCMAKE_BUILD_TYPE=Debug ~/projects/maelir/test
 Target:
 
 ```
+source $HOME/.espressif/tools/activate_idf_v6.0.2.sh
+pip3 install Pillow
+
 cd <src>/target/qualia_esp32s3
 idf.py update-dependencies
 
