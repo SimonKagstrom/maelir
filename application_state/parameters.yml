@@ -7,10 +7,6 @@ parameters:
     type: bool
     default: false
 
-  ota_update_active:
-    type: bool
-    default: false
-
   minute_average_speed:
     type: uint8_t
     default: 0
