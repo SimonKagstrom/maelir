@@ -69,7 +69,7 @@ private:
     };
 
     class MapScreen;
-    class MenuScreen;
+    class MainMenuScreen;
     class UpdatingScreen;
 
     // From BaseThread

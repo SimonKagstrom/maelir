@@ -1,7 +1,7 @@
 #include "ui.hh"
 
+#include "main_menu_screen.hh"
 #include "map_screen.hh"
-#include "menu_screen.hh"
 #include "route_iterator.hh"
 #include "route_utils.hh"
 #include "time.hh"
@@ -193,7 +193,7 @@ void
 UserInterface::EnterMenu()
 {
     m_gps_port->DisableWakeup();
-    m_menu_screen = std::make_unique<MenuScreen>(*this, [this]() {
+    m_menu_screen = std::make_unique<MainMenuScreen>(*this, [this]() {
         if (m_updating_screen == nullptr)
         {
             // Ugly

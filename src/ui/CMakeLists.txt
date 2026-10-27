@@ -2,8 +2,8 @@ library_from_data(${RESOURCE_DIR}/boat.png boat)
 library_from_data(${RESOURCE_DIR}/crosshair.png crosshair)
 
 add_library(ui EXCLUDE_FROM_ALL
+    main_menu_screen.cc
     map_screen.cc
-    menu_screen.cc
     ui.cc
     updating_screen.cc
 )
@@ -29,4 +29,5 @@ PRIVATE
     painter
     route_iterator
     git_version_header
+    ui_menu
 )
