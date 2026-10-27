@@ -211,8 +211,7 @@ CreateDisplay()
                 .vsync_back_porch = 12,
                 .vsync_front_porch = 24,
             },
-        // TODO: DMA2D is enabled via esp_lcd_dpi_panel_enable_dma2d() since esp-idf v6, which
-        // the jd9365 driver in libmaelir doesn't do yet (the st7701 driver does)
+        // DMA2D is enabled by the display driver
         .flags =
             {
                 .disable_lp = false,
