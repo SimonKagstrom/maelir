@@ -1,11 +1,11 @@
 #pragma once
 
 #include "application_state.hh"
-#include "base_thread.hh"
 #include "hal/i_nvm.hh"
+#include "pooled_thread_base.hh"
 #include "route_service.hh"
 
-class Storage : public os::BaseThread
+class Storage : public PooledThreadBase
 {
 public:
     Storage(hal::INvm& nvm,

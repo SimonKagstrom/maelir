@@ -13,7 +13,7 @@ TripComputer::TripComputer(ApplicationState& application_state,
     , m_meters_per_pixel(meters_per_pixel)
     , m_land_mask_row_size(land_mask_row_size)
 {
-    m_gps_port->AwakeOn(GetSemaphore());
+    m_gps_port->AwakeOn(GetNotifier());
 }
 
 template <size_t Size>

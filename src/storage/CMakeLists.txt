@@ -9,7 +9,7 @@ PUBLIC
 
 target_link_libraries(storage
 PUBLIC
-    base_thread
     application_state
+    job_pool_thread
     route_service
 )

@@ -88,7 +88,7 @@ Storage::Storage(hal::INvm& nvm,
     : m_nvm(nvm)
     , m_application_state(application_state)
     , m_state_listener(
-          application_state.AttachListener<AS::configuration, AS::stored_positions>(GetSemaphore()))
+          application_state.AttachListener<AS::configuration, AS::stored_positions>(GetNotifier()))
     , m_route_listener(std::move(route_listener))
     , m_state_cache(application_state)
 {
@@ -117,7 +117,7 @@ Storage::Storage(hal::INvm& nvm,
         }
     }
 
-    m_route_listener->AwakeOn(GetSemaphore());
+    m_route_listener->AwakeOn(GetNotifier());
 }
 
 

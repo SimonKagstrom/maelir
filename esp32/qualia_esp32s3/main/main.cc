@@ -296,19 +296,16 @@ app_main(void)
                                               gps_reader->AttachListener(),
                                               route_service->AttachListener());
 
-    button_debouncer->Start("button_debouncder", os::ThreadPriority::kHigh);
-    storage->Start("storage");
+    button_debouncer->Start("button_debouncer", os::ThreadPriority::kHigh);
     gps_simulator->Start("gps_simulator", 4096);
     gps_reader->Start("gps_reader");
     producer->Start("producer", os::ThreadPriority::kHigh);
     route_service->Start("route_service", 4096);
-    trip_computer->Start("trip_computer");
-
-    // Time for the storage to read the home position
-    os::Sleep(10ms);
     ui->Start("ui", os::ThreadCore::kCore1, os::ThreadPriority::kHigh, 8192);
 
     // References to these are kept elsewhere (e.g., by the UI), but the job pool owns them
+    job_pool->AttachPooledThread(std::move(storage));
+    job_pool->AttachPooledThread(std::move(trip_computer));
     job_pool->AttachPooledThread(std::move(ota_updater));
     job_pool->Start("job_pool", 4096);
 

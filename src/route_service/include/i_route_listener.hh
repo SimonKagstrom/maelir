@@ -1,7 +1,7 @@
 #pragma once
 
+#include "event_notifier.hh"
 #include "router.hh"
-#include "semaphore.hh"
 
 #include <optional>
 #include <span>
@@ -29,7 +29,7 @@ public:
 
     virtual ~IRouteListener() = default;
 
-    virtual void AwakeOn(os::binary_semaphore& semaphore) = 0;
+    virtual void AwakeOn(IEventNotifier& notifier) = 0;
 
     virtual std::optional<Event> Poll() = 0;
 };

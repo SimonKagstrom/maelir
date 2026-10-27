@@ -1,14 +1,14 @@
 #pragma once
 
 #include "application_state.hh"
-#include "base_thread.hh"
 #include "gps_port.hh"
 #include "i_route_listener.hh"
+#include "pooled_thread_base.hh"
 #include "route_iterator.hh"
 
 #include <etl/vector.h>
 
-class TripComputer : public os::BaseThread
+class TripComputer : public PooledThreadBase
 {
 public:
     TripComputer(ApplicationState& application_state,

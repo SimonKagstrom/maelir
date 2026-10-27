@@ -10,16 +10,16 @@ public:
     void PushEvent(IRouteListener::EventType event, std::span<const IndexType> route)
     {
         m_events.push({event, route});
-        if (m_semaphore)
+        if (m_notifier)
         {
-            m_semaphore->release();
+            m_notifier->Notify();
         }
     }
 
 private:
-    void AwakeOn(os::binary_semaphore& semaphore) final
+    void AwakeOn(IEventNotifier& notifier) final
     {
-        m_semaphore = &semaphore;
+        m_notifier = &notifier;
     }
 
     std::optional<IRouteListener::Event> Poll() final
@@ -34,7 +34,7 @@ private:
         return std::nullopt;
     }
 
-    os::binary_semaphore* m_semaphore {nullptr};
+    IEventNotifier* m_notifier {nullptr};
     etl::queue_spsc_atomic<IRouteListener::Event, 4> m_events;
 };
 

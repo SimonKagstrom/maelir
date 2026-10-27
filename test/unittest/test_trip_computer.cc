@@ -1,3 +1,4 @@
+#include "job_pool_thread.hh"
 #include "mock/mock_gps_port.hh"
 #include "mock/mock_route_listener.hh"
 #include "route_test_utils.hh"
@@ -28,12 +29,23 @@ public:
         ALLOW_CALL(*gps_port, DoAwakeOn(_));
         ALLOW_CALL(*route_listener, AwakeOn(_));
 
-        trip_computer = std::make_unique<TripComputer>(m_application_state,
-                                                       std::move(m_gps_port),
-                                                       std::move(m_route_listener),
-                                                       kMetersPerPixel,
-                                                       32);
-        SetThread(trip_computer.get());
+        auto owner = std::make_unique<TripComputer>(m_application_state,
+                                                    std::move(m_gps_port),
+                                                    std::move(m_route_listener),
+                                                    kMetersPerPixel,
+                                                    32);
+        trip_computer = owner.get();
+
+        // Pooled, like on the target. The job pool owns it from here on
+        job_pool.AttachPooledThread(std::move(owner));
+        SetThread(&job_pool);
+
+        job_pool.Start("job_pool");
+
+        // Attached threads are run on the first activation, so do that before the tests
+        ALLOW_CALL(*route_listener, Poll()).RETURN(std::nullopt);
+        job_pool.Awake();
+        DoRunLoop();
     }
 
     // The trip computer uses the GPS data from the application state
@@ -56,7 +68,10 @@ public:
     ApplicationState m_application_state;
     MockGpsPort* gps_port;
     MockRouteListener* route_listener;
-    std::unique_ptr<TripComputer> trip_computer;
+    TripComputer* trip_computer {nullptr};
+
+    // After the state, since it owns the trip computer which refers to it
+    JobPoolThread job_pool;
 };
 
 } // namespace

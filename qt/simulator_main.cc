@@ -135,11 +135,6 @@ main(int argc, char* argv[])
                                               route_service->AttachListener());
 
 
-    storage->Start("storage");
-
-    // Hack to make sure storage has started (not needed with FreeRTOS)
-    os::Sleep(10ms);
-
     gps_listener->Start("gps_listener");
     uart_event_listener->Start("uart_event_listener");
     uart_event_forwarder->Start("uart_event_forwarder");
@@ -148,10 +143,11 @@ main(int argc, char* argv[])
     gps_reader->Start("gps_reader");
     producer->Start("tile_producer");
     route_service->Start("route_service");
-    trip_computer->Start("trip_computer");
     ui->Start("ui");
 
     // References to these are kept elsewhere (e.g., by the UI), but the job pool owns them
+    job_pool->AttachPooledThread(std::move(storage));
+    job_pool->AttachPooledThread(std::move(trip_computer));
     job_pool->AttachPooledThread(std::move(ota_updater));
     job_pool->Start("job_pool");
 

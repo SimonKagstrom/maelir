@@ -25,16 +25,16 @@ public:
     void PushGpsData(const GpsData& data)
     {
         m_data.push(data);
-        if (m_semaphore)
+        if (m_notifier)
         {
-            m_semaphore->release();
+            m_notifier->Notify();
         }
     }
 
 private:
-    void DoAwakeOn(os::binary_semaphore* semaphore) final
+    void DoAwakeOn(IEventNotifier* notifier) final
     {
-        m_semaphore = semaphore;
+        m_notifier = notifier;
     }
 
     std::optional<GpsData> Poll() final
@@ -53,7 +53,7 @@ private:
 
     GpsReader* m_parent;
     etl::queue_spsc_atomic<GpsData, 8> m_data;
-    os::binary_semaphore* m_semaphore {nullptr};
+    IEventNotifier* m_notifier {nullptr};
     const uint8_t m_index;
 };
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "application_state.hh"
+#include "event_notifier.hh"
 #include "hal/i_gps.hh"
-#include "semaphore.hh"
 
 #include <optional>
 
@@ -11,9 +11,9 @@ class IGpsPort
 public:
     virtual ~IGpsPort() = default;
 
-    void AwakeOn(os::binary_semaphore& semaphore)
+    void AwakeOn(IEventNotifier& notifier)
     {
-        DoAwakeOn(&semaphore);
+        DoAwakeOn(&notifier);
     }
 
     void DisableWakeup()
@@ -24,5 +24,5 @@ public:
     virtual std::optional<GpsData> Poll() = 0;
 
 protected:
-    virtual void DoAwakeOn(os::binary_semaphore* semaphore) = 0;
+    virtual void DoAwakeOn(IEventNotifier* notifier) = 0;
 };
