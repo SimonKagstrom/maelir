@@ -1,18 +1,19 @@
-#include "display_jd9365.hh"
 #include "encoder_input.hh"
 #include "gps_mux.hh"
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
+#include "httpd_ota_updater_esp32.hh"
+#include "jd9365_display_esp32.hh"
+#include "job_pool_thread.hh"
+#include "nvm_esp32.hh"
 #include "ota_updater.hh"
 #include "route_service.hh"
 #include "route_utils.hh"
 #include "sdkconfig.h"
 #include "storage.hh"
-#include "target_httpd_ota_updater.hh"
-#include "target_nvm.hh"
-#include "target_uart.hh"
 #include "tile_producer.hh"
 #include "trip_computer.hh"
+#include "uart_esp32.hh"
 #include "uart_event_listener.hh"
 #include "ui.hh"
 
@@ -31,11 +32,9 @@ constexpr auto kTftBacklight = GPIO_NUM_26;
 
 
 #define TEST_LCD_BIT_PER_PIXEL (24)
-#define TEST_PIN_NUM_LCD_RST   (27)
+#define TEST_PIN_NUM_LCD_RST   (GPIO_NUM_27)
 #define TEST_PIN_NUM_BK_LIGHT  (26) // set to -1 if not used
 #define TEST_MIPI_DSI_LANE_NUM (2)
-
-#define TEST_MIPI_DPI_PX_FORMAT (LCD_COLOR_PIXEL_FORMAT_RGB565)
 
 #define TEST_DELAY_TIME_MS (3000)
 
@@ -184,7 +183,12 @@ CreateDisplay()
     };
     ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
 
-    static const esp_lcd_dsi_bus_config_t bus_config = JD9365_PANEL_BUS_DSI_2CH_CONFIG();
+    // As JD9365_PANEL_BUS_DSI_2CH_CONFIG(), which doesn't build as C++ with esp-idf v6
+    static esp_lcd_dsi_bus_config_t bus_config {};
+    bus_config.bus_id = 0;
+    bus_config.num_data_lanes = TEST_MIPI_DSI_LANE_NUM;
+    bus_config.phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT;
+    bus_config.lane_bit_rate_mbps = 1500;
     ESP_ERROR_CHECK(esp_lcd_new_dsi_bus(&bus_config, &mipi_dsi_bus));
 
     static const esp_lcd_dbi_io_config_t dbi_config = JD9365_PANEL_IO_DBI_CONFIG();
@@ -193,7 +197,6 @@ CreateDisplay()
         .virtual_channel = 0,
         .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
         .dpi_clock_freq_mhz = 80,
-        .pixel_format = TEST_MIPI_DPI_PX_FORMAT,
         .in_color_format = LCD_COLOR_FMT_RGB565,
         .out_color_format = LCD_COLOR_FMT_RGB565,
         .num_fbs = 2,
@@ -208,9 +211,10 @@ CreateDisplay()
                 .vsync_back_porch = 12,
                 .vsync_front_porch = 24,
             },
+        // TODO: DMA2D is enabled via esp_lcd_dpi_panel_enable_dma2d() since esp-idf v6, which
+        // the jd9365 driver in libmaelir doesn't do yet (the st7701 driver does)
         .flags =
             {
-                .use_dma2d = true,
                 .disable_lp = false,
             },
     };
@@ -225,15 +229,15 @@ CreateDisplay()
             },
     };
     static const esp_lcd_panel_dev_config_t panel_config = {
-        .reset_gpio_num = TEST_PIN_NUM_LCD_RST,
         .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
         .data_endian = LCD_RGB_DATA_ENDIAN_BIG,
         .bits_per_pixel = TEST_LCD_BIT_PER_PIXEL,
+        .reset_gpio_num = TEST_PIN_NUM_LCD_RST,
+        .vendor_config = &vendor_config,
         .flags =
             {
                 .reset_active_high = 0,
             },
-        .vendor_config = &vendor_config,
     };
 
     auto out = std::make_unique<DisplayJd9365>(mipi_dbi_io, panel_config);
@@ -283,8 +287,7 @@ app_main(void)
 
     ApplicationState state;
 
-    state.Checkout()->demo_mode = true;
-    state.Checkout()->show_speedometer = true;
+    state.Set<AS::demo_mode>(true);
 
     auto io_board_uart = std::make_unique<UartEsp32>(UART_NUM_0,
                                                       115200,
@@ -311,6 +314,7 @@ app_main(void)
                                                         LookupMetersPerPixel(*map_metadata),
                                                         map_metadata->land_mask_row_size);
 
+    auto job_pool = std::make_unique<JobPoolThread>();
     auto ota_updater = std::make_unique<OtaUpdater>(*ota_updater_device, state);
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
@@ -333,6 +337,10 @@ app_main(void)
     // Time for the storage to read the home position
     os::Sleep(10ms);
     ui->Start("ui", os::ThreadCore::kCore1, os::ThreadPriority::kHigh, 8192);
+
+    // References to these are kept elsewhere (e.g., by the UI), but the job pool owns them
+    job_pool->AttachPooledThread(std::move(ota_updater));
+    job_pool->Start("job_pool", 4096);
 
     while (true)
     {

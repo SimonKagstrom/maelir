@@ -14,6 +14,7 @@ target_link_libraries(${COMPONENT_TARGET}
     gps_reader
     ota_updater
     httpd_ota_updater_esp32
+    job_pool_thread
     os_esp32
     nvm_esp32
     uart_esp32
