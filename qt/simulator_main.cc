@@ -1,6 +1,7 @@
 #include "gps_listener.hh"
 #include "gps_reader.hh"
 #include "gps_simulator.hh"
+#include "job_pool_thread.hh"
 #include "nvm_host.hh"
 #include "ota_updater.hh"
 #include "ota_updater_host.hh"
@@ -74,7 +75,7 @@ main(int argc, char* argv[])
     ApplicationState state;
 
     srand(seed);
-    state.CheckoutReadWrite().Set<AS::demo_mode>(true);
+    state.Set<AS::demo_mode>(true);
 
     auto map_metadata = reinterpret_cast<const MapMetadata*>(mmap_bin);
 
@@ -120,6 +121,7 @@ main(int argc, char* argv[])
                                                         map_metadata->land_mask_row_size);
 
 
+    auto job_pool = std::make_unique<JobPoolThread>();
     auto ota_updater = std::make_unique<OtaUpdater>(*ota_updater_device, state);
 
     auto ui = std::make_unique<UserInterface>(state,
@@ -147,8 +149,11 @@ main(int argc, char* argv[])
     producer->Start("tile_producer");
     route_service->Start("route_service");
     trip_computer->Start("trip_computer");
-    ota_updater->Start("ota_updater");
     ui->Start("ui");
+
+    // References to these are kept elsewhere (e.g., by the UI), but the job pool owns them
+    job_pool->AttachPooledThread(std::move(ota_updater));
+    job_pool->Start("job_pool");
 
     window.show();
 

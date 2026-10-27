@@ -42,6 +42,12 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 add_subdirectory(.. maelir)
 add_subdirectory(../external/libmaelir/qt libmaelir_qt)
 add_subdirectory(uart_bridge)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # PNGdec does unaligned accesses on purpose
+    target_compile_options(pngdec_zlib PRIVATE -fno-sanitize=alignment)
+    target_compile_options(pngdec PRIVATE -fno-sanitize=alignment)
+endif()
+
 add_library(filesystem_implementation ALIAS std_filesystem)
 add_library(display_properties ALIAS display_480x480)
 add_library(generated_application_state ALIAS maelir_application_state)
@@ -60,6 +66,7 @@ target_link_libraries(maelir_qt
     ui
     tile_producer
     gps_simulator
+    job_pool_thread
     route_service
     ota_updater_host
     nvm_host
