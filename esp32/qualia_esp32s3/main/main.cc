@@ -6,6 +6,7 @@
 #include "gps_simulator.hh"
 #include "httpd_ota_updater_esp32.hh"
 #include "i2c_gps_esp32.hh"
+#include "job_pool_thread.hh"
 #include "nvm_esp32.hh"
 #include "ota_updater.hh"
 #include "route_service.hh"
@@ -283,6 +284,7 @@ app_main(void)
                                                         LookupMetersPerPixel(*map_metadata),
                                                         map_metadata->land_mask_row_size);
 
+    auto job_pool = std::make_unique<JobPoolThread>();
     auto ota_updater = std::make_unique<OtaUpdater>(*ota_updater_device, state);
     auto ui = std::make_unique<UserInterface>(state,
                                               *map_metadata,
@@ -301,11 +303,14 @@ app_main(void)
     producer->Start("producer", os::ThreadPriority::kHigh);
     route_service->Start("route_service", 4096);
     trip_computer->Start("trip_computer");
-    ota_updater->Start("ota_updater");
 
     // Time for the storage to read the home position
     os::Sleep(10ms);
     ui->Start("ui", os::ThreadCore::kCore1, os::ThreadPriority::kHigh, 8192);
+
+    // References to these are kept elsewhere (e.g., by the UI), but the job pool owns them
+    job_pool->AttachPooledThread(std::move(ota_updater));
+    job_pool->Start("job_pool", 4096);
 
     while (true)
     {

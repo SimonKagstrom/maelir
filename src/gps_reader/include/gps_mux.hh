@@ -15,7 +15,7 @@ public:
 
     std::optional<hal::RawGpsData> WaitForData(IEventNotifier& notifier) final
     {
-        if (m_application_state.CheckoutReadonly().Get<AS::demo_mode>())
+        if (m_application_state.Get<AS::demo_mode>())
         {
             return m_simulator.WaitForData(notifier);
         }

@@ -13,6 +13,7 @@ target_link_libraries(${COMPONENT_TARGET}
     gps_simulator
     httpd_ota_updater_esp32
     i2c_gps_esp32
+    job_pool_thread
     nvm_esp32
     os_esp32
     ota_updater

@@ -1,1 +1,18 @@
-../../waveshare_lcd_esp32s3/main/idf_component.yml
+## IDF Component Manager Manifest File
+dependencies:
+  # Not used here, but a library links to it
+  espressif/esp_lcd_touch_gt911:
+    version: "^1.2.0~2"
+  espressif/esp_lcd_st7701:
+    version: "^2.0.2"
+  espressif/esp_io_expander_tca9554:
+    version: "^2.0.3"
+  espressif/esp_lcd_panel_io_additions:
+    version: "^1.0.1~1"
+  # Not used here, but a library links to it
+  espressif/network_provisioning:
+    version: "^1.2.4"
+
+  ## Required IDF version
+  idf:
+    version: ">=6.0.0"
