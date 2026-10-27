@@ -5,8 +5,39 @@ on:
   push:
 
 jobs:
-  unittest:
-    name: Unit test
+  firmware-build:
+    name: Firmware (${{ matrix.board }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - board: qualia_esp32s3
+            target: esp32s3
+          - board: waveshare_lcd_esp32p4
+            target: esp32p4
+          - board: waveshare_io_board_esp32c3
+            target: esp32c3
+          - board: waveshare_io_board_esp32h2
+            target: esp32h2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build firmware with CMake/Ninja
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v6.1
+          target: ${{ matrix.target }}
+          path: esp32/${{ matrix.board }}
+          command: |
+            pip3 install jinja2 pyyaml
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release .
+            cmake --build build --parallel
+
+  host-build:
+    name: Qt/unit test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -14,14 +45,17 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install build dependencies
+      - name: Install Qt and build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
             ninja-build \
             g++ \
-            python3-pip
+            python3-pip \
+            qt6-base-dev \
+            qt6-base-dev-tools \
+            libgl1-mesa-dev
 
       - name: Install codegen dependencies
         run: pip3 install jinja2 pyyaml
@@ -34,3 +68,9 @@ jobs:
 
       - name: Run unit tests
         run: ctest --test-dir build-unittest --output-on-failure
+
+      - name: Configure qt
+        run: cmake -S qt -B build-qt -GNinja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build qt
+        run: cmake --build build-qt --parallel

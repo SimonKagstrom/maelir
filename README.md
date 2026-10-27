@@ -8,29 +8,34 @@ ESP32C3, both from waveshare, plus a UBLOX Neo-7M GPS module and a rotary encode
 -----
 The rest of the document is just for me to remember commands, for now. TODO: More description...
 
+The common parts (threads, HAL, drivers, menu etc) are in [libmaelir](https://github.com/SimonKagstrom/libmaelir),
+which is a submodule. Python dependencies:
+
+```
+pip3 install -r requirements.txt
+```
+
 Qt:
 
 ```
-cmake -B maelir -GNinja -DCMAKE_BUILD_TYPE=Debug ~/projects/maelir/qt/
+cmake -B maelir_qt -GNinja -DCMAKE_BUILD_TYPE=Debug ~/projects/maelir/qt/
+maelir_qt/maelir_qt -m <map.bin>
 ```
 
 Unittest:
 
 ```
 cmake -B maelir_unittest -GNinja -DCMAKE_BUILD_TYPE=Debug ~/projects/maelir/test/unittest
+ctest --test-dir maelir_unittest
 ```
 
 
-Target:
+Target (qualia_esp32s3, waveshare_lcd_esp32p4 or the waveshare_io_board_esp32c3/h2):
 
 ```
-source $HOME/.espressif/tools/activate_idf_v6.0.2.sh
-pip3 install Pillow
+source $HOME/.espressif/tools/activate_idf_v6.1.sh
 
-cd <src>/target/qualia_esp32s3
-idf.py update-dependencies
-
-cmake -GNinja -B maelir_qualia_esp32s3/ -DCMAKE_BUILD_TYPE=Release ~/projects/maelir/target/qualia_esp32s3
+cmake -GNinja -B maelir_qualia_esp32s3/ -DCMAKE_BUILD_TYPE=Release ~/projects/maelir/esp32/qualia_esp32s3
 ```
 
 Create the map data:
