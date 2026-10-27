@@ -2,10 +2,10 @@
 #include "button_debouncer.hh"
 #include "encoder_input.hh"
 #include "event_serializer.hh"
-#include "target_gpio.hh"
-#include "target_uart.hh"
+#include "gpio_esp32.hh"
+#include "uart_esp32.hh"
 #include "uart_event_forwarder.hh"
-#include "uart_gps.hh"
+#include "uart_gps_esp32.hh"
 
 #include <etl/queue_spsc_atomic.h>
 #include <freertos/FreeRTOS.h>

@@ -10,3 +10,5 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 
 add_subdirectory(.. maelir)
+# No display here, but libmaelir requires the properties
+add_library(display_properties ALIAS display_800x800)

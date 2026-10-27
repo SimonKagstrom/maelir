@@ -1,16 +1,11 @@
 ## IDF Component Manager Manifest File
 dependencies:
+  # Not used here, but libraries link to them
+  espressif/esp_lcd_touch_gt911:
+    version: "^1.2.0~2"
+  espressif/network_provisioning:
+    version: "^1.2.4"
+
   ## Required IDF version
   idf:
-    version: ">=4.1.0"
-  # # Put list of dependencies here
-  # # For components maintained by Espressif:
-  # component: "~1.0.0"
-  # # For 3rd party components:
-  # username/component: ">=1.0.0,<2.0.0"
-  # username2/component2:
-  #   version: "~1.0.0"
-  #   # For transient dependencies `public` flag can be set.
-  #   # `public` flag doesn't have an effect dependencies of the `main` component.
-  #   # All dependencies of `main` are public by default.
-  #   public: true
+    version: ">=6.0.0"
