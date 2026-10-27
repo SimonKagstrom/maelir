@@ -19,6 +19,6 @@ public:
 private:
     lv_obj_t* m_label;
 
-    std::unique_ptr<ListenerCookie> m_progress_cookie;
+    ListenerCookie m_progress_cookie;
     std::atomic<uint8_t> m_progress {0};
 };

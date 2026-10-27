@@ -1,81 +1,63 @@
 #include "application_state.hh"
+#include "semaphore.hh"
 #include "test.hh"
 
-TEST_CASE("it's possible to commit to the application state")
+TEST_SUITE_BEGIN("application_state");
+
+TEST_CASE("The maelir application state has default values")
 {
     ApplicationState state;
 
-    auto s = state.Checkout();
-    auto ro = state.CheckoutReadonly();
-
-    // Default values
-    REQUIRE(s->demo_mode == false);
-    REQUIRE(s->gps_connected == false);
-    REQUIRE(s->color_mode == ApplicationState::ColorMode::kColor);
-
-    s->gps_connected = true;
-    REQUIRE(ro->gps_connected == false);
-
-    // Commits
-    s = nullptr;
-    REQUIRE(ro->gps_connected == true);
-
-    auto s2 = state.Checkout();
-    REQUIRE(s2->gps_connected == true);
+    REQUIRE(state.Get<AS::demo_mode>() == false);
+    REQUIRE(state.Get<AS::gps_status>() == GpsStatus::kSilent);
+    REQUIRE(state.Get<AS::configuration>()->color_mode == ColorMode::kColor);
+    REQUIRE(state.Get<AS::configuration>()->show_speedometer == true);
 }
 
-TEST_CASE("a change to the application state wakes up listeners")
+TEST_CASE("A change to the application state wakes up listeners")
 {
     ApplicationState state;
 
     os::binary_semaphore sem_a {0};
     os::binary_semaphore sem_b {0};
 
-    auto l_a = state.AttachListener(sem_a);
-    auto l_b = state.AttachListener(sem_b);
+    auto l_a = state.AttachListener<AS::demo_mode>(sem_a);
+    auto l_b = state.AttachListener<AS::demo_mode, AS::gps_status>(sem_b);
 
     REQUIRE(sem_a.try_acquire() == false);
     REQUIRE(sem_b.try_acquire() == false);
 
-    auto s = state.Checkout();
-    s->demo_mode = true;
-    s = nullptr;
+    state.Set<AS::demo_mode>(true);
 
     REQUIRE(sem_a.try_acquire() == true);
     REQUIRE(sem_b.try_acquire() == true);
+
+    WHEN("the same value is written again")
+    {
+        state.Set<AS::demo_mode>(true);
+
+        THEN("listeners are not woken up")
+        {
+            REQUIRE(sem_a.try_acquire() == false);
+            REQUIRE(sem_b.try_acquire() == false);
+        }
+    }
 }
 
-TEST_CASE("no change to the application state doesn't wake up listeners")
+TEST_CASE("Two snapshots can modify separate parts of the configuration")
 {
     ApplicationState state;
 
-    os::binary_semaphore sem_a {0};
+    {
+        auto s0 = state.CheckoutPartialSnapshot<AS::configuration>();
+        auto s1 = state.CheckoutPartialSnapshot<AS::minute_average_speed>();
 
-    auto l_a = state.AttachListener(sem_a);
+        s0.GetWritableReference<AS::configuration>().show_speedometer = false;
+        s1.Set<AS::minute_average_speed>(12);
+    }
 
-    REQUIRE(sem_a.try_acquire() == false);
-
-    auto s = state.Checkout();
-    s->demo_mode = false;
-    s = nullptr;
-
-    REQUIRE(sem_a.try_acquire() == false);
+    REQUIRE(state.Get<AS::configuration>()->show_speedometer == false);
+    REQUIRE(state.Get<AS::minute_average_speed>() == 12);
 }
 
-TEST_CASE("two application state writers can modify separate parts of the state")
-{
-    ApplicationState state;
-
-    auto s0 = state.Checkout();
-    auto s1 = state.Checkout();
-
-    s0->show_speedometer = false;
-    s1->color_mode = ApplicationState::ColorMode::kBlackRed;
-
-    s0 = nullptr;
-    // Written last, but should not overwrite s0 changes
-    s1 = nullptr;
-
-    REQUIRE(state.CheckoutReadonly()->color_mode == ApplicationState::ColorMode::kBlackRed);
-    REQUIRE(state.CheckoutReadonly()->show_speedometer == false);
-}
+TEST_SUITE_END();

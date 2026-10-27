@@ -59,9 +59,8 @@ UserInterface::OnStartup()
 {
     assert(m_lvgl_display == nullptr);
 
-    m_position = LandIndexToPoint(
-        m_application_state.CheckoutReadonly().Get<AS::configuration>()->home_position,
-        m_land_mask_row_size);
+    m_position = LandIndexToPoint(m_application_state.Get<AS::configuration>()->home_position,
+                                  m_land_mask_row_size);
 
     lv_init();
     lv_tick_set_cb(os::GetTimeStampRaw);
@@ -171,8 +170,8 @@ UserInterface::OnActivation()
         }
     }
 
-    m_position = *m_application_state.CheckoutReadonly().Get<AS::pixel_position>();
-    auto position = m_application_state.CheckoutReadonly().Get<AS::position>();
+    m_position = *m_application_state.Get<AS::pixel_position>();
+    auto position = m_application_state.Get<AS::position>();
     m_speed = position->speed;
 
     m_map_screen->OnPosition(*position);

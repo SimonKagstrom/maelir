@@ -130,9 +130,7 @@ Storage::OnStartup()
 std::optional<milliseconds>
 Storage::OnActivation()
 {
-    auto ro = m_application_state.CheckoutReadonly();
     auto& co = m_state_cache.Pull();
-
 
     if (co.IsChanged<AS::configuration>() || co.IsChanged<AS::stored_positions>())
     {

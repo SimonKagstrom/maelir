@@ -20,7 +20,7 @@ private:
     hal::INvm& m_nvm;
     ApplicationState& m_application_state;
 
-    std::unique_ptr<ListenerCookie> m_state_listener;
+    ListenerCookie m_state_listener;
     std::unique_ptr<IRouteListener> m_route_listener;
 
     ApplicationState::PartialReadOnlyCache<AS::configuration, AS::stored_positions> m_state_cache;

@@ -53,7 +53,7 @@ GpsSimulator::OnActivation()
         }
     }
 
-    auto ro = m_application_state.CheckoutReadonly();
+    auto demo_mode = m_application_state.Get<AS::demo_mode>();
 
     auto before = m_state;
     do
@@ -62,7 +62,7 @@ GpsSimulator::OnActivation()
         switch (m_state)
         {
         case State::kIdle:
-            if (ro.Get<AS::demo_mode>())
+            if (demo_mode)
             {
                 m_state = State::kRequestRoute;
                 break;
@@ -89,7 +89,7 @@ GpsSimulator::OnActivation()
             break;
 
         case State::kWaitForRoute:
-            if (ro.Get<AS::demo_mode>() == false)
+            if (demo_mode == false)
             {
                 m_state = State::kExitDemo;
                 break;
@@ -103,7 +103,7 @@ GpsSimulator::OnActivation()
             return std::nullopt;
 
         case State::kDemo:
-            if (ro.Get<AS::demo_mode>() == false)
+            if (demo_mode == false)
             {
                 m_state = State::kExitDemo;
                 break;

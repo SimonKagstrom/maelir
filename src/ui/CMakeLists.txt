@@ -24,6 +24,7 @@ PUBLIC
     ota_updater
 PRIVATE
     boat_library
+    cohen_sutherland
     crosshair_library
     painter
     route_iterator

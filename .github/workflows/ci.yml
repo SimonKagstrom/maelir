@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  unittest:
+    name: Unit test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            g++ \
+            python3-pip
+
+      - name: Install codegen dependencies
+        run: pip3 install jinja2 pyyaml
+
+      - name: Configure unit test
+        run: cmake -S test/unittest -B build-unittest -GNinja -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build unit tests
+        run: cmake --build build-unittest --parallel
+
+      - name: Run unit tests
+        run: ctest --test-dir build-unittest --output-on-failure

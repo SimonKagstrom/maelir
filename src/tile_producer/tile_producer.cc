@@ -253,7 +253,7 @@ TileProducer::IsCached(const Point& point) const
 void
 TileProducer::OnStartup()
 {
-    m_color_mode = m_application_state.CheckoutReadonly().Get<AS::configuration>()->color_mode;
+    m_color_mode = m_application_state.Get<AS::configuration>()->color_mode;
 }
 
 std::optional<milliseconds>

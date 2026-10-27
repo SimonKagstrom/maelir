@@ -12,8 +12,6 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     m_thumbnail_buffer = std::make_unique<uint8_t[]>((kTileSize / 3) * (kTileSize / 3) *
                                                      sizeof(uint16_t) * kMaxStoredPositions);
 
-    auto state = m_parent.m_application_state.CheckoutReadonly();
-
     // Create a style for the selected state
     m_style_selected = lv_style_t {};
 
@@ -53,12 +51,11 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
 
     // TODO: If a home position is set
     AddEntry(main_page, "Navigate home", [this](auto) {
-        auto rw = m_parent.m_application_state.CheckoutReadWrite();
-        rw.Set<AS::demo_mode>(false);
+        m_parent.m_application_state.Set<AS::demo_mode>(false);
 
         m_parent.m_route_service.RequestRoute(
             m_parent.m_position,
-            LandIndexToPoint(rw.Get<AS::configuration>()->home_position,
+            LandIndexToPoint(m_parent.m_application_state.Get<AS::configuration>()->home_position,
                              m_parent.m_land_mask_row_size));
         m_on_close();
     });
@@ -67,7 +64,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     {
         AddEntry(main_page, "New route", [this](auto) {
             // Disable demo mode in this case
-            m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
+            m_parent.m_application_state.Set<AS::demo_mode>(false);
 
             m_parent.SelectPosition(PositionSelection::kNewRoute);
             m_on_close();
@@ -76,7 +73,7 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     else
     {
         AddEntry(main_page, "Cancel route", [this](auto) {
-            m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
+            m_parent.m_application_state.Set<AS::demo_mode>(false);
 
             m_parent.m_route.clear();
             m_on_close();
@@ -84,9 +81,8 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
     }
     AddEntryToSubPage(main_page, "Recall route", route_page);
 
-    auto ro = m_parent.m_application_state.CheckoutReadonly();
-    auto stored_positions = ro.Get<AS::stored_positions>();
-    auto conf = ro.Get<AS::configuration>();
+    auto stored_positions = m_parent.m_application_state.Get<AS::stored_positions>();
+    auto conf = m_parent.m_application_state.Get<AS::configuration>();
     for (auto i = 0u; i < stored_positions->positions.size(); i++)
     {
         auto point =
@@ -100,9 +96,9 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
             buffer,
             "Route to " + std::to_string(point.x) + "," + std::to_string(point.y),
             [this, i](auto) {
-                m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
+                m_parent.m_application_state.Set<AS::demo_mode>(false);
                 auto stored_positions =
-                    m_parent.m_application_state.CheckoutReadonly().Get<AS::stored_positions>();
+                    m_parent.m_application_state.Get<AS::stored_positions>();
 
                 m_parent.m_route_service.RequestRoute(
                     m_parent.m_position,
@@ -147,25 +143,27 @@ UserInterface::MenuScreen::MenuScreen(UserInterface& parent, std::function<void(
         conf.show_speedometer = !conf.show_speedometer;
     });
 
-    AddBooleanEntry(settings_page, "Demo mode", ro.Get<AS::demo_mode>(), [this](auto) {
-        auto rw = m_parent.m_application_state.CheckoutReadWrite();
-        rw.Set<AS::demo_mode>(!rw.Get<AS::demo_mode>());
-    });
+    AddBooleanEntry(
+        settings_page, "Demo mode", m_parent.m_application_state.Get<AS::demo_mode>(), [this](auto) {
+            auto ps = m_parent.m_application_state.CheckoutPartialSnapshot<AS::demo_mode>();
+            ps.Set<AS::demo_mode>(!ps.Get<AS::demo_mode>());
+        });
     AddSeparator(settings_page);
 
     AddEntry(settings_page, "Adjust GPS", [this](auto) {
-        m_parent.m_application_state.CheckoutReadWrite().Set<AS::demo_mode>(false);
+        m_parent.m_application_state.Set<AS::demo_mode>(false);
 
         m_parent.m_adjust_gps = true;
         m_on_close();
     });
 
     AddEntry(settings_page, std::format("OTA update ({})", kSoftwareVersion), [this](auto) {
-        auto rw = m_parent.m_application_state.CheckoutReadWrite();
-        rw.Set<AS::ota_update_active>(true);
+        auto qw = m_parent.m_application_state
+                      .CheckoutQueuedWriter<AS::ota_update_active, AS::demo_mode>();
+        qw.Set<AS::ota_update_active>(true);
 
         // Disable, to avoid cache conflicts
-        rw.Set<AS::demo_mode>(false);
+        qw.Set<AS::demo_mode>(false);
         m_parent.EnterOtaUpdatingScreen();
         m_on_close();
     });

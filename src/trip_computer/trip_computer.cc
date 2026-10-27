@@ -55,26 +55,26 @@ TripComputer::OnActivation()
 {
     if (auto ev = m_route_listener->Poll(); ev)
     {
-        auto rw = m_application_state.CheckoutReadWrite();
+        auto qw =
+            m_application_state.CheckoutQueuedWriter<AS::route_total_meters, AS::route_passed_meters>();
 
         // Reset
         m_current_route.Reset();
 
-        rw.Set<AS::route_total_meters>(0);
-        rw.Set<AS::route_passed_meters>(0);
+        qw.Set<AS::route_total_meters>(0);
+        qw.Set<AS::route_passed_meters>(0);
 
         if (ev->type == IRouteListener::EventType::kReady)
         {
             m_current_route.SetRoute(ev->route);
-            rw.Set<AS::route_total_meters>(MeasureRoute());
+            qw.Set<AS::route_total_meters>(MeasureRoute());
         }
     }
 
-    auto ro = m_application_state.CheckoutReadonly();
-    if (ro.Get<AS::gps_position_valid>())
+    if (m_application_state.Get<AS::gps_status>() == GpsStatus::kPositionValid)
     {
-        HandleSpeed(ro.Get<AS::position>()->speed);
-        HandleRoute(*ro.Get<AS::pixel_position>());
+        HandleSpeed(m_application_state.Get<AS::position>()->speed);
+        HandleRoute(*m_application_state.Get<AS::pixel_position>());
     }
 
     return std::nullopt;
@@ -150,9 +150,7 @@ TripComputer::HandleRoute(Point pixel_position)
         last_point = cur_point;
     }
 
-    auto rw = m_application_state.CheckoutReadWrite();
-
-    rw.Set<AS::route_passed_meters>(passed_distance / kResolution * kResolution);
+    m_application_state.Set<AS::route_passed_meters>(passed_distance / kResolution * kResolution);
 }
 
 uint32_t

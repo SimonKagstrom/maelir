@@ -1,9 +1,0 @@
-[requires]
-etl/20.39.4
-
-[generators]
-CMakeDeps
-CMakeToolchain
-
-[layout]
-cmake_layout

@@ -72,7 +72,7 @@ private:
     const uint32_t m_tile_rows;
 
     ApplicationState &m_application_state;
-    std::unique_ptr<ListenerCookie> m_state_listener;
+    ListenerCookie m_state_listener;
 
     etl::vector<std::unique_ptr<ImageImpl>, kTileCacheSize> m_tiles;
     etl::list<uint32_t, kTileCacheSize> m_tile_request_order;

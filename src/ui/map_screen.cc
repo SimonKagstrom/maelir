@@ -146,8 +146,8 @@ UserInterface::MapScreen::Update()
 {
     char buf[64];
 
-    auto ro = m_parent.m_application_state.CheckoutReadonly();
-    auto conf = ro.Get<AS::configuration>();
+    auto& state = m_parent.m_application_state;
+    auto conf = state.Get<AS::configuration>();
     auto show_speedometer = conf->show_speedometer;
     auto show_trip_computer = m_zoom_level > 1 && m_state != State::kSelectDestination;
 
@@ -198,7 +198,8 @@ UserInterface::MapScreen::Update()
         snprintf(buf,
                  sizeof(buf),
                  "%s%s%s",
-                 ro.Get<AS::gps_position_valid>() ? LV_SYMBOL_GPS : LV_SYMBOL_CLOSE,
+                 state.Get<AS::gps_status>() == GpsStatus::kPositionValid ? LV_SYMBOL_GPS
+                                                                          : LV_SYMBOL_CLOSE,
                  m_parent.m_calculating_route ? " " : "",
                  m_parent.m_calculating_route ? LV_SYMBOL_LOOP : "");
     }
@@ -213,8 +214,9 @@ UserInterface::MapScreen::Update()
         lv_obj_remove_flag(m_trip_computer_box, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(m_trip_computer_label, LV_OBJ_FLAG_HIDDEN);
 
-        auto meters_left = ro.Get<AS::route_total_meters>() - ro.Get<AS::route_passed_meters>();
-        auto average_knots = ro.Get<AS::five_minute_average_speed>();
+        auto meters_left =
+            state.Get<AS::route_total_meters>() - state.Get<AS::route_passed_meters>();
+        auto average_knots = state.Get<AS::five_minute_average_speed>();
         uint32_t time_left = average_knots == 0 ? 0u : meters_left / ((average_knots * 1852) / 60);
         auto hours_left = time_left / 60;
         auto minutes_left = time_left % 60;
@@ -237,8 +239,8 @@ UserInterface::MapScreen::Update()
                  distance_format,
                  hours_left,
                  minutes_left,
-                 ro.Get<AS::minute_average_speed>(),
-                 ro.Get<AS::five_minute_average_speed>());
+                 state.Get<AS::minute_average_speed>(),
+                 state.Get<AS::five_minute_average_speed>());
         lv_label_set_text(m_trip_computer_label, buf);
     }
     else
@@ -504,19 +506,24 @@ UserInterface::MapScreen::PointClipsDisplay(const Point& point) const
 bool
 UserInterface::MapScreen::LineClipsDisplay(const Point& from, const Point& to) const
 {
+    // Clipped in place, but only the result is used here
     if (m_state == State::kMap)
     {
-        return cs::LineClipsDisplay(from.x - m_map_position.x,
-                                    from.y - m_map_position.y,
-                                    to.x - m_map_position.x,
-                                    to.y - m_map_position.y);
+        int x0 = from.x - m_map_position.x;
+        int y0 = from.y - m_map_position.y;
+        int x1 = to.x - m_map_position.x;
+        int y1 = to.y - m_map_position.y;
+
+        return cs::ClipLineToDisplay(x0, y0, x1, y1);
     }
     else
     {
-        return cs::LineClipsDisplay((from.x - m_map_position_zoomed_out.x) / m_zoom_level,
-                                    (from.y - m_map_position_zoomed_out.y) / m_zoom_level,
-                                    (to.x - m_map_position_zoomed_out.x) / m_zoom_level,
-                                    (to.y - m_map_position_zoomed_out.y) / m_zoom_level);
+        int x0 = (from.x - m_map_position_zoomed_out.x) / m_zoom_level;
+        int y0 = (from.y - m_map_position_zoomed_out.y) / m_zoom_level;
+        int x1 = (to.x - m_map_position_zoomed_out.x) / m_zoom_level;
+        int y1 = (to.y - m_map_position_zoomed_out.y) / m_zoom_level;
+
+        return cs::ClipLineToDisplay(x0, y0, x1, y1);
     }
 }
 

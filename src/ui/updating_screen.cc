@@ -39,7 +39,7 @@ UserInterface::UpdatingScreen::UpdatingScreen(UserInterface& parent)
 
     lv_obj_set_style_text_font(m_label, &lv_font_montserrat_22, LV_PART_MAIN);
 
-    lv_label_set_text(m_label, instructions);
+    lv_label_set_text(m_label, instructions.c_str());
 
     lv_obj_set_style_text_align(m_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(m_label, LV_ALIGN_CENTER, 0, 0);

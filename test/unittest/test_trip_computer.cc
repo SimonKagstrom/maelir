@@ -36,6 +36,23 @@ public:
         SetThread(trip_computer.get());
     }
 
+    // The trip computer uses the GPS data from the application state
+    void SetGpsData(float speed, Point pixel_position = {})
+    {
+        auto qw = m_application_state
+                      .CheckoutQueuedWriter<AS::position, AS::pixel_position, AS::gps_status>();
+
+        qw.Set<AS::position>(GpsData {.speed = speed});
+        qw.Set<AS::pixel_position>(pixel_position);
+        qw.Set<AS::gps_status>(GpsStatus::kPositionValid);
+    }
+
+    void Step()
+    {
+        trip_computer->Awake();
+        DoRunLoop();
+    }
+
     ApplicationState m_application_state;
     MockGpsPort* gps_port;
     MockRouteListener* route_listener;
@@ -46,60 +63,53 @@ public:
 
 TEST_CASE_FIXTURE(Fixture, "at startup, the trip computer average speed is 0")
 {
-    auto state = m_application_state.CheckoutReadonly();
-
-    ALLOW_CALL(*gps_port, Poll()).RETURN(std::nullopt);
     ALLOW_CALL(*route_listener, Poll()).LR_RETURN(std::nullopt);
 
-    DoRunLoop();
-    REQUIRE(state->minute_average_speed == 0);
-    REQUIRE(state->five_minute_average_speed == 0);
+    Step();
+    REQUIRE(m_application_state.Get<AS::minute_average_speed>() == 0);
+    REQUIRE(m_application_state.Get<AS::five_minute_average_speed>() == 0);
 }
 
 TEST_CASE_FIXTURE(Fixture, "the trip computer average speed is updated")
 {
-    auto state = m_application_state.CheckoutReadonly();
-
-    auto gps_data = GpsData {.speed = 1.0f};
-
-    ALLOW_CALL(*gps_port, Poll()).LR_RETURN(gps_data);
     ALLOW_CALL(*route_listener, Poll()).LR_RETURN(std::nullopt);
 
-    DoRunLoop();
-    REQUIRE(state->minute_average_speed == 1);
-    REQUIRE(state->five_minute_average_speed == 0);
+    SetGpsData(1.0f);
+    Step();
+    REQUIRE(m_application_state.Get<AS::minute_average_speed>() == 1);
+    REQUIRE(m_application_state.Get<AS::five_minute_average_speed>() == 0);
 
-    gps_data.speed = 4.0f;
+    SetGpsData(4.0f);
     // Push a few 4 knot entries
     for (auto i = 0u; i < 10; i++)
     {
-        DoRunLoop();
+        Step();
     }
-    REQUIRE(state->minute_average_speed == (1 + 10 * 4) / 11);
-    REQUIRE(state->five_minute_average_speed == 0);
+    REQUIRE(m_application_state.Get<AS::minute_average_speed>() == (1 + 10 * 4) / 11);
+    REQUIRE(m_application_state.Get<AS::five_minute_average_speed>() == 0);
 
     WHEN("the history has filled up for one minute")
     {
         for (auto i = 0; i < 60 - 11; i++)
         {
-            DoRunLoop();
+            Step();
         }
 
         THEN("it's transferred to the five minute history")
         {
-            REQUIRE(state->minute_average_speed == 3);
-            REQUIRE(state->five_minute_average_speed == 3);
+            REQUIRE(m_application_state.Get<AS::minute_average_speed>() == 3);
+            REQUIRE(m_application_state.Get<AS::five_minute_average_speed>() == 3);
         }
 
         AND_THEN("after a few minutes, the five minute history is updated accordingly")
         {
-            gps_data.speed = 8.0f;
+            SetGpsData(8.0f);
 
             for (auto i = 0; i < 4 * 60; i++)
             {
-                DoRunLoop();
+                Step();
             }
-            REQUIRE(state->five_minute_average_speed == (3 + 8 * 4) / 5);
+            REQUIRE(m_application_state.Get<AS::five_minute_average_speed>() == (3 + 8 * 4) / 5);
         }
     }
 }
@@ -115,38 +125,35 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
     constexpr uint32_t kSecondLegLength = (kPathFinderTileSize * 8) * kMetersPerPixel;
     constexpr uint32_t kRouteLength = NarrowResolution(kFirstLegLength + kSecondLegLength);
 
-    auto gps_data = GpsData {.speed = 20.0f};
+    SetGpsData(20.0f);
 
-    ALLOW_CALL(*gps_port, Poll()).LR_RETURN(gps_data);
     ALLOW_CALL(*route_listener, Poll()).RETURN(std::nullopt);
 
-    auto state = m_application_state.CheckoutReadonly();
-
-    REQUIRE(state->route_passed_meters == 0);
-    REQUIRE(state->route_total_meters == 0);
+    REQUIRE(m_application_state.Get<AS::route_passed_meters>() == 0);
+    REQUIRE(m_application_state.Get<AS::route_total_meters>() == 0);
 
     WHEN("a new route is presented")
     {
         const auto kRouteEv = IRouteListener::Event {IRouteListener::EventType::kReady, kRoute};
 
         REQUIRE_CALL(*route_listener, Poll()).LR_RETURN(kRouteEv);
-        DoRunLoop();
+        Step();
 
         THEN("the distance to the target is updated")
         {
-            REQUIRE(state->route_total_meters == kRouteLength);
+            REQUIRE(m_application_state.Get<AS::route_total_meters>() == kRouteLength);
         }
 
         AND_WHEN("the boat moves along the route")
         {
-            gps_data.pixel_position = ToPoint(7, 0);
-
-            DoRunLoop();
+            SetGpsData(20.0f, ToPoint(7, 0));
+            Step();
 
             THEN("the passed distance is updated")
             {
-                REQUIRE(state->route_passed_meters == NarrowResolution(kFirstLegLength));
-                REQUIRE(state->route_total_meters == kRouteLength);
+                REQUIRE(m_application_state.Get<AS::route_passed_meters>() ==
+                        NarrowResolution(kFirstLegLength));
+                REQUIRE(m_application_state.Get<AS::route_total_meters>() == kRouteLength);
             }
 
             AND_WHEN("the target is almost reached")
@@ -154,13 +161,14 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
                 auto target = ToPoint(15, 8);
                 target.x -= kPathFinderTileSize / 8;
 
-                gps_data.pixel_position = target;
-                DoRunLoop();
+                SetGpsData(20.0f, target);
+                Step();
 
                 THEN("the passed distance is updated")
                 {
-                    REQUIRE(state->route_passed_meters == kRouteLength);
-                    REQUIRE(state->route_passed_meters == state->route_total_meters);
+                    REQUIRE(m_application_state.Get<AS::route_passed_meters>() == kRouteLength);
+                    REQUIRE(m_application_state.Get<AS::route_passed_meters>() ==
+                            m_application_state.Get<AS::route_total_meters>());
                 }
             }
         }
@@ -171,11 +179,11 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
                 IRouteListener::Event {IRouteListener::EventType::kReleased, {}};
 
             REQUIRE_CALL(*route_listener, Poll()).LR_RETURN(kRouteDroppedEv);
-            DoRunLoop();
+            Step();
 
             THEN("the distance to the target is zeroed")
             {
-                REQUIRE(state->route_total_meters == 0);
+                REQUIRE(m_application_state.Get<AS::route_total_meters>() == 0);
             }
         }
         AND_WHEN("a new route is calculated")
@@ -184,11 +192,11 @@ TEST_CASE_FIXTURE(Fixture, "the trip computer updates distance to the target pos
                 IRouteListener::Event {IRouteListener::EventType::kCalculating, {}};
 
             REQUIRE_CALL(*route_listener, Poll()).LR_RETURN(kRouteDroppedEv);
-            DoRunLoop();
+            Step();
 
             THEN("the distance to the target is zeroed")
             {
-                REQUIRE(state->route_total_meters == 0);
+                REQUIRE(m_application_state.Get<AS::route_total_meters>() == 0);
             }
         }
     }

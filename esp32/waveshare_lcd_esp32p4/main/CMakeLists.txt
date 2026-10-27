@@ -13,12 +13,13 @@ target_link_libraries(${COMPONENT_TARGET}
     ui
     gps_reader
     ota_updater
-    target_httpd_ota_updater
-    target_os
-    target_nvm
+    httpd_ota_updater_esp32
+    os_esp32
+    nvm_esp32
+    uart_esp32
     storage
-    uart_gps
-    i2c_gps
-    display_jd9365
+    uart_gps_esp32
+    i2c_gps_esp32
+    jd9365_display_esp32
     uart_event_listener
 )

@@ -3,10 +3,6 @@ cpp_includes:
   - "stored_positions.hh"
 
 parameters:
-  gps_connected:
-    type: bool
-    default: false
-
   minute_average_speed:
     type: uint8_t
     default: 0

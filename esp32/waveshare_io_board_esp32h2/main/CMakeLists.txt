@@ -7,12 +7,12 @@ target_link_libraries(${COMPONENT_TARGET}
     idf::spi_flash
     idf::esp_partition
     encoder_input
-    uart_gps
-    target_os
-    target_nvm
+    uart_gps_esp32
+    os_esp32
+    nvm_esp32
     gps_listener
     button_debouncer
-    target_gpio
+    gpio_esp32
     event_serializer
     uart_event_forwarder
 )

@@ -102,9 +102,9 @@ GpsReader::OnActivation()
         return std::nullopt;
     }
 
-    auto conf = m_application_state.CheckoutReadonly().Get<AS::configuration>();
-    auto qw = m_application_state
-                  .CheckoutQueuedWriter<AS::position, AS::pixel_position, AS::gps_position_valid>();
+    auto conf = m_application_state.Get<AS::configuration>();
+    auto qw =
+        m_application_state.CheckoutQueuedWriter<AS::position, AS::pixel_position, AS::gps_status>();
 
     GpsData mangled;
 
@@ -120,7 +120,7 @@ GpsReader::OnActivation()
 
     qw.Set<AS::position>(mangled);
     qw.Set<AS::pixel_position>(pixel_position);
-    qw.Set<AS::gps_position_valid>(true);
+    qw.Set<AS::gps_status>(GpsStatus::kPositionValid);
 
     Reset();
 

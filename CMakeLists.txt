@@ -1,24 +1,14 @@
-include (cmake/bin_to_source.cmake)
+include(external/libmaelir/cmake/bin_to_source.cmake)
+include(external/libmaelir/cmake/generate_state_machine.cmake)
+include(external/libmaelir/cmake/git_version.cmake)
 
-add_subdirectory(external)
+git_version_header(git_version_header ${CMAKE_CURRENT_SOURCE_DIR})
+
+# The common lv_conf.h for all platforms. A cache variable, since LVGL is added from libmaelir
+# (not below this directory), and LVGL declares it as a cache variable itself
+set(LV_BUILD_CONF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lvgl_config CACHE PATH "Directory with lv_conf.h" FORCE)
+
 add_subdirectory(application_state)
+add_subdirectory(external)
+add_subdirectory(messages)
 add_subdirectory(src)
-
-add_custom_target(generate_git_version
-  ${CMAKE_COMMAND} -D SOURCE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}
-                   -D DST_FILE=${CMAKE_BINARY_DIR}/include/version.hh
-                   -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_version.cmake
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD
-)
-
-add_library(git_version_header INTERFACE)
-
-target_include_directories(git_version_header
-INTERFACE
-    ${CMAKE_BINARY_DIR}/include
-)
-
-add_dependencies(git_version_header
-    generate_git_version
-)

@@ -20,6 +20,6 @@ private:
     hal::IGpio& m_button;
     hal::IInput::IListener* m_listener {nullptr};
 
-    std::unique_ptr<ListenerCookie> m_button_listener;
-    std::unique_ptr<ListenerCookie> m_rotary_listener;
+    ListenerCookie m_button_listener;
+    ListenerCookie m_rotary_listener;
 };

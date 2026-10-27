@@ -34,7 +34,7 @@ private:
     RouteService& m_route_service;
 
     std::unique_ptr<IRouteListener> m_route_listener;
-    std::unique_ptr<ListenerCookie> m_application_state_listener;
+    ListenerCookie m_application_state_listener;
 
     std::unique_ptr<RouteIterator> m_route_iterator;
     bool m_route_pending {false};
