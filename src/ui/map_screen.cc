@@ -26,8 +26,8 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     lv_obj_set_scrollbar_mode(m_screen, LV_SCROLLBAR_MODE_OFF);
 
     /*
-     * The map is drawn directly into the LVGL render buffer, which avoids an intermediate
-     * full-screen buffer and the copy from it (PSRAM bandwidth is the limit).
+     * The map and route are drawn directly into the LVGL render buffer, which avoids an
+     * intermediate full-screen buffer and the copy from it (PSRAM bandwidth is the limit).
      */
     lv_obj_add_event_cb(
         m_screen,
@@ -39,26 +39,6 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
         },
         LV_EVENT_DRAW_MAIN,
         this);
-
-    /* Create line style */
-    static lv_style_t style_passed_line;
-    static lv_style_t style_remaining_line;
-
-    lv_style_init(&style_passed_line);
-    lv_style_init(&style_remaining_line);
-
-    lv_style_set_line_width(&style_passed_line, 8);
-    lv_style_set_line_color(&style_passed_line, lv_palette_main(LV_PALETTE_GREY));
-    lv_style_set_line_rounded(&style_passed_line, true);
-
-    lv_style_set_line_width(&style_remaining_line, 8);
-    lv_style_set_line_color(&style_remaining_line, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
-    lv_style_set_line_rounded(&style_remaining_line, true);
-
-    m_route_line = std::make_unique<RouteLine>(m_screen);
-
-    lv_obj_add_style(m_route_line->lv_remaining_line, &style_remaining_line, 0);
-    lv_obj_add_style(m_route_line->lv_passed_line, &style_passed_line, 0);
 
     m_speedometer_arc = lv_arc_create(m_screen);
     lv_obj_set_size(m_speedometer_arc, lv_pct(100), lv_pct(100));
@@ -159,8 +139,7 @@ UserInterface::MapScreen::Update()
 
     if (m_state == State::kSelectDestination)
     {
-        lv_obj_add_flag(m_route_line->lv_passed_line, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
+        m_show_route = false;
         lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
 
         if (m_parent.m_position_select_vertical)
@@ -176,8 +155,7 @@ UserInterface::MapScreen::Update()
     }
     else if (m_state == State::kAdjustGps)
     {
-        lv_obj_add_flag(m_route_line->lv_passed_line, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
+        m_show_route = false;
         lv_obj_remove_flag(m_crosshair, LV_OBJ_FLAG_HIDDEN);
 
         auto first_sym = LV_SYMBOL_LEFT;
@@ -406,8 +384,7 @@ UserInterface::MapScreen::RunStateMachine()
         case State::kDestinationSelected:
             m_mode = Mode::kMap;
             m_crosshair_position = Point {0, 0};
-            lv_obj_remove_flag(m_route_line->lv_passed_line, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_remove_flag(m_route_line->lv_remaining_line, LV_OBJ_FLAG_HIDDEN);
+            m_show_route = true;
             lv_obj_remove_flag(m_boat, LV_OBJ_FLAG_HIDDEN);
 
             m_state = State::kMap;
@@ -469,6 +446,18 @@ UserInterface::MapScreen::DrawsMapDirectly() const
     return m_state == State::kMap || m_state == State::kAdjustGps;
 }
 
+Point
+UserInterface::MapScreen::ToDisplay(const Point& point) const
+{
+    if (m_state == State::kMap)
+    {
+        return {point.x - m_map_position.x, point.y - m_map_position.y};
+    }
+
+    return {(point.x - m_map_position_zoomed_out.x) / m_zoom_level,
+            (point.y - m_map_position_zoomed_out.y) / m_zoom_level};
+}
+
 void
 UserInterface::MapScreen::DrawBackground(uint16_t* dst)
 {
@@ -482,86 +471,36 @@ UserInterface::MapScreen::DrawBackground(uint16_t* dst)
                m_static_map_buffer.get(),
                hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
     }
-}
 
-void
-UserInterface::MapScreen::AddRoutePoint(unsigned index, const Point& point) const
-{
-    auto has_passed_index = index < m_parent.m_passed_route_index;
-    auto passing_index = index == m_parent.m_passed_route_index;
-
-    lv_point_precise_t lv_point;
-
-    if (m_state == State::kMap)
+    if (!m_show_route)
     {
-        lv_point = {point.x - m_map_position.x, point.y - m_map_position.y};
-    }
-    else
-    {
-        lv_point = {(point.x - m_map_position_zoomed_out.x) / m_zoom_level,
-                    (point.y - m_map_position_zoomed_out.y) / m_zoom_level};
+        return;
     }
 
-    if (has_passed_index)
-    {
-        m_route_line->passed_points.push_back(lv_point);
-    }
-    else if (passing_index)
-    {
-        m_route_line->passed_points.push_back(lv_point);
-        m_route_line->remaining_points.push_back(lv_point);
-    }
-    else
-    {
-        m_route_line->remaining_points.push_back(lv_point);
-    }
-}
+    const auto passed_color = lv_color_to_u16(lv_palette_main(LV_PALETTE_GREY));
+    const auto remaining_color = lv_color_to_u16(lv_palette_main(LV_PALETTE_LIGHT_GREEN));
 
-bool
-UserInterface::MapScreen::PointClipsDisplay(const Point& point) const
-{
-    if (m_state == State::kMap)
+    // Passed first, so that the remaining route is drawn on top
+    for (const auto& segment : m_route_segments)
     {
-        return cs::PointClipsDisplay(point.x - m_map_position.x, point.y - m_map_position.y);
+        if (segment.passed)
+        {
+            painter::DrawClippedLine<Point, 8>(dst, segment.from, segment.to, passed_color);
+        }
     }
-    else
+    for (const auto& segment : m_route_segments)
     {
-        return cs::PointClipsDisplay((point.x - m_map_position_zoomed_out.x) / m_zoom_level,
-                                     (point.y - m_map_position_zoomed_out.y) / m_zoom_level);
-    }
-}
-
-bool
-UserInterface::MapScreen::LineClipsDisplay(const Point& from, const Point& to) const
-{
-    // Clipped in place, but only the result is used here
-    if (m_state == State::kMap)
-    {
-        int x0 = from.x - m_map_position.x;
-        int y0 = from.y - m_map_position.y;
-        int x1 = to.x - m_map_position.x;
-        int y1 = to.y - m_map_position.y;
-
-        return cs::ClipLineToDisplay(x0, y0, x1, y1);
-    }
-    else
-    {
-        int x0 = (from.x - m_map_position_zoomed_out.x) / m_zoom_level;
-        int y0 = (from.y - m_map_position_zoomed_out.y) / m_zoom_level;
-        int x1 = (to.x - m_map_position_zoomed_out.x) / m_zoom_level;
-        int y1 = (to.y - m_map_position_zoomed_out.y) / m_zoom_level;
-
-        return cs::ClipLineToDisplay(x0, y0, x1, y1);
+        if (!segment.passed)
+        {
+            painter::DrawClippedLine<Point, 8>(dst, segment.from, segment.to, remaining_color);
+        }
     }
 }
 
 void
 UserInterface::MapScreen::DrawRoute()
 {
-    m_route_line->passed_points.clear();
-    m_route_line->remaining_points.clear();
-    lv_line_set_points(m_route_line->lv_passed_line, {}, 0);
-    lv_line_set_points(m_route_line->lv_remaining_line, {}, 0);
+    m_route_segments.clear();
     if (m_parent.m_route.empty())
     {
         return;
@@ -591,22 +530,17 @@ UserInterface::MapScreen::DrawRoute()
             }
         }
 
-        if (LineClipsDisplay(*last_point, *cur_point))
+        // Clipped in place
+        auto from = ToDisplay(*last_point);
+        auto to = ToDisplay(*cur_point);
+        if (cs::ClipLineToDisplay(from.x, from.y, to.x, to.y))
         {
-            AddRoutePoint(index - 1, *last_point);
-            AddRoutePoint(index, *cur_point);
+            m_route_segments.push_back({from, to, index <= m_parent.m_passed_route_index});
         }
 
         index++;
         last_point = cur_point;
     }
-
-    lv_line_set_points(m_route_line->lv_passed_line,
-                       m_route_line->passed_points.data(),
-                       m_route_line->passed_points.size());
-    lv_line_set_points(m_route_line->lv_remaining_line,
-                       m_route_line->remaining_points.data(),
-                       m_route_line->remaining_points.size());
 }
 
 void

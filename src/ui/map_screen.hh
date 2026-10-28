@@ -39,18 +39,12 @@ private:
     };
 
 
-    struct RouteLine
+    // A route segment in display coordinates, clipped to the display
+    struct RouteSegment
     {
-        RouteLine(lv_obj_t* parent)
-            : lv_passed_line(lv_line_create(parent))
-            , lv_remaining_line(lv_line_create(parent))
-        {
-        }
-
-        lv_obj_t* lv_passed_line;
-        lv_obj_t* lv_remaining_line;
-        std::vector<lv_point_precise_t> passed_points;
-        std::vector<lv_point_precise_t> remaining_points;
+        Point from;
+        Point to;
+        bool passed;
     };
 
     Point PositionToMapCenter(const Point& pixel_position) const;
@@ -65,10 +59,7 @@ private:
     void DrawDestinationCrosshair();
 
     bool DrawsMapDirectly() const;
-
-    void AddRoutePoint(unsigned index, const Point& point) const;
-    bool PointClipsDisplay(const Point& point) const;
-    bool LineClipsDisplay(const Point& from, const Point& to) const;
+    Point ToDisplay(const Point& point) const;
 
     void PrepareInitialZoomedOutMap();
     void FillZoomedOutMap();
@@ -83,7 +74,8 @@ private:
     std::unique_ptr<Image> m_boat_data;
     std::unique_ptr<Image> m_crosshair_data;
 
-    std::unique_ptr<RouteLine> m_route_line;
+    std::vector<RouteSegment> m_route_segments;
+    bool m_show_route {true};
 
     // Freed via the screen deleter
     lv_obj_t* m_boat;
