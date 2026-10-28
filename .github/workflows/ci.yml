@@ -58,6 +58,7 @@ jobs:
             nodejs \
             npm \
             python3-pip \
+            libcurl4-openssl-dev \
             qt6-base-dev \
             qt6-base-dev-tools \
             libgl1-mesa-dev
