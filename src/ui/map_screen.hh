@@ -54,12 +54,17 @@ private:
     };
 
     Point PositionToMapCenter(const Point& pixel_position) const;
-    void DrawMapTiles(const Point& position);
+    void DrawMapTiles(uint16_t* dst, const Point& position);
+
+    // Called from LV_EVENT_DRAW_MAIN to paint directly into the LVGL render buffer
+    void DrawBackground(uint16_t* dst);
 
     void DrawBoat();
     void DrawSpeedometer();
     void DrawRoute();
     void DrawDestinationCrosshair();
+
+    bool DrawsMapDirectly() const;
 
     void AddRoutePoint(unsigned index, const Point& point) const;
     bool PointClipsDisplay(const Point& point) const;
@@ -81,7 +86,6 @@ private:
     std::unique_ptr<RouteLine> m_route_line;
 
     // Freed via the screen deleter
-    lv_obj_t* m_background;
     lv_obj_t* m_boat;
     lv_obj_t* m_speedometer_scale;
     lv_obj_t* m_speedometer_arc;
@@ -103,8 +107,8 @@ private:
     etl::vector<Point, (hal::kDisplayWidth / kTileSize) * 4 * (hal::kDisplayHeight / kTileSize) * 4>
         m_zoomed_out_map_tiles;
 
-    std::unique_ptr<uint8_t[]> m_static_map_buffer;
-    std::unique_ptr<Image> m_static_map_image;
+    // The zoomed out maps are filled in over several frames, so they need a separate buffer
+    std::unique_ptr<uint16_t[]> m_static_map_buffer;
 
     Mode m_mode {Mode::kMap};
 

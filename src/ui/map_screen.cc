@@ -6,6 +6,8 @@
 #include "painter.hh"
 #include "route_utils.hh"
 
+#include <cstring>
+
 constexpr auto kMaxKnots = 30;
 constexpr auto kSpeedometerMaxAngle = 202;
 
@@ -15,28 +17,32 @@ UserInterface::MapScreen::MapScreen(UserInterface& parent)
     , m_crosshair_data(DecodePngMask(crosshair_data, 0))
     , m_select_timer(m_parent.StartTimer(0ms))
 {
-    m_static_map_buffer =
-        std::make_unique<uint8_t[]>(hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
-    m_static_map_image = std::make_unique<Image>(
-        std::span<const uint8_t> {m_static_map_buffer.get(),
-                                  hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t)},
-        hal::kDisplayWidth,
-        hal::kDisplayHeight);
+    m_static_map_buffer = std::make_unique<uint16_t[]>(hal::kDisplayWidth * hal::kDisplayHeight);
 
     m_map_position = PositionToMapCenter(m_parent.m_position);
 
+    // The map is painted below everything else, so the screen background is never seen
+    lv_obj_set_style_bg_opa(m_screen, LV_OPA_TRANSP, 0);
+    lv_obj_set_scrollbar_mode(m_screen, LV_SCROLLBAR_MODE_OFF);
 
-    m_background = lv_image_create(m_screen);
+    /*
+     * The map is drawn directly into the LVGL render buffer, which avoids an intermediate
+     * full-screen buffer and the copy from it (PSRAM bandwidth is the limit).
+     */
+    lv_obj_add_event_cb(
+        m_screen,
+        [](lv_event_t* e) {
+            auto* self = static_cast<MapScreen*>(lv_event_get_user_data(e));
+            auto* layer = lv_event_get_layer(e);
 
-    lv_obj_move_background(m_background);
-    lv_image_set_src(m_background, &m_static_map_image->lv_image_dsc);
-
+            self->DrawBackground(static_cast<uint16_t*>(static_cast<void*>(layer->draw_buf->data)));
+        },
+        LV_EVENT_DRAW_MAIN,
+        this);
 
     /* Create line style */
     static lv_style_t style_passed_line;
     static lv_style_t style_remaining_line;
-
-    lv_obj_set_scrollbar_mode(m_screen, LV_SCROLLBAR_MODE_OFF);
 
     lv_style_init(&style_passed_line);
     lv_style_init(&style_remaining_line);
@@ -266,6 +272,9 @@ UserInterface::MapScreen::Update()
     DrawSpeedometer();
     DrawRoute();
     DrawDestinationCrosshair();
+
+    // The background isn't an LVGL object, so make sure it's redrawn
+    lv_obj_invalidate(m_screen);
 }
 
 void
@@ -286,7 +295,6 @@ UserInterface::MapScreen::RunStateMachine()
         {
         case State::kMap:
             m_zoom_level = 1;
-            DrawMapTiles(m_map_position);
 
             if (m_parent.m_select_position)
             {
@@ -384,7 +392,6 @@ UserInterface::MapScreen::RunStateMachine()
         case State::kAdjustGps:
             m_zoom_level = 1;
             m_mode = Mode::kMap;
-            DrawMapTiles(m_map_position);
 
             if (m_parent.m_adjust_gps == false)
             {
@@ -454,6 +461,27 @@ UserInterface::MapScreen::DrawSpeedometer()
     auto angle = speed * max_angle / kMaxKnots;
 
     lv_arc_set_bg_angles(m_speedometer_arc, 0, angle);
+}
+
+bool
+UserInterface::MapScreen::DrawsMapDirectly() const
+{
+    return m_state == State::kMap || m_state == State::kAdjustGps;
+}
+
+void
+UserInterface::MapScreen::DrawBackground(uint16_t* dst)
+{
+    if (DrawsMapDirectly())
+    {
+        DrawMapTiles(dst, m_map_position);
+    }
+    else
+    {
+        memcpy(dst,
+               m_static_map_buffer.get(),
+               hal::kDisplayWidth * hal::kDisplayHeight * sizeof(uint16_t));
+    }
 }
 
 void
@@ -582,7 +610,7 @@ UserInterface::MapScreen::DrawRoute()
 }
 
 void
-UserInterface::MapScreen::DrawMapTiles(const Point& position)
+UserInterface::MapScreen::DrawMapTiles(uint16_t* dst, const Point& position)
 {
     auto x_remainder = position.x % kTileSize;
     auto y_remainder = position.y % kTileSize;
@@ -603,7 +631,7 @@ UserInterface::MapScreen::DrawMapTiles(const Point& position)
                 {start_x + x * kTileSize, start_y + y * kTileSize});
             if (tile)
             {
-                painter::Blit(reinterpret_cast<uint16_t*>(m_static_map_buffer.get()),
+                painter::Blit(dst,
                               tile->GetImage(),
                               {x * kTileSize - x_remainder, y * kTileSize - y_remainder});
             }
@@ -710,7 +738,7 @@ UserInterface::MapScreen::DrawZoomedTile(const Point& position)
     {
         auto dst = Point {position.x - m_map_position_zoomed_out.x,
                           position.y - m_map_position_zoomed_out.y};
-        painter::ZoomedBlit(reinterpret_cast<uint16_t*>(m_static_map_buffer.get()),
+        painter::ZoomedBlit(m_static_map_buffer.get(),
                             hal::kDisplayWidth,
                             tile->GetImage(),
                             m_zoom_level,
