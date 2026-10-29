@@ -52,6 +52,7 @@ private:
 
     // Called from LV_EVENT_DRAW_MAIN to paint directly into the LVGL render buffer
     void DrawBackground(uint16_t* dst);
+    void DrawRouteSegment(uint16_t* dst, const RouteSegment& segment, uint16_t color) const;
 
     void DrawBoat();
     void DrawSpeedometer();

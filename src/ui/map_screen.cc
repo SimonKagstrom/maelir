@@ -8,6 +8,8 @@
 
 #include <cstring>
 
+constexpr auto kRouteLineWidth = 8;
+constexpr auto kRouteCornerCircleWidth = kRouteLineWidth + 2;
 constexpr auto kMaxKnots = 30;
 constexpr auto kSpeedometerMaxAngle = 202;
 
@@ -485,16 +487,38 @@ UserInterface::MapScreen::DrawBackground(uint16_t* dst)
     {
         if (segment.passed)
         {
-            painter::DrawClippedLine<Point, 8>(dst, segment.from, segment.to, passed_color);
+            DrawRouteSegment(dst, segment, passed_color);
         }
     }
     for (const auto& segment : m_route_segments)
     {
         if (!segment.passed)
         {
-            painter::DrawClippedLine<Point, 8>(dst, segment.from, segment.to, remaining_color);
+            DrawRouteSegment(dst, segment, remaining_color);
         }
     }
+}
+
+void
+UserInterface::MapScreen::DrawRouteSegment(uint16_t* dst,
+                                           const RouteSegment& segment,
+                                           uint16_t color) const
+{
+    auto is_diagonal = segment.from.x != segment.to.x && segment.from.y != segment.to.y;
+
+    if (is_diagonal)
+    {
+        painter::DrawClippedLine<Point, kRouteLineWidth>(dst, segment.from, segment.to, color);
+    }
+    else
+    {
+        // The lines look too thick for non-diagonal segments, so reduce the width
+        painter::DrawClippedLine<Point, kRouteLineWidth - 2>(dst, segment.from, segment.to, color);
+    }
+
+    // Round joints with the neighbouring segments
+    painter::DrawFilledCircle<Point, kRouteCornerCircleWidth>(dst, segment.from, color);
+    painter::DrawFilledCircle<Point, kRouteCornerCircleWidth>(dst, segment.to, color);
 }
 
 void
